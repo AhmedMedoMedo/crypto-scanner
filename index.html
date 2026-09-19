@@ -24,7 +24,8 @@
                             green: '#10B981',
                             red: '#EF4444',
                             blue: '#3B82F6',
-                            gold: '#F59E0B'
+                            gold: '#F59E0B',
+                            purple: '#8B5CF6'
                         }
                     }
                 }
@@ -50,7 +51,6 @@
             border-radius: 4px;
         }
         
-        /* تأثير تحميل البيانات */
         @keyframes shine {
             to { background-position-x: -200%; }
         }
@@ -61,7 +61,6 @@
             animation: 1.5s shine linear infinite;
         }
 
-        /* ستايل تحديث الأسعار */
         @keyframes flashGreen {
             0% { background-color: rgba(16, 185, 129, 0.25); }
             100% { background-color: transparent; }
@@ -73,7 +72,6 @@
         .update-green { animation: flashGreen 1s ease-out; }
         .update-red { animation: flashRed 1s ease-out; }
 
-        /* ستايل الفرص الذهبية - ده اللي هيميز العملة في الجدول */
         @keyframes pulseGold {
             0% { box-shadow: inset 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8); }
             70% { box-shadow: inset 0 0 10px 2px rgba(245, 158, 11, 0); border-color: rgba(245, 158, 11, 0.2); }
@@ -85,21 +83,498 @@
             border-left: 4px solid #F59E0B !important;
             background-color: rgba(245, 158, 11, 0.08) !important;
         }
-        .golden-badge {
-            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        .signal-badge {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            margin-top: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .signal-breakout {
+            background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+            color: white;
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+        }
+        .signal-whale {
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: white;
+            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+        }
+        .signal-squeeze {
+            background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+            color: white;
+            box-shadow: 0 2px 5px rgba(139, 92, 246, 0.3);
         }
     </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-gradient-to-bl from-brand-gold to-yellow-600 flex items-center justify-center text-white font-bold shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">رادار الفرص الذكي <span class="text-[10px] sm:text-xs font-normal text-brand-gold ml-1 hidden sm:inline border border-brand-gold px-1 rounded">VIP</span></h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="status-indicator" class="flex items-center gap-1.5 text-[10px] sm:text-xs text-gray-400 bg-gray-800 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-gray-700">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-green opacity-75 hidden" id="status-ping"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-gray-500" id="status-dot"></span>
+                        </span>
+                        <span id="status-text">جاري الاتصال...</span>
+                    </div>
+
+                    <!-- التنبيه الصوتي -->
+                    <button id="sound-toggle-btn" class="p-1.5 sm:p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors relative group" title="تفعيل التنبيهات الصوتية">
+                        <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                        <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+
+                    <button id="refresh-btn" class="p-1.5 sm:p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-4 lg:px-8 py-3 sm:py-6 flex flex-col gap-3 sm:gap-6">
+        
+        <!-- Controls Section -->
+        <section class="bg-gray-900 rounded-xl border border-gray-800 p-3 sm:p-5 shadow-lg">
+            <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 justify-between">
+                
+                <!-- Filters -->
+                <div class="flex-1 space-y-3">
+                    <h2 class="text-[11px] sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">فلترة الفرص الذكية</h2>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                        
+                        <!-- Search -->
+                        <div class="space-y-1 sm:space-y-1.5 col-span-2 lg:col-span-1">
+                            <label class="text-[10px] sm:text-xs text-gray-400">ابحث عن عملة</label>
+                            <input type="text" id="search-input" placeholder="مثال: BTC, SOL..." class="block w-full px-3 py-1.5 sm:py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-brand-gold text-xs sm:text-sm dir-ltr text-left">
+                        </div>
+
+                        <!-- Strategy -->
+                        <div class="space-y-1 sm:space-y-1.5 col-span-2 lg:col-span-1">
+                            <label class="text-[10px] sm:text-xs text-brand-gold font-bold flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                الرادار الآلي
+                            </label>
+                            <select id="strategy-select" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-brand-gold border-opacity-60 focus:outline-none focus:border-brand-gold rounded-lg bg-gray-800 text-gray-200">
+                                <option value="golden_only" class="font-bold text-brand-gold bg-gray-900" selected>⭐ عرض الإشارات القوية فقط (دخول فوري)</option>
+                                <option value="none">عرض كل السوق</option>
+                                <option value="breakout">🔥 اختراق القمة فقط</option>
+                                <option value="whale">🐋 ارتداد حيتان فقط</option>
+                                <option value="squeeze">🧲 ضغط وتجميع فقط</option>
+                            </select>
+                        </div>
+
+                        <!-- Volume Filter -->
+                        <div class="space-y-1 sm:space-y-1.5">
+                            <label class="text-[10px] sm:text-xs text-gray-400">السيولة اليومية (أمان)</label>
+                            <select id="min-volume" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
+                                <option value="0">بدون حد أدنى (مخاطرة)</option>
+                                <option value="2000000">أعلى من 2 مليون$</option>
+                                <option value="5000000" selected>أعلى من 5 مليون$ (متوازن)</option>
+                                <option value="10000000">أعلى من 10 مليون$ (آمن)</option>
+                                <option value="30000000">أعلى من 30 مليون$ (حيتان)</option>
+                            </select>
+                        </div>
+
+                        <!-- Trend Direction -->
+                        <div class="space-y-1 sm:space-y-1.5">
+                            <label class="text-[10px] sm:text-xs text-gray-400">الاتجاه العام</label>
+                            <select id="trend-filter" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
+                                <option value="all" selected>الكل</option>
+                                <option value="bullish">أخضر فقط (+)</option>
+                                <option value="bearish">أحمر فقط (-)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hidden lg:block w-px bg-gray-800"></div>
+
+                <!-- Sorting -->
+                <div class="flex flex-col space-y-2 sm:space-y-3 lg:w-48">
+                     <h2 class="text-[11px] sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">ترتيب حسب</h2>
+                     <select id="sort-select" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
+                        <option value="signal" selected>أقوى إشارة أولاً</option>
+                        <option value="changeDesc">الأكثر صعوداً %</option>
+                        <option value="volDesc">الأعلى سيولة</option>
+                    </select>
+                    
+                    <div class="flex justify-between items-center mt-auto pt-1">
+                        <span class="text-[9px] sm:text-xs text-gray-500" id="last-update-time">في انتظار البيانات...</span>
+                        <span class="text-[9px] sm:text-xs bg-brand-gold bg-opacity-20 text-brand-gold font-bold px-2 py-0.5 rounded border border-brand-gold border-opacity-30" id="pair-count">0 عملة</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Table Section -->
+        <section class="bg-gray-900 rounded-xl border border-gray-800 shadow-xl overflow-hidden flex-1 flex flex-col min-h-[400px]">
+            <div class="overflow-x-auto custom-scrollbar flex-1 relative">
+                <table class="min-w-full divide-y divide-gray-800 text-right">
+                    <thead class="bg-gray-850 sticky top-0 z-10 shadow-sm text-[11px] sm:text-xs lg:text-sm">
+                        <tr>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300">العملة</th>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300">حالة الفرصة (الرادار)</th>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-left">السعر (USDT)</th>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-left">التغير</th>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-left hidden lg:table-cell">السيولة</th>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-center">أكشن</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crypto-table-body" class="divide-y divide-gray-800/50 bg-gray-900">
+                        <!-- Loading Skeletons -->
+                        <tr class="animate-pulse">
+                            <td class="px-2 sm:px-4 py-3"><div class="h-4 bg-gray-800 rounded w-16 skeleton"></div></td>
+                            <td class="px-2 sm:px-4 py-3"><div class="h-4 bg-gray-800 rounded w-24 skeleton"></div></td>
+                            <td class="px-2 sm:px-4 py-3"><div class="h-4 bg-gray-800 rounded w-12 mr-auto skeleton"></div></td>
+                            <td class="px-2 sm:px-4 py-3"><div class="h-4 bg-gray-800 rounded w-10 mr-auto skeleton"></div></td>
+                            <td class="px-2 sm:px-4 py-3 hidden lg:table-cell"><div class="h-4 bg-gray-800 rounded w-20 mr-auto skeleton"></div></td>
+                            <td class="px-2 sm:px-4 py-3"><div class="h-6 bg-gray-800 rounded w-12 mx-auto skeleton"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-20 p-4 text-center">
+                    <svg class="h-12 w-12 text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <h3 class="text-sm sm:text-base font-bold text-gray-300">مفيش فرص قوية حالياً مطابقة للشروط</h3>
+                    <p class="text-[11px] sm:text-xs text-gray-500 mt-2">خلي الموقع مفتوح، الرادار بيحلل السوق كل ثانية وهينبهك أول ما تظهر فرصة.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let allCryptoData = [];       
+        let previousPrices = {};      
+        let previousFilteredSymbols = new Set();
+        let isFirstLoad = true;
+        let updateInterval;
+        let soundEnabled = false;
+        let synth = null;
+        let hasRequestedNotification = false;
+        
+        const BINANCE_API_URL = 'https://api.binance.com/api/v3/ticker/24hr';
+        const TARGET_QUOTE_ASSET = 'USDT'; 
+        const REFRESH_RATE_MS = 8000; 
+
+        const tableBody = document.getElementById('crypto-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const searchInput = document.getElementById('search-input');
+        const minVolumeSelect = document.getElementById('min-volume');
+        const trendFilterSelect = document.getElementById('trend-filter');
+        const sortSelect = document.getElementById('sort-select');
+        const strategySelect = document.getElementById('strategy-select'); 
+        const pairCountSpan = document.getElementById('pair-count');
+        const lastUpdateTimeSpan = document.getElementById('last-update-time');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const statusDot = document.getElementById('status-dot');
+        const statusPing = document.getElementById('status-ping');
+        const statusText = document.getElementById('status-text');
+
+        const soundToggleBtn = document.getElementById('sound-toggle-btn');
+        const soundIconOff = document.getElementById('sound-icon-off');
+        const soundIconOn = document.getElementById('sound-icon-on');
+
+        const formatPrice = (priceStr) => {
+            const price = parseFloat(priceStr);
+            if (isNaN(price)) return '0.00';
+            if (price < 0.0001) return price.toPrecision(4);
+            if (price < 1) return price.toFixed(4);
+            if (price < 10) return price.toFixed(3);
+            return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const formatNumberShort = (numStr) => {
+            const num = parseFloat(numStr);
+            if (isNaN(num)) return '0';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            return num.toFixed(0);
+        };
+
+        const getBaseAsset = (symbol) => symbol.replace(TARGET_QUOTE_ASSET, '');
+
+        const playAlertSound = (coinName, signalType) => {
+            if (!soundEnabled) return;
+            try {
+                if (!synth) {
+                    synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
+                    }).toDestination();
+                }
+                const now = Tone.now();
+                // نغمة حماسية سريعة
+                synth.triggerAttackRelease("C5", "16n", now);
+                synth.triggerAttackRelease("E5", "16n", now + 0.1);
+                synth.triggerAttackRelease("G5", "8n", now + 0.2);
+            } catch (e) { console.error(e); }
+
+            if (Notification.permission === "granted") {
+                new Notification(`صيدة جديدة: ${coinName} 🚀`, {
+                    body: `الرادار لقط إشارة: ${signalType}.. افتح الشارت بسرعة!`,
+                });
+            }
+        };
+
+        soundToggleBtn.addEventListener('click', async () => {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) {
+                await Tone.start(); 
+                soundIconOff.classList.add('hidden');
+                soundIconOn.classList.remove('hidden');
+                soundToggleBtn.classList.add('bg-brand-gold', 'bg-opacity-20');
+                if (!hasRequestedNotification && "Notification" in window && Notification.permission !== "granted") {
+                    Notification.requestPermission();
+                    hasRequestedNotification = true;
+                }
+                playAlertSound("TEST", "تفعيل الرادار"); 
+            } else {
+                soundIconOff.classList.remove('hidden');
+                soundIconOn.classList.add('hidden');
+                soundToggleBtn.classList.remove('bg-brand-gold', 'bg-opacity-20');
+            }
+        });
+
+        const setStatus = (status) => {
+            if (status === 'connected') {
+                statusDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-brand-green';
+                statusPing.classList.remove('hidden');
+                statusText.innerText = 'متصل وحي';
+            } else if (status === 'error') {
+                statusDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-brand-red';
+                statusPing.classList.add('hidden');
+                statusText.innerText = 'خطأ في الاتصال';
+            } else {
+                statusDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-gray-500';
+                statusPing.classList.add('hidden');
+                statusText.innerText = 'تحديث...';
+            }
+        };
+
+        const fetchMarketData = async () => {
+            if(!isFirstLoad) setStatus('fetching');
+            try {
+                const response = await fetch(BINANCE_API_URL);
+                if (!response.ok) throw new Error(`HTTP error!`);
+                const data = await response.json();
+                
+                allCryptoData = data
+                    .filter(item => item.symbol.endsWith(TARGET_QUOTE_ASSET) && parseFloat(item.quoteVolume) > 0)
+                    .map(item => {
+                        const changePct = parseFloat(item.priceChangePercent);
+                        const price = parseFloat(item.lastPrice);
+                        const high = parseFloat(item.highPrice);
+                        const low = parseFloat(item.lowPrice);
+                        const avgPrice = parseFloat(item.weightedAvgPrice);
+                        const volume = parseFloat(item.quoteVolume);
+                        
+                        // --- 🧠 محرك التحليل الفني اللحظي (Smart Detection Engine) ---
+                        const dailyRange = high - low;
+                        const rangePercent = dailyRange > 0 ? (dailyRange / low) * 100 : 0;
+                        const pricePosition = dailyRange > 0 ? (price - low) / dailyRange : 0;
+                        
+                        let signalType = "none";
+                        let signalBadge = "";
+                        let signalScore = 0; // عشان الترتيب
+
+                        // 1. اختراق قمة (جاهزة للانفجار حالا)
+                        if (pricePosition > 0.94 && changePct > 2 && changePct < 15 && price > avgPrice) {
+                            signalType = "breakout";
+                            signalBadge = `<span class="signal-badge signal-breakout">🔥 اختراق قمة (دخول)</span>`;
+                            signalScore = 3;
+                        }
+                        // 2. ارتداد حيتان (نزول قوي ثم شراء من القاع)
+                        else if (((price - low) / low) > 0.05 && changePct < 3 && changePct > -4 && price > avgPrice) {
+                            signalType = "whale";
+                            signalBadge = `<span class="signal-badge signal-whale">🐋 ارتداد حوت (تجميع)</span>`;
+                            signalScore = 2;
+                        }
+                        // 3. ضغط سعري وتجميع (مملة قبل الكسر)
+                        else if (rangePercent > 1 && rangePercent < 5.5 && pricePosition > 0.85 && price >= avgPrice) {
+                            signalType = "squeeze";
+                            signalBadge = `<span class="signal-badge signal-squeeze">🧲 ضغط سعري (انفجار)</span>`;
+                            signalScore = 1;
+                        }
+
+                        return {
+                            symbol: item.symbol,
+                            baseAsset: getBaseAsset(item.symbol),
+                            price: price,
+                            changePercent: changePct,
+                            high: high,
+                            low: low,
+                            volume: volume, 
+                            isBullish: changePct >= 0,
+                            avgPrice: avgPrice,
+                            signalType: signalType,
+                            signalBadge: signalBadge,
+                            signalScore: signalScore
+                        };
+                    });
+
+                renderTable();
+                setStatus('connected');
+                const now = new Date();
+                lastUpdateTimeSpan.innerText = `تحديث: ${now.toLocaleTimeString('ar-EG')}`;
+                if (isFirstLoad) isFirstLoad = false;
+            } catch (error) {
+                setStatus('error');
+            }
+        };
+
+        const renderTable = () => {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const minVol = parseFloat(minVolumeSelect.value);
+            const trendDirection = trendFilterSelect.value;
+            const sortBy = sortSelect.value;
+            const strategy = strategySelect.value; 
+
+            let filteredData = allCryptoData.filter(item => {
+                if (item.volume < minVol) return false;
+                if (!item.baseAsset.toLowerCase().includes(searchTerm)) return false;
+                if (trendDirection === 'bullish' && !item.isBullish) return false;
+                if (trendDirection === 'bearish' && item.isBullish) return false;
+
+                if (strategy === 'golden_only') {
+                    return item.signalScore > 0; 
+                } else if (strategy !== 'none') {
+                    return item.signalType === strategy;
+                }
+
+                return true;
+            });
+
+            filteredData.sort((a, b) => {
+                if (sortBy === 'signal') {
+                    if (b.signalScore !== a.signalScore) return b.signalScore - a.signalScore;
+                    return b.changePercent - a.changePercent;
+                }
+                if (sortBy === 'changeDesc') return b.changePercent - a.changePercent;
+                if (sortBy === 'volDesc') return b.volume - a.volume;
+                return b.signalScore - a.signalScore;
+            });
+
+            pairCountSpan.innerText = `${filteredData.length} فرصة`;
+
+            // التنبيه للعملات الجديدة اللي ظهرت فيها إشارة قوية
+            const currentGoldenSymbols = new Set(filteredData.filter(i => i.signalScore > 0).map(item => item.symbol));
+            
+            if (!isFirstLoad && (strategy === 'golden_only' || strategy !== 'none')) {
+                for (const symbol of currentGoldenSymbols) {
+                    if (!previousFilteredSymbols.has(symbol)) {
+                        const newCoin = filteredData.find(c => c.symbol === symbol);
+                        let alertMsg = newCoin.signalType === 'breakout' ? 'اختراق قمة!' : (newCoin.signalType === 'whale' ? 'حوت دخل' : 'ضغط سعري');
+                        playAlertSound(newCoin.baseAsset, alertMsg);
+                        break; 
+                    }
+                }
+            }
+            previousFilteredSymbols = currentGoldenSymbols;
+
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            const displayData = filteredData.slice(0, 100); 
+            
+            let html = '';
+            displayData.forEach(item => {
+                const prevPrice = previousPrices[item.symbol];
+                let rowAnim = '';
+                if (!isFirstLoad && prevPrice) {
+                    if (item.price > prevPrice) rowAnim = 'update-green';
+                    else if (item.price < prevPrice) rowAnim = 'update-red';
+                }
+                previousPrices[item.symbol] = item.price;
+
+                const isBull = item.isBullish;
+                const colorClass = isBull ? 'text-brand-green' : 'text-brand-red';
+                
+                let rowClasses = 'hover:bg-gray-800 border-b border-gray-800/50';
+                if (item.signalScore > 0) {
+                    rowClasses = 'golden-opportunity border-b border-gray-800/50';
+                }
+
+                html += `
+                    <tr class="${rowClasses} transition-colors ${rowAnim}">
+                        <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap">
+                            <div class="font-bold text-white text-[12px] sm:text-sm dir-ltr self-start">${item.baseAsset}</div>
+                        </td>
+                        <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap">
+                            ${item.signalBadge || '<span class="text-xs text-gray-600">-</span>'}
+                        </td>
+                        <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap text-left font-mono text-[11px] sm:text-sm text-gray-100 dir-ltr">
+                            $${formatPrice(item.price)}
+                        </td>
+                        <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap text-left font-bold text-[12px] sm:text-sm ${colorClass} dir-ltr">
+                            ${isBull ? '+' : ''}${item.changePercent.toFixed(2)}%
+                        </td>
+                        <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap text-left hidden lg:table-cell font-mono text-[11px] sm:text-sm text-gray-400 dir-ltr">
+                            $${formatNumberShort(item.volume)}
+                        </td>
+                        <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap text-center">
+                            <a href="https://www.binance.com/ar/trade/${item.symbol}" target="_blank" class="inline-flex items-center justify-center px-3 py-1.5 bg-brand-blue hover:bg-blue-600 text-white font-bold text-[11px] sm:text-xs rounded shadow-lg transition-colors">
+                                تداول الآن
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+        };
+
+        ['input', 'change'].forEach(evt => {
+            searchInput.addEventListener(evt, renderTable);
+            minVolumeSelect.addEventListener(evt, renderTable);
+            trendFilterSelect.addEventListener(evt, renderTable);
+            sortSelect.addEventListener(evt, renderTable);
+            strategySelect.addEventListener(evt, renderTable);
+        });
+
+        refreshBtn.addEventListener('click', () => {
+            const svg = refreshBtn.querySelector('svg');
+            svg.classList.add('animate-spin');
+            fetchMarketData().then(() => setTimeout(() => svg.classList.remove('animate-spin'), 500));
+            clearInterval(updateInterval);
+            updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
+        });
+
+        const initApp = () => {
+            fetchMarketData();
+            updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
+            
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) fetchMarketData(); 
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
+
+```
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
