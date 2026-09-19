@@ -26,7 +26,9 @@
                             red: '#EF4444',
                             blue: '#3B82F6',
                             gold: '#F59E0B',
-                            purple: '#8B5CF6'
+                            purple: '#8B5CF6',
+                            yellow: '#FACC15',
+                            cyan: '#06b6d4'
                         }
                     }
                 }
@@ -39,37 +41,19 @@
             color: #f3f4f6; 
         }
         
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #111827;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 4px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
         
-        @keyframes shine {
-            to { background-position-x: -200%; }
-        }
+        @keyframes shine { to { background-position-x: -200%; } }
         .skeleton {
-            background: #1f2937;
             background: linear-gradient(110deg, #1f2937 8%, #374151 18%, #1f2937 33%);
             background-size: 200% 100%;
             animation: 1.5s shine linear infinite;
         }
 
-        @keyframes flashGreen {
-            0% { background-color: rgba(16, 185, 129, 0.25); }
-            100% { background-color: transparent; }
-        }
-        @keyframes flashRed {
-            0% { background-color: rgba(239, 68, 68, 0.25); }
-            100% { background-color: transparent; }
-        }
+        @keyframes flashGreen { 0% { background-color: rgba(16, 185, 129, 0.25); } 100% { background-color: transparent; } }
+        @keyframes flashRed { 0% { background-color: rgba(239, 68, 68, 0.25); } 100% { background-color: transparent; } }
         .update-green { animation: flashGreen 1s ease-out; }
         .update-red { animation: flashRed 1s ease-out; }
 
@@ -84,36 +68,22 @@
             border-left: 4px solid #F59E0B !important;
             background-color: rgba(245, 158, 11, 0.08) !important;
         }
+        
         .signal-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
         }
-        .signal-breakout {
-            background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
-            color: white;
-            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
-        }
-        .signal-whale {
-            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-            color: white;
-            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
-        }
-        .signal-squeeze {
-            background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
-            color: white;
-            box-shadow: 0 2px 5px rgba(139, 92, 246, 0.3);
-        }
+        .signal-breakout { background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%); color: white; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3); }
+        .signal-whale { background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); color: white; box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3); }
+        .signal-squeeze { background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; box-shadow: 0 2px 5px rgba(139, 92, 246, 0.3); }
+        .signal-spike { background: linear-gradient(135deg, #FACC15 0%, #CA8A04 100%); color: black; box-shadow: 0 2px 8px rgba(250, 204, 21, 0.5); animation: pulseGold 1.5s infinite; }
+        .signal-volume { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; box-shadow: 0 2px 5px rgba(6, 182, 212, 0.3); }
+        
+        .modal-enter { opacity: 0; transform: scale(0.95) translateY(10px); }
+        .modal-enter-active { opacity: 1; transform: scale(1) translateY(0); transition: all 0.3s ease-out; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
-    <!-- Header -->
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-sm">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14 sm:h-16">
@@ -132,7 +102,6 @@
                         <span id="status-text">جاري الاتصال...</span>
                     </div>
 
-                    <!-- التنبيه الصوتي -->
                     <button id="sound-toggle-btn" class="p-1.5 sm:p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors relative group" title="تفعيل التنبيهات الصوتية">
                         <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                         <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -148,22 +117,18 @@
 
     <main class="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-4 lg:px-8 py-3 sm:py-6 flex flex-col gap-3 sm:gap-6">
         
-        <!-- Controls Section -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-3 sm:p-5 shadow-lg">
             <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 justify-between">
                 
-                <!-- Filters -->
                 <div class="flex-1 space-y-3">
                     <h2 class="text-[11px] sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">فلترة الفرص الذكية</h2>
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                         
-                        <!-- Search -->
                         <div class="space-y-1 sm:space-y-1.5 col-span-2 lg:col-span-1">
                             <label class="text-[10px] sm:text-xs text-gray-400">ابحث عن عملة</label>
                             <input type="text" id="search-input" placeholder="مثال: BTC, SOL..." class="block w-full px-3 py-1.5 sm:py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-brand-gold text-xs sm:text-sm dir-ltr text-left">
                         </div>
 
-                        <!-- Strategy -->
                         <div class="space-y-1 sm:space-y-1.5 col-span-2 lg:col-span-1">
                             <label class="text-[10px] sm:text-xs text-brand-gold font-bold flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -172,15 +137,16 @@
                             <select id="strategy-select" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-brand-gold border-opacity-60 focus:outline-none focus:border-brand-gold rounded-lg bg-gray-800 text-gray-200">
                                 <option value="golden_only" class="font-bold text-brand-gold bg-gray-900" selected>⭐ عرض الإشارات القوية فقط (دخول فوري)</option>
                                 <option value="none">عرض كل السوق</option>
-                                <option value="breakout">🔥 اختراق القمة فقط</option>
-                                <option value="whale">🐋 ارتداد حيتان فقط</option>
-                                <option value="squeeze">🧲 ضغط وتجميع فقط</option>
+                                <option value="spike">⚡ سيولة لحظية عنيفة</option>
+                                <option value="volume">🌊 ضخ سيولة للحيتان</option>
+                                <option value="breakout">🔥 اختراق القمة</option>
+                                <option value="whale">🐋 ارتداد من القاع</option>
                             </select>
                         </div>
 
-                        <!-- Volume Filter -->
                         <div class="space-y-1 sm:space-y-1.5">
                             <label class="text-[10px] sm:text-xs text-gray-400">السيولة اليومية (أمان)</label>
+                            <!-- تم التأكد من صحة أرقام الفلتر ومطابقتها للمعادلات -->
                             <select id="min-volume" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
                                 <option value="0">بدون حد أدنى (مخاطرة)</option>
                                 <option value="2000000">أعلى من 2 مليون$</option>
@@ -190,7 +156,6 @@
                             </select>
                         </div>
 
-                        <!-- Trend Direction -->
                         <div class="space-y-1 sm:space-y-1.5">
                             <label class="text-[10px] sm:text-xs text-gray-400">الاتجاه العام</label>
                             <select id="trend-filter" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
@@ -204,7 +169,6 @@
 
                 <div class="hidden lg:block w-px bg-gray-800"></div>
 
-                <!-- Sorting -->
                 <div class="flex flex-col space-y-2 sm:space-y-3 lg:w-48">
                      <h2 class="text-[11px] sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">ترتيب حسب</h2>
                      <select id="sort-select" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
@@ -215,20 +179,19 @@
                     
                     <div class="flex justify-between items-center mt-auto pt-1">
                         <span class="text-[9px] sm:text-xs text-gray-500" id="last-update-time">في انتظار البيانات...</span>
-                        <span class="text-[9px] sm:text-xs bg-brand-gold bg-opacity-20 text-brand-gold font-bold px-2 py-0.5 rounded border border-brand-gold border-opacity-30" id="pair-count">0 عملة</span>
+                        <span class="text-[9px] sm:text-xs bg-brand-gold bg-opacity-20 text-brand-gold font-bold px-2 py-0.5 rounded border border-brand-gold border-opacity-30" id="pair-count">0 فرصة</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Data Table Section -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 shadow-xl overflow-hidden flex-1 flex flex-col min-h-[400px]">
             <div class="overflow-x-auto custom-scrollbar flex-1 relative">
                 <table class="min-w-full divide-y divide-gray-800 text-right">
                     <thead class="bg-gray-850 sticky top-0 z-10 shadow-sm text-[11px] sm:text-xs lg:text-sm">
                         <tr>
                             <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300">العملة</th>
-                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300">حالة الفرصة (الرادار)</th>
+                            <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300">حالة الفرصة / الفحص الفني</th>
                             <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-left">السعر (USDT)</th>
                             <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-left">التغير</th>
                             <th scope="col" class="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 font-semibold text-gray-300 text-left hidden lg:table-cell">السيولة</th>
@@ -236,7 +199,6 @@
                         </tr>
                     </thead>
                     <tbody id="crypto-table-body" class="divide-y divide-gray-800/50 bg-gray-900">
-                        <!-- Loading Skeletons -->
                         <tr class="animate-pulse">
                             <td class="px-2 sm:px-4 py-3"><div class="h-4 bg-gray-800 rounded w-16 skeleton"></div></td>
                             <td class="px-2 sm:px-4 py-3"><div class="h-4 bg-gray-800 rounded w-24 skeleton"></div></td>
@@ -248,33 +210,89 @@
                     </tbody>
                 </table>
                 
-                <!-- Empty State -->
                 <div id="empty-state" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-20 p-4 text-center">
                     <svg class="h-12 w-12 text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <h3 class="text-sm sm:text-base font-bold text-gray-300">مفيش فرص قوية حالياً مطابقة للشروط</h3>
-                    <p class="text-[11px] sm:text-xs text-gray-500 mt-2">خلي الموقع مفتوح، الرادار بيحلل السوق كل ثانية وهينبهك أول ما تظهر فرصة.</p>
+                    <p class="text-[11px] sm:text-xs text-gray-500 mt-2">خلي الموقع مفتوح، الرادار بيحلل السوق وبيراقب الحيتان أول بأول.</p>
                 </div>
             </div>
         </section>
-
     </main>
+
+    <div id="scan-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeScanModal()"></div>
+        <div id="scan-modal-content" class="relative bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
+            <div class="flex justify-between items-center p-4 border-b border-gray-800 bg-gray-850">
+                <h3 class="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
+                    <svg class="w-5 h-5 text-brand-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    نتيجة الفحص الفني <span id="modal-coin-name" class="text-brand-gold dir-ltr inline-block"></span>
+                </h3>
+                <button onclick="closeScanModal()" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg p-1 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 sm:p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">الترند العام (SMA 200)</span>
+                        <div id="modal-sma" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">ترند سريع (EMA 20)</span>
+                        <div id="modal-ema" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">مناطق التشبع (RSI 14)</span>
+                        <div id="modal-rsi" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">مؤشر الزخم (Momentum)</span>
+                        <div id="modal-momentum" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700 col-span-2">
+                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">البولينجر باندز (الضغط والانفجار)</span>
+                        <div id="modal-bb" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
+                    </div>
+                </div>
+                
+                <div id="modal-decision" class="mt-4 p-3 rounded-lg border text-center font-bold text-xs sm:text-sm bg-gray-800 border-gray-700 text-gray-300">
+                    جاري استخراج قرار الرادار...
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-800 bg-gray-850 flex justify-end">
+                <a id="modal-trade-btn" href="#" target="_blank" class="px-6 py-2 bg-brand-blue hover:bg-blue-600 text-white text-sm font-bold rounded-lg shadow-lg transition-colors w-full sm:w-auto text-center">
+                    شراء العملة الآن
+                </a>
+            </div>
+        </div>
+    </div>
 
     <script>
         let allCryptoData = [];       
         let previousPrices = {};      
-        let previousFilteredSymbols = new Set();
+        let previousVolumes = {};     // لحساب الضخ المفاجئ للسيولة
+        let previousAlertedSymbols = new Set(); // عشان نمنع جرس التنبيه العشوائي عند تغيير الفلتر
+        
         let isFirstLoad = true;
         let updateInterval;
         let soundEnabled = false;
         let synth = null;
-        let hasRequestedNotification = false;
         
-        const BINANCE_API_URL = 'https://api.binance.com/api/v3/ticker/24hr';
+        // سيرفرات باينانس البديلة عشان نتجنب الـ "خطأ اتصال"
+        const API_ENDPOINTS = [
+            'https://api.binance.com/api/v3/ticker/24hr',
+            'https://api1.binance.com/api/v3/ticker/24hr',
+            'https://api2.binance.com/api/v3/ticker/24hr',
+            'https://api3.binance.com/api/v3/ticker/24hr'
+        ];
+        let currentEndpointIndex = 0;
+        
         const TARGET_QUOTE_ASSET = 'USDT'; 
-        const REFRESH_RATE_MS = 8000; 
+        const REFRESH_RATE_MS = 10000; // تحديث كل 10 ثواني (آمن جداً)
 
+        // تعريف عناصر واجهة المستخدم
         const tableBody = document.getElementById('crypto-table-body');
         const emptyState = document.getElementById('empty-state');
         const searchInput = document.getElementById('search-input');
@@ -284,15 +302,14 @@
         const strategySelect = document.getElementById('strategy-select'); 
         const pairCountSpan = document.getElementById('pair-count');
         const lastUpdateTimeSpan = document.getElementById('last-update-time');
-        const refreshBtn = document.getElementById('refresh-btn');
         const statusDot = document.getElementById('status-dot');
         const statusPing = document.getElementById('status-ping');
         const statusText = document.getElementById('status-text');
 
-        const soundToggleBtn = document.getElementById('sound-toggle-btn');
-        const soundIconOff = document.getElementById('sound-icon-off');
-        const soundIconOn = document.getElementById('sound-icon-on');
+        const scanModal = document.getElementById('scan-modal');
+        const scanModalContent = document.getElementById('scan-modal-content');
 
+        // أدوات تنسيق الأرقام
         const formatPrice = (priceStr) => {
             const price = parseFloat(priceStr);
             if (isNaN(price)) return '0.00';
@@ -307,12 +324,13 @@
             if (isNaN(num)) return '0';
             if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
             if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            return num.toFixed(0);
+            return num.toLocaleString('en-US', {maximumFractionDigits: 0});
         };
 
         const getBaseAsset = (symbol) => symbol.replace(TARGET_QUOTE_ASSET, '');
 
-        const playAlertSound = (coinName, signalType) => {
+        // التنبيهات الصوتية
+        const playAlertSound = () => {
             if (!soundEnabled) return;
             try {
                 if (!synth) {
@@ -322,35 +340,28 @@
                     }).toDestination();
                 }
                 const now = Tone.now();
-                // نغمة حماسية سريعة
                 synth.triggerAttackRelease("C5", "16n", now);
                 synth.triggerAttackRelease("E5", "16n", now + 0.1);
                 synth.triggerAttackRelease("G5", "8n", now + 0.2);
             } catch (e) { console.error(e); }
-
-            if (Notification.permission === "granted") {
-                new Notification(`صيدة جديدة: ${coinName} 🚀`, {
-                    body: `الرادار لقط إشارة: ${signalType}.. افتح الشارت بسرعة!`,
-                });
-            }
         };
 
-        soundToggleBtn.addEventListener('click', async () => {
+        document.getElementById('sound-toggle-btn').addEventListener('click', async () => {
             soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-toggle-btn');
             if (soundEnabled) {
                 await Tone.start(); 
-                soundIconOff.classList.add('hidden');
-                soundIconOn.classList.remove('hidden');
-                soundToggleBtn.classList.add('bg-brand-gold', 'bg-opacity-20');
-                if (!hasRequestedNotification && "Notification" in window && Notification.permission !== "granted") {
+                document.getElementById('sound-icon-off').classList.add('hidden');
+                document.getElementById('sound-icon-on').classList.remove('hidden');
+                btn.classList.add('bg-brand-gold', 'bg-opacity-20');
+                if ("Notification" in window && Notification.permission !== "granted") {
                     Notification.requestPermission();
-                    hasRequestedNotification = true;
                 }
-                playAlertSound("TEST", "تفعيل الرادار"); 
+                playAlertSound(); 
             } else {
-                soundIconOff.classList.remove('hidden');
-                soundIconOn.classList.add('hidden');
-                soundToggleBtn.classList.remove('bg-brand-gold', 'bg-opacity-20');
+                document.getElementById('sound-icon-off').classList.remove('hidden');
+                document.getElementById('sound-icon-on').classList.add('hidden');
+                btn.classList.remove('bg-brand-gold', 'bg-opacity-20');
             }
         });
 
@@ -362,9 +373,9 @@
             } else if (status === 'error') {
                 statusDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-brand-red';
                 statusPing.classList.add('hidden');
-                statusText.innerText = 'خطأ في الاتصال';
+                statusText.innerText = 'خطأ اتصال، يعاد...';
             } else {
-                statusDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-gray-500';
+                statusDot.className = 'relative inline-flex rounded-full h-2 w-2 bg-brand-gold';
                 statusPing.classList.add('hidden');
                 statusText.innerText = 'تحديث...';
             }
@@ -373,45 +384,77 @@
         const fetchMarketData = async () => {
             if(!isFirstLoad) setStatus('fetching');
             try {
-                const response = await fetch(BINANCE_API_URL);
-                if (!response.ok) throw new Error(`HTTP error!`);
+                // جلب البيانات من السيرفر الحالي
+                const response = await fetch(API_ENDPOINTS[currentEndpointIndex]);
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
                 const data = await response.json();
                 
                 allCryptoData = data
-                    .filter(item => item.symbol.endsWith(TARGET_QUOTE_ASSET) && parseFloat(item.quoteVolume) > 0)
+                    .filter(item => item.symbol.endsWith(TARGET_QUOTE_ASSET))
                     .map(item => {
-                        const changePct = parseFloat(item.priceChangePercent);
-                        const price = parseFloat(item.lastPrice);
-                        const high = parseFloat(item.highPrice);
-                        const low = parseFloat(item.lowPrice);
-                        const avgPrice = parseFloat(item.weightedAvgPrice);
-                        const volume = parseFloat(item.quoteVolume);
+                        const quoteVolume = Number(item.quoteVolume);
+                        if (isNaN(quoteVolume) || quoteVolume <= 0) return null;
+
+                        const changePct = Number(item.priceChangePercent);
+                        const price = Number(item.lastPrice);
+                        const high = Number(item.highPrice);
+                        const low = Number(item.lowPrice);
+                        const avgPrice = Number(item.weightedAvgPrice);
                         
-                        // --- 🧠 محرك التحليل الفني اللحظي (Smart Detection Engine) ---
                         const dailyRange = high - low;
-                        const rangePercent = dailyRange > 0 ? (dailyRange / low) * 100 : 0;
                         const pricePosition = dailyRange > 0 ? (price - low) / dailyRange : 0;
+                        const rangePercent = dailyRange > 0 ? (dailyRange / low) * 100 : 0;
                         
+                        // 1. حساب السيولة اللحظية (السرعة)
+                        let localVelocity = 0;
+                        if (previousPrices[item.symbol]) {
+                            localVelocity = ((price - previousPrices[item.symbol]) / previousPrices[item.symbol]) * 100;
+                        }
+                        
+                        // 2. حساب الضخ الفجائي للأموال (Volume Spike)
+                        let volSpikeAmt = 0;
+                        if (previousVolumes[item.symbol]) {
+                            volSpikeAmt = quoteVolume - previousVolumes[item.symbol]; 
+                        }
+                        
+                        // حفظ البيانات للمرة الجاية
+                        previousPrices[item.symbol] = price;
+                        previousVolumes[item.symbol] = quoteVolume;
+
                         let signalType = "none";
                         let signalBadge = "";
-                        let signalScore = 0; // عشان الترتيب
+                        let signalScore = 0; 
 
-                        // 1. اختراق قمة (جاهزة للانفجار حالا)
-                        if (pricePosition > 0.94 && changePct > 2 && changePct < 15 && price > avgPrice) {
+                        // استراتيجيات الرادار بالترتيب (الأقوى يظهر أولاً)
+                        
+                        if (localVelocity > 0.3) {
+                            // سرعة مرعبة (بمب شغال دلوقتي)
+                            signalType = "spike";
+                            signalBadge = `<span class="signal-badge signal-spike">⚡ سيولة لحظية (انفجار)</span>`;
+                            signalScore = 5;
+                        }
+                        else if (volSpikeAmt > 50000 && changePct > 0) {
+                            // حوت دخل ضخ 50 ألف دولار كاش في 10 ثواني
+                            signalType = "volume";
+                            signalBadge = `<span class="signal-badge signal-volume">🌊 ضخ سيولة حيتان</span>`;
+                            signalScore = 4;
+                        }
+                        else if (pricePosition > 0.95 && changePct > 2 && price > avgPrice) {
+                            // واقف على قمة وجاهز يكسر
                             signalType = "breakout";
-                            signalBadge = `<span class="signal-badge signal-breakout">🔥 اختراق قمة (دخول)</span>`;
+                            signalBadge = `<span class="signal-badge signal-breakout">🔥 اختراق قمة</span>`;
                             signalScore = 3;
                         }
-                        // 2. ارتداد حيتان (نزول قوي ثم شراء من القاع)
-                        else if (((price - low) / low) > 0.05 && changePct < 3 && changePct > -4 && price > avgPrice) {
+                        else if (((price - low) / low) > 0.05 && changePct < 5 && price > avgPrice) {
+                            // ارتداد قوي من القاع
                             signalType = "whale";
-                            signalBadge = `<span class="signal-badge signal-whale">🐋 ارتداد حوت (تجميع)</span>`;
+                            signalBadge = `<span class="signal-badge signal-whale">🐋 ارتداد من القاع</span>`;
                             signalScore = 2;
                         }
-                        // 3. ضغط سعري وتجميع (مملة قبل الكسر)
-                        else if (rangePercent > 1 && rangePercent < 5.5 && pricePosition > 0.85 && price >= avgPrice) {
+                        else if (rangePercent > 1 && rangePercent < 5 && pricePosition > 0.85) {
+                            // تجميع وحشر سعري
                             signalType = "squeeze";
-                            signalBadge = `<span class="signal-badge signal-squeeze">🧲 ضغط سعري (انفجار)</span>`;
+                            signalBadge = `<span class="signal-badge signal-squeeze">🧲 ضغط وتجميع</span>`;
                             signalScore = 1;
                         }
 
@@ -420,53 +463,64 @@
                             baseAsset: getBaseAsset(item.symbol),
                             price: price,
                             changePercent: changePct,
-                            high: high,
-                            low: low,
-                            volume: volume, 
+                            volume: quoteVolume, 
                             isBullish: changePct >= 0,
-                            avgPrice: avgPrice,
                             signalType: signalType,
                             signalBadge: signalBadge,
-                            signalScore: signalScore
+                            signalScore: signalScore,
+                            volSpikeAmt: volSpikeAmt
                         };
-                    });
+                    })
+                    .filter(item => item !== null); 
 
-                renderTable();
                 setStatus('connected');
                 const now = new Date();
                 lastUpdateTimeSpan.innerText = `تحديث: ${now.toLocaleTimeString('ar-EG')}`;
-                if (isFirstLoad) isFirstLoad = false;
+
             } catch (error) {
-                setStatus('error');
+                console.error("Fetch Error:", error);
+                // تبديل السيرفر في حالة الفشل (لتجنب الحظر)
+                currentEndpointIndex = (currentEndpointIndex + 1) % API_ENDPOINTS.length;
+                setStatus('error'); 
+                return; // إيقاف التنفيذ لو في خطأ في النت بجد
+            }
+
+            // فصلنا رسم الجدول عن الاتصال عشان لو في خطأ في الإشعارات ميفصلش الموقع
+            try {
+                renderTable(true); 
+                if (isFirstLoad) isFirstLoad = false;
+            } catch (renderError) {
+                console.error("Render Error:", renderError);
             }
         };
 
-        const renderTable = () => {
+        const renderTable = (isDataRefresh = false) => {
             const searchTerm = searchInput.value.toLowerCase().trim();
-            const minVol = parseFloat(minVolumeSelect.value);
+            const minVol = Number(minVolumeSelect.value); 
             const trendDirection = trendFilterSelect.value;
             const sortBy = sortSelect.value;
             const strategy = strategySelect.value; 
 
+            // فلترة القائمة بناءً على اختيارات المستخدم
             let filteredData = allCryptoData.filter(item => {
+                // الفلتر الرقمي للسيولة (الـ 2 مليون وغيرها هتشتغل بدقة هنا)
                 if (item.volume < minVol) return false;
+                
                 if (!item.baseAsset.toLowerCase().includes(searchTerm)) return false;
                 if (trendDirection === 'bullish' && !item.isBullish) return false;
                 if (trendDirection === 'bearish' && item.isBullish) return false;
 
-                if (strategy === 'golden_only') {
-                    return item.signalScore > 0; 
-                } else if (strategy !== 'none') {
-                    return item.signalType === strategy;
-                }
-
+                if (strategy === 'golden_only') return item.signalScore > 0; 
+                if (strategy !== 'none') return item.signalType === strategy;
+                
                 return true;
             });
 
+            // الترتيب
             filteredData.sort((a, b) => {
                 if (sortBy === 'signal') {
                     if (b.signalScore !== a.signalScore) return b.signalScore - a.signalScore;
-                    return b.changePercent - a.changePercent;
+                    return b.changePercent - a.changePercent; 
                 }
                 if (sortBy === 'changeDesc') return b.changePercent - a.changePercent;
                 if (sortBy === 'volDesc') return b.volume - a.volume;
@@ -475,21 +529,31 @@
 
             pairCountSpan.innerText = `${filteredData.length} فرصة`;
 
-            // التنبيه للعملات الجديدة اللي ظهرت فيها إشارة قوية
-            const currentGoldenSymbols = new Set(filteredData.filter(i => i.signalScore > 0).map(item => item.symbol));
-            
-            if (!isFirstLoad && (strategy === 'golden_only' || strategy !== 'none')) {
-                for (const symbol of currentGoldenSymbols) {
-                    if (!previousFilteredSymbols.has(symbol)) {
-                        const newCoin = filteredData.find(c => c.symbol === symbol);
-                        let alertMsg = newCoin.signalType === 'breakout' ? 'اختراق قمة!' : (newCoin.signalType === 'whale' ? 'حوت دخل' : 'ضغط سعري');
-                        playAlertSound(newCoin.baseAsset, alertMsg);
-                        break; 
+            // نظام التنبيه الذكي (بيشتغل بس لو البيانات اتحدثت، مش لو غيرنا الفلتر)
+            if (isDataRefresh && !isFirstLoad && (strategy === 'golden_only' || strategy !== 'none')) {
+                const currentVisibleGolden = filteredData.filter(i => i.signalScore >= 3).map(i => i.symbol);
+                for (const symbol of currentVisibleGolden) {
+                    if (!previousAlertedSymbols.has(symbol)) {
+                        playAlertSound();
+                        if (window.Notification && Notification.permission === "granted") {
+                            try {
+                                const coin = filteredData.find(c => c.symbol === symbol);
+                                new Notification(`🚀 فرصة قوية: ${coin.baseAsset}`, { body: `الرادار رصد حركة غير طبيعية للعملة الآن.` });
+                            } catch (e) {
+                                console.log("الإشعارات غير مدعومة");
+                            }
+                        }
+                        break; // رن مرة واحدة بس في كل تحديث
                     }
                 }
+                // حفظ الفرص اللي رنت عشان مترنش تاني
+                previousAlertedSymbols = new Set(currentVisibleGolden);
+            } else if (!isDataRefresh) {
+                // لو المستخدم هو اللي بيغير الفلتر بإيده، بنحدث الذاكرة عشان ميرنش غلط المرة الجاية
+                previousAlertedSymbols = new Set(filteredData.filter(i => i.signalScore >= 3).map(i => i.symbol));
             }
-            previousFilteredSymbols = currentGoldenSymbols;
 
+            // رسم الجدول
             if (filteredData.length === 0) {
                 tableBody.innerHTML = '';
                 emptyState.classList.remove('hidden');
@@ -501,29 +565,23 @@
             
             let html = '';
             displayData.forEach(item => {
-                const prevPrice = previousPrices[item.symbol];
-                let rowAnim = '';
-                if (!isFirstLoad && prevPrice) {
-                    if (item.price > prevPrice) rowAnim = 'update-green';
-                    else if (item.price < prevPrice) rowAnim = 'update-red';
-                }
-                previousPrices[item.symbol] = item.price;
-
                 const isBull = item.isBullish;
                 const colorClass = isBull ? 'text-brand-green' : 'text-brand-red';
                 
                 let rowClasses = 'hover:bg-gray-800 border-b border-gray-800/50';
-                if (item.signalScore > 0) {
-                    rowClasses = 'golden-opportunity border-b border-gray-800/50';
-                }
+                if (item.signalScore > 0) rowClasses = 'golden-opportunity border-b border-gray-800/50';
 
                 html += `
-                    <tr class="${rowClasses} transition-colors ${rowAnim}">
+                    <tr class="${rowClasses} transition-colors">
                         <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap">
                             <div class="font-bold text-white text-[12px] sm:text-sm dir-ltr self-start">${item.baseAsset}</div>
                         </td>
                         <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap">
-                            ${item.signalBadge || '<span class="text-xs text-gray-600">-</span>'}
+                            <div class="mb-1.5">${item.signalBadge || '<span class="text-xs text-gray-600">-</span>'}</div>
+                            <button onclick="openTechScan('${item.symbol}', ${item.price})" class="text-[10px] sm:text-xs bg-brand-blue bg-opacity-10 border border-brand-blue border-opacity-50 text-brand-blue hover:bg-brand-blue hover:text-white px-2 py-1 rounded inline-flex items-center gap-1 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                فحص المؤشرات 
+                            </button>
                         </td>
                         <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap text-left font-mono text-[11px] sm:text-sm text-gray-100 dir-ltr">
                             $${formatPrice(item.price)}
@@ -535,8 +593,8 @@
                             $${formatNumberShort(item.volume)}
                         </td>
                         <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap text-center">
-                            <a href="https://www.binance.com/ar/trade/${item.symbol}" target="_blank" class="inline-flex items-center justify-center px-3 py-1.5 bg-brand-blue hover:bg-blue-600 text-white font-bold text-[11px] sm:text-xs rounded shadow-lg transition-colors">
-                                تداول الآن
+                            <a href="https://www.binance.com/ar/trade/${item.symbol}" target="_blank" class="inline-flex items-center justify-center px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white font-bold text-[11px] sm:text-xs rounded border border-gray-700 transition-colors">
+                                تداول
                             </a>
                         </td>
                     </tr>
@@ -545,18 +603,154 @@
             tableBody.innerHTML = html;
         };
 
+        const calculateSMA = (data, period) => {
+            if (data.length < period) return null;
+            let sum = 0; for (let i = data.length - period; i < data.length; i++) sum += data[i];
+            return sum / period;
+        };
+
+        const calculateEMA = (data, period) => {
+            if (data.length < period) return null;
+            let k = 2 / (period + 1); let ema = data[0]; 
+            for (let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema;
+            return ema;
+        };
+
+        const calculateRSI = (data, period = 14) => {
+            if (data.length <= period) return null;
+            let gains = 0, losses = 0;
+            for (let i = 1; i <= period; i++) {
+                let diff = data[i] - data[i - 1];
+                if (diff >= 0) gains += diff; else losses -= diff;
+            }
+            let avgGain = gains / period; let avgLoss = losses / period;
+            for (let i = period + 1; i < data.length; i++) {
+                let diff = data[i] - data[i - 1];
+                let currentGain = diff >= 0 ? diff : 0;
+                let currentLoss = diff < 0 ? -diff : 0;
+                avgGain = ((avgGain * (period - 1)) + currentGain) / period;
+                avgLoss = ((avgLoss * (period - 1)) + currentLoss) / period;
+            }
+            if (avgLoss === 0) return 100;
+            return 100 - (100 / (1 + (avgGain / avgLoss)));
+        };
+
+        const calculateMomentum = (data, period = 10) => {
+            if (data.length <= period) return null;
+            const currentPrice = data[data.length - 1];
+            const oldPrice = data[data.length - 1 - period];
+            return ((currentPrice - oldPrice) / oldPrice) * 100;
+        };
+
+        const calculateBollingerBands = (data, period = 20) => {
+            if (data.length < period) return null;
+            const recent = data.slice(-period);
+            const sma = recent.reduce((a, b) => a + b, 0) / period;
+            const variance = recent.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period;
+            const stdDev = Math.sqrt(variance);
+            return { upper: sma + (2 * stdDev), lower: sma - (2 * stdDev) };
+        };
+
+        window.openTechScan = async (symbol, currentPrice) => {
+            document.getElementById('modal-coin-name').innerText = getBaseAsset(symbol);
+            document.getElementById('modal-trade-btn').href = `https://www.binance.com/ar/trade/${symbol}`;
+            
+            const resetHtml = '<div class="h-3 bg-gray-700 rounded w-1/2 animate-pulse mt-1"></div>';
+            ['modal-sma', 'modal-ema', 'modal-rsi', 'modal-momentum', 'modal-bb'].forEach(id => document.getElementById(id).innerHTML = resetHtml);
+            document.getElementById('modal-decision').className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-gray-800 border-gray-700 text-gray-300 animate-pulse';
+            document.getElementById('modal-decision').innerText = 'جاري استدعاء وتحليل الشارت من باينانس...';
+            
+            scanModal.classList.remove('hidden');
+            setTimeout(() => scanModalContent.classList.add('modal-enter-active'), 10);
+
+            try {
+                // سحب بيانات الشموع اليومية من باينانس للفحص
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=200`);
+                if (!res.ok) throw new Error('Network error');
+                const klines = await res.json();
+                
+                if (klines.length < 50) throw new Error('العملة جديدة، لا يوجد بيانات كافية للفحص.');
+
+                const closes = klines.map(k => parseFloat(k[4]));
+
+                const sma200 = calculateSMA(closes, 200);
+                const isAboveSMA = sma200 ? currentPrice > sma200 : null;
+                
+                const ema20 = calculateEMA(closes.slice(-50), 20); 
+                const isAboveEMA = ema20 ? currentPrice > ema20 : null;
+
+                const rsi = calculateRSI(closes.slice(-30), 14);
+                const momentum = calculateMomentum(closes.slice(-20), 10);
+                const bb = calculateBollingerBands(closes.slice(-30), 20);
+
+                // تحديث الشاشة بالنتائج
+                document.getElementById('modal-sma').innerHTML = isAboveSMA === null ? `<span class="text-gray-500">-</span>` : isAboveSMA ? `<span class="text-brand-green">🟢 إيجابي (صاعد)</span>` : `<span class="text-brand-red">🔴 سلبي (هابط)</span>`;
+                document.getElementById('modal-ema').innerHTML = isAboveEMA === null ? `<span class="text-gray-500">-</span>` : isAboveEMA ? `<span class="text-brand-green">🟢 ترند قوي</span>` : `<span class="text-brand-red">🔴 ترند ضعيف</span>`;
+                
+                const rsiEl = document.getElementById('modal-rsi');
+                if (!rsi) rsiEl.innerHTML = "-";
+                else if (rsi > 70) rsiEl.innerHTML = `<span class="text-brand-red">🔴 خطر تشبع (${rsi.toFixed(1)})</span>`;
+                else if (rsi < 40) rsiEl.innerHTML = `<span class="text-brand-blue">🔵 تجميع (${rsi.toFixed(1)})</span>`;
+                else rsiEl.innerHTML = `<span class="text-brand-green">🟢 صحي للطلوع (${rsi.toFixed(1)})</span>`;
+
+                const momEl = document.getElementById('modal-momentum');
+                if (momentum === null) momEl.innerHTML = "-";
+                else if (momentum > 10) momEl.innerHTML = `<span class="text-brand-green">🚀 زخم انفجاري (+${momentum.toFixed(1)}%)</span>`;
+                else if (momentum > 0) momEl.innerHTML = `<span class="text-brand-blue">📈 زخم إيجابي (+${momentum.toFixed(1)}%)</span>`;
+                else momEl.innerHTML = `<span class="text-brand-red">📉 زخم سلبي (${momentum.toFixed(1)}%)</span>`;
+
+                const bbEl = document.getElementById('modal-bb');
+                if (!bb) bbEl.innerHTML = "-";
+                else if (currentPrice > bb.upper) bbEl.innerHTML = `<span class="text-brand-green">🔥 اختراق علوي (ممتاز)</span>`;
+                else if (currentPrice < bb.lower) bbEl.innerHTML = `<span class="text-brand-red">📉 هبوط حاد</span>`;
+                else bbEl.innerHTML = `<span class="text-gray-400">⚖️ تذبذب داخلي</span>`;
+
+                // القرار النهائي
+                let score = 0; let maxScore = 0;
+                if(isAboveSMA !== null) { maxScore++; if(isAboveSMA) score++; }
+                if(isAboveEMA !== null) { maxScore++; if(isAboveEMA) score++; }
+                if(rsi !== null) { maxScore++; if(rsi >= 40 && rsi <= 70) score++; }
+                if(momentum !== null) { maxScore++; if(momentum > 0) score++; }
+
+                const decisionEl = document.getElementById('modal-decision');
+                const winRate = maxScore > 0 ? (score / maxScore) : 0;
+
+                if (winRate >= 0.8 && momentum > 5 && currentPrice >= (bb ? bb.upper * 0.98 : 0)) {
+                    decisionEl.className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-green bg-opacity-20 border-brand-green text-brand-green shadow-[0_0_15px_rgba(16,185,129,0.2)]';
+                    decisionEl.innerHTML = '🚀 توكل على الله! مؤشرات قوية وزخم عالي، الصفقة ممتازة للدخول الفوري.';
+                } else if (winRate >= 0.5) {
+                    decisionEl.className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-blue bg-opacity-20 border-brand-blue text-brand-blue';
+                    decisionEl.innerHTML = '👍 فرصة جيدة. الزخم إيجابي وتقدر تدخل بس خلي هدفك قريب (سكالبنج).';
+                } else if (rsi && rsi > 70) {
+                    decisionEl.className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-gold bg-opacity-20 border-brand-gold text-brand-gold';
+                    decisionEl.innerHTML = '⚠️ احذر! العملة صعدت كتير وفي منطقة تشبع، الدخول دلوقتي مخاطرة.';
+                } else {
+                    decisionEl.className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-red bg-opacity-20 border-brand-red text-brand-red';
+                    decisionEl.innerHTML = '🛑 لا تدخل! المؤشرات سلبية والترند العام لا يدعم الصعود.';
+                }
+
+            } catch (e) {
+                document.getElementById('modal-decision').className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-red bg-opacity-20 border-brand-red text-brand-red';
+                document.getElementById('modal-decision').innerHTML = `⚠️ تعذر الفحص: العملة جديدة جداً أو هناك مشكلة في الاتصال.`;
+            }
+        };
+
+        window.closeScanModal = () => {
+            scanModalContent.classList.remove('modal-enter-active');
+            setTimeout(() => scanModal.classList.add('hidden'), 300);
+        };
+
+        // ربط الفلاتر بتحديث الجدول (بنبعت false عشان منعملش تنبيه صوتي واحنا بنغير الفلتر بإيدنا)
         ['input', 'change'].forEach(evt => {
-            searchInput.addEventListener(evt, renderTable);
-            minVolumeSelect.addEventListener(evt, renderTable);
-            trendFilterSelect.addEventListener(evt, renderTable);
-            sortSelect.addEventListener(evt, renderTable);
-            strategySelect.addEventListener(evt, renderTable);
+            searchInput.addEventListener(evt, () => renderTable(false));
+            minVolumeSelect.addEventListener(evt, () => renderTable(false));
+            trendFilterSelect.addEventListener(evt, () => renderTable(false));
+            sortSelect.addEventListener(evt, () => renderTable(false));
+            strategySelect.addEventListener(evt, () => renderTable(false));
         });
 
-        refreshBtn.addEventListener('click', () => {
-            const svg = refreshBtn.querySelector('svg');
-            svg.classList.add('animate-spin');
-            fetchMarketData().then(() => setTimeout(() => svg.classList.remove('animate-spin'), 500));
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            fetchMarketData();
             clearInterval(updateInterval);
             updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
         });
@@ -564,10 +758,6 @@
         const initApp = () => {
             fetchMarketData();
             updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
-            
-            document.addEventListener("visibilitychange", () => {
-                if (!document.hidden) fetchMarketData(); 
-            });
         };
 
         document.addEventListener('DOMContentLoaded', initApp);
