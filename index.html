@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رادار الكريبتو للفرص الذهبية | VIP</title>
+    <title>رادار الفرص الذكي | VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,35 +12,17 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Cairo', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
                     colors: {
-                        gray: {
-                            850: '#1f2937',
-                            900: '#111827',
-                            950: '#030712',
-                        },
-                        brand: {
-                            green: '#10B981',
-                            red: '#EF4444',
-                            blue: '#3B82F6',
-                            gold: '#F59E0B',
-                            purple: '#8B5CF6',
-                            yellow: '#FACC15',
-                            cyan: '#06b6d4'
-                        }
+                        gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' },
+                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B', cyan: '#06b6d4', purple: '#8B5CF6' }
                     }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #030712; 
-            color: #f3f4f6; 
-        }
-        
+        body { background-color: #030712; color: #f3f4f6; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #111827; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
@@ -48,14 +30,8 @@
         @keyframes shine { to { background-position-x: -200%; } }
         .skeleton {
             background: linear-gradient(110deg, #1f2937 8%, #374151 18%, #1f2937 33%);
-            background-size: 200% 100%;
-            animation: 1.5s shine linear infinite;
+            background-size: 200% 100%; animation: 1.5s shine linear infinite;
         }
-
-        @keyframes flashGreen { 0% { background-color: rgba(16, 185, 129, 0.25); } 100% { background-color: transparent; } }
-        @keyframes flashRed { 0% { background-color: rgba(239, 68, 68, 0.25); } 100% { background-color: transparent; } }
-        .update-green { animation: flashGreen 1s ease-out; }
-        .update-red { animation: flashRed 1s ease-out; }
 
         @keyframes pulseGold {
             0% { box-shadow: inset 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8); }
@@ -64,14 +40,11 @@
         }
         .golden-opportunity {
             animation: pulseGold 2s infinite;
-            border-right: 4px solid #F59E0B !important;
-            border-left: 4px solid #F59E0B !important;
+            border-right: 4px solid #F59E0B !important; border-left: 4px solid #F59E0B !important;
             background-color: rgba(245, 158, 11, 0.08) !important;
         }
         
-        .signal-badge {
-            display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
-        }
+        .signal-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
         .signal-breakout { background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%); color: white; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3); }
         .signal-whale { background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); color: white; box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3); }
         .signal-squeeze { background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; box-shadow: 0 2px 5px rgba(139, 92, 246, 0.3); }
@@ -101,12 +74,10 @@
                         </span>
                         <span id="status-text">جاري الاتصال...</span>
                     </div>
-
                     <button id="sound-toggle-btn" class="p-1.5 sm:p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors relative group" title="تفعيل التنبيهات الصوتية">
                         <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                         <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     </button>
-
                     <button id="refresh-btn" class="p-1.5 sm:p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
@@ -117,18 +88,77 @@
 
     <main class="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-4 lg:px-8 py-3 sm:py-6 flex flex-col gap-3 sm:gap-6">
         
+        <!-- DASHBOARD SECTION -->
+        <section class="bg-gray-900 rounded-xl border border-gray-800 p-4 shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-brand-blue opacity-5 rounded-bl-full pointer-events-none"></div>
+            
+            <div class="flex justify-between items-center mb-4 relative z-10">
+                <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    MOMENTUM TRACKER (أداء الرادار)
+                </h2>
+                <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-2 py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
+                    <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    جاري ربط السحابة...
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center relative z-10">
+                <div class="bg-gray-850 p-3 rounded-lg border border-gray-700 shadow-inner">
+                    <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase">إجمالي الصفقات</div>
+                    <div class="text-lg sm:text-2xl font-bold text-white" id="dash-total">0</div>
+                </div>
+                <div class="bg-gray-850 p-3 rounded-lg border border-gray-700 shadow-inner">
+                    <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase">معدل النجاح (WIN RATE)</div>
+                    <div class="text-lg sm:text-2xl font-bold text-brand-blue" id="dash-winrate">0.0%</div>
+                </div>
+                <div class="bg-gray-850 p-3 rounded-lg border border-gray-700 shadow-inner">
+                    <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase">صفقات رابحة</div>
+                    <div class="text-lg sm:text-2xl font-bold text-brand-green" id="dash-won">0</div>
+                </div>
+                <div class="bg-gray-850 p-3 rounded-lg border border-gray-700 shadow-inner">
+                    <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase">صفقات خاسرة</div>
+                    <div class="text-lg sm:text-2xl font-bold text-brand-red" id="dash-lost">0</div>
+                </div>
+                <div class="bg-gray-850 p-3 rounded-lg border border-gray-700 shadow-inner md:col-span-4 col-span-2 relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-brand-gold/5 to-transparent pointer-events-none"></div>
+                    <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase relative z-10">صافي الربح التقديري</div>
+                    <div class="text-lg sm:text-2xl font-bold text-brand-gold relative z-10" id="dash-profit">0.00%</div>
+                </div>
+            </div>
+
+            <!-- Active Trades List -->
+            <div class="mt-4 pt-4 border-t border-gray-800" id="active-trades-container">
+                <div class="text-[10px] text-gray-400 mb-2 font-bold flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span> صفقات مفتوحة حالياً (قيد المراقبة):
+                </div>
+                <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2" id="active-trades-list">
+                    <div class="text-[11px] text-gray-600 font-mono">لا توجد صفقات مفتوحة...</div>
+                </div>
+            </div>
+
+            <!-- Closed Trades History -->
+            <div class="mt-4 pt-4 border-t border-gray-800" id="closed-trades-container">
+                <div class="text-[10px] text-gray-400 mb-2 font-bold flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    سجل الصفقات المغلقة:
+                </div>
+                <div class="max-h-32 overflow-y-auto custom-scrollbar pr-1 space-y-1.5" id="closed-trades-list">
+                    <!-- Dynamic History Items -->
+                </div>
+            </div>
+        </section>
+
+        <!-- FILTERS & SETTINGS -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-3 sm:p-5 shadow-lg">
             <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 justify-between">
-                
                 <div class="flex-1 space-y-3">
                     <h2 class="text-[11px] sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">فلترة الفرص الذكية</h2>
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-                        
                         <div class="space-y-1 sm:space-y-1.5 col-span-2 lg:col-span-1">
                             <label class="text-[10px] sm:text-xs text-gray-400">ابحث عن عملة</label>
                             <input type="text" id="search-input" placeholder="مثال: BTC, SOL..." class="block w-full px-3 py-1.5 sm:py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-brand-gold text-xs sm:text-sm dir-ltr text-left">
                         </div>
-
                         <div class="space-y-1 sm:space-y-1.5 col-span-2 lg:col-span-1">
                             <label class="text-[10px] sm:text-xs text-brand-gold font-bold flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -137,16 +167,10 @@
                             <select id="strategy-select" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-brand-gold border-opacity-60 focus:outline-none focus:border-brand-gold rounded-lg bg-gray-800 text-gray-200">
                                 <option value="golden_only" class="font-bold text-brand-gold bg-gray-900" selected>⭐ عرض الإشارات القوية فقط (دخول فوري)</option>
                                 <option value="none">عرض كل السوق</option>
-                                <option value="spike">⚡ سيولة لحظية عنيفة</option>
-                                <option value="volume">🌊 ضخ سيولة للحيتان</option>
-                                <option value="breakout">🔥 اختراق القمة</option>
-                                <option value="whale">🐋 ارتداد من القاع</option>
                             </select>
                         </div>
-
                         <div class="space-y-1 sm:space-y-1.5">
                             <label class="text-[10px] sm:text-xs text-gray-400">السيولة اليومية (أمان)</label>
-                            <!-- تم التأكد من صحة أرقام الفلتر ومطابقتها للمعادلات -->
                             <select id="min-volume" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
                                 <option value="0">بدون حد أدنى (مخاطرة)</option>
                                 <option value="2000000">أعلى من 2 مليون$</option>
@@ -155,7 +179,6 @@
                                 <option value="30000000">أعلى من 30 مليون$ (حيتان)</option>
                             </select>
                         </div>
-
                         <div class="space-y-1 sm:space-y-1.5">
                             <label class="text-[10px] sm:text-xs text-gray-400">الاتجاه العام</label>
                             <select id="trend-filter" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
@@ -166,9 +189,7 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="hidden lg:block w-px bg-gray-800"></div>
-
                 <div class="flex flex-col space-y-2 sm:space-y-3 lg:w-48">
                      <h2 class="text-[11px] sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">ترتيب حسب</h2>
                      <select id="sort-select" class="block w-full px-2 py-1.5 sm:py-2 text-[11px] sm:text-sm border-gray-700 focus:outline-none focus:border-brand-blue rounded-lg bg-gray-800 text-gray-300">
@@ -176,7 +197,6 @@
                         <option value="changeDesc">الأكثر صعوداً %</option>
                         <option value="volDesc">الأعلى سيولة</option>
                     </select>
-                    
                     <div class="flex justify-between items-center mt-auto pt-1">
                         <span class="text-[9px] sm:text-xs text-gray-500" id="last-update-time">في انتظار البيانات...</span>
                         <span class="text-[9px] sm:text-xs bg-brand-gold bg-opacity-20 text-brand-gold font-bold px-2 py-0.5 rounded border border-brand-gold border-opacity-30" id="pair-count">0 فرصة</span>
@@ -185,6 +205,7 @@
             </div>
         </section>
 
+        <!-- DATA TABLE -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 shadow-xl overflow-hidden flex-1 flex flex-col min-h-[400px]">
             <div class="overflow-x-auto custom-scrollbar flex-1 relative">
                 <table class="min-w-full divide-y divide-gray-800 text-right">
@@ -209,7 +230,6 @@
                         </tr>
                     </tbody>
                 </table>
-                
                 <div id="empty-state" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-20 p-4 text-center">
                     <svg class="h-12 w-12 text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -221,13 +241,14 @@
         </section>
     </main>
 
+    <!-- SCAN MODAL -->
     <div id="scan-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeScanModal()"></div>
         <div id="scan-modal-content" class="relative bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden modal-enter">
             <div class="flex justify-between items-center p-4 border-b border-gray-800 bg-gray-850">
                 <h3 class="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
                     <svg class="w-5 h-5 text-brand-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    نتيجة الفحص الفني <span id="modal-coin-name" class="text-brand-gold dir-ltr inline-block"></span>
+                    نتيجة الفحص الفني <span id="modal-coin-name" class="text-brand-gold dir-ltr inline-block font-black"></span>
                 </h3>
                 <button onclick="closeScanModal()" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg p-1 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -244,19 +265,18 @@
                         <div id="modal-ema" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
                     </div>
                     <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">مناطق التشبع (RSI 14)</span>
-                        <div id="modal-rsi" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
-                    </div>
-                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
                         <span class="text-[10px] text-gray-400 font-semibold block mb-1">مؤشر الزخم (Momentum)</span>
                         <div id="modal-momentum" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">مناطق التشبع (RSI 14)</span>
+                        <div id="modal-rsi" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
                     </div>
                     <div class="bg-gray-800 rounded-lg p-3 border border-gray-700 col-span-2">
                         <span class="text-[10px] text-gray-400 font-semibold block mb-1">البولينجر باندز (الضغط والانفجار)</span>
                         <div id="modal-bb" class="font-bold text-[11px] sm:text-sm">جاري الحساب...</div>
                     </div>
                 </div>
-                
                 <div id="modal-decision" class="mt-4 p-3 rounded-lg border text-center font-bold text-xs sm:text-sm bg-gray-800 border-gray-700 text-gray-300">
                     جاري استخراج قرار الرادار...
                 </div>
@@ -269,18 +289,40 @@
         </div>
     </div>
 
-    <script>
+    <!-- FIREBASE AND APP LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // 🚀 كود الربط الخاص بمشروعك (SmartScanner) 🚀
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAH2hiXyrnTDSa9vQJid8aFsryJk2jcHg",
+            authDomain: "smartscanner-a5e0d.firebaseapp.com",
+            projectId: "smartscanner-a5e0d",
+            storageBucket: "smartscanner-a5e0d.firebasestorage.app",
+            messagingSenderId: "976223541282",
+            appId: "1:976223541282:web:a5dcfaeaa99ac58f3127b"
+        };
+        // ==========================================
+
+        let app, auth, db, userId, tradesRef;
+        let isFirebaseConnected = false;
+
         let allCryptoData = [];       
         let previousPrices = {};      
-        let previousVolumes = {};     // لحساب الضخ المفاجئ للسيولة
-        let previousAlertedSymbols = new Set(); // عشان نمنع جرس التنبيه العشوائي عند تغيير الفلتر
-        
+        let previousVolumes = {};     
+        let virtualTrades = []; 
         let isFirstLoad = true;
         let updateInterval;
         let soundEnabled = false;
         let synth = null;
         
-        // سيرفرات باينانس البديلة عشان نتجنب الـ "خطأ اتصال"
+        const TARGET_PROFIT_PCT = 0.03; 
+        const STOP_LOSS_PCT = 0.02;     
+        
         const API_ENDPOINTS = [
             'https://api.binance.com/api/v3/ticker/24hr',
             'https://api1.binance.com/api/v3/ticker/24hr',
@@ -288,11 +330,9 @@
             'https://api3.binance.com/api/v3/ticker/24hr'
         ];
         let currentEndpointIndex = 0;
-        
         const TARGET_QUOTE_ASSET = 'USDT'; 
-        const REFRESH_RATE_MS = 10000; // تحديث كل 10 ثواني (آمن جداً)
+        const REFRESH_RATE_MS = 10000; 
 
-        // تعريف عناصر واجهة المستخدم
         const tableBody = document.getElementById('crypto-table-body');
         const emptyState = document.getElementById('empty-state');
         const searchInput = document.getElementById('search-input');
@@ -305,31 +345,30 @@
         const statusDot = document.getElementById('status-dot');
         const statusPing = document.getElementById('status-ping');
         const statusText = document.getElementById('status-text');
-
-        const scanModal = document.getElementById('scan-modal');
-        const scanModalContent = document.getElementById('scan-modal-content');
-
-        // أدوات تنسيق الأرقام
-        const formatPrice = (priceStr) => {
-            const price = parseFloat(priceStr);
+        const dbStatusBadge = document.getElementById('db-status-badge');
+        
+        const formatPrice = (price) => {
             if (isNaN(price)) return '0.00';
             if (price < 0.0001) return price.toPrecision(4);
             if (price < 1) return price.toFixed(4);
             if (price < 10) return price.toFixed(3);
             return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
-
-        const formatNumberShort = (numStr) => {
-            const num = parseFloat(numStr);
+        const formatNumberShort = (num) => {
             if (isNaN(num)) return '0';
             if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
             if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
             return num.toLocaleString('en-US', {maximumFractionDigits: 0});
         };
-
+        const formatDuration = (ms) => {
+            if (!ms || ms < 0) return '0ث';
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            if (minutes > 0) return `${minutes}د ${seconds}ث`;
+            return `${seconds}ث`;
+        };
         const getBaseAsset = (symbol) => symbol.replace(TARGET_QUOTE_ASSET, '');
 
-        // التنبيهات الصوتية
         const playAlertSound = () => {
             if (!soundEnabled) return;
             try {
@@ -354,9 +393,6 @@
                 document.getElementById('sound-icon-off').classList.add('hidden');
                 document.getElementById('sound-icon-on').classList.remove('hidden');
                 btn.classList.add('bg-brand-gold', 'bg-opacity-20');
-                if ("Notification" in window && Notification.permission !== "granted") {
-                    Notification.requestPermission();
-                }
                 playAlertSound(); 
             } else {
                 document.getElementById('sound-icon-off').classList.remove('hidden');
@@ -381,81 +417,226 @@
             }
         };
 
+        const setDbStatus = (status) => {
+            if (status === 'connected') {
+                dbStatusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-brand-green rounded-full"></span> سجل سحابي متصل`;
+                dbStatusBadge.className = 'text-[10px] bg-brand-green bg-opacity-20 border border-brand-green border-opacity-30 text-brand-green px-2 py-1 rounded-full font-bold shadow-sm flex items-center gap-1.5';
+            } else if (status === 'error' || status === 'unconfigured') {
+                dbStatusBadge.innerHTML = `محفظة مؤقتة (الجلسة الحالية)`;
+                dbStatusBadge.className = 'text-[10px] bg-gray-600 bg-opacity-20 border border-gray-600 border-opacity-30 text-gray-400 px-2 py-1 rounded-full font-bold shadow-sm';
+            }
+        }
+
+        const updateDashboardUI = () => {
+            let won = 0, lost = 0, open = 0, totalPnl = 0;
+            const activeList = document.getElementById('active-trades-list');
+            const closedList = document.getElementById('closed-trades-list');
+            
+            let activeHtml = '';
+            let closedHtml = '';
+
+            const sortedTrades = [...virtualTrades].sort((a, b) => {
+                const timeA = a.closeTime || a.openTime;
+                const timeB = b.closeTime || b.openTime;
+                return timeB - timeA;
+            });
+
+            sortedTrades.forEach(trade => {
+                if (trade.status === 'won') { 
+                    won++; totalPnl += trade.pnl; 
+                    closedHtml += renderClosedTradeHtml(trade, 'won');
+                }
+                else if (trade.status === 'lost') { 
+                    lost++; totalPnl += trade.pnl; 
+                    closedHtml += renderClosedTradeHtml(trade, 'lost');
+                }
+                else if (trade.status === 'open') { 
+                    open++; 
+                    const currentPnl = ((trade.currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
+                    const pnlClass = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
+                    activeHtml += `
+                        <div class="flex-shrink-0 bg-gray-800 border ${pnlClass} border-opacity-30 rounded-md px-2 py-1 text-[10px] font-bold">
+                            ${trade.baseAsset} <span class="ml-1 dir-ltr inline-block">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                        </div>
+                    `;
+                }
+            });
+
+            if (open === 0) activeHtml = `<div class="text-[11px] text-gray-600 font-mono">لا توجد صفقات مفتوحة...</div>`;
+            if (closedHtml === '') closedHtml = `<div class="text-[11px] text-gray-600 font-mono text-center py-2">لم يتم إغلاق أي صفقة بعد</div>`;
+            
+            activeList.innerHTML = activeHtml;
+            closedList.innerHTML = closedHtml;
+
+            const closedTradesCount = won + lost;
+            const winRate = closedTradesCount > 0 ? (won / closedTradesCount) * 100 : 0;
+
+            document.getElementById('dash-total').innerText = virtualTrades.length;
+            document.getElementById('dash-won').innerText = won;
+            document.getElementById('dash-lost').innerText = lost;
+            document.getElementById('dash-winrate').innerText = winRate.toFixed(1) + '%';
+            
+            const profitEl = document.getElementById('dash-profit');
+            profitEl.innerText = (totalPnl > 0 ? '+' : '') + totalPnl.toFixed(2) + '%';
+            profitEl.className = `text-lg sm:text-2xl font-bold relative z-10 ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
+        };
+
+        const renderClosedTradeHtml = (trade, type) => {
+            const isWon = type === 'won';
+            const bgColor = isWon ? 'bg-brand-green/10' : 'bg-brand-red/10';
+            const borderColor = isWon ? 'border-brand-green/30' : 'border-brand-red/30';
+            const textColor = isWon ? 'text-brand-green' : 'text-brand-red';
+            const icon = isWon ? '✅' : '❌';
+            const duration = formatDuration(trade.closeTime - trade.openTime);
+
+            return `
+                <div class="flex items-center justify-between p-2 rounded border ${bgColor} ${borderColor}">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px]">${icon}</span>
+                        <span class="font-bold text-white text-xs dir-ltr">${trade.baseAsset}</span>
+                        <span class="text-[9px] text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded ml-1">⏱ ${duration}</span>
+                    </div>
+                    <div class="font-bold text-xs dir-ltr ${textColor}">
+                        ${isWon ? '+' : ''}${trade.pnl.toFixed(2)}%
+                    </div>
+                </div>
+            `;
+        };
+
+        const attemptTradeEntry = async (coin) => {
+            if (coin.signalScore >= 4) {
+                const isAlreadyOpen = virtualTrades.find(t => t.symbol === coin.symbol && t.status === 'open');
+                if (!isAlreadyOpen) {
+                    const newTrade = {
+                        symbol: coin.symbol,
+                        baseAsset: coin.baseAsset,
+                        entryPrice: coin.price,
+                        currentPrice: coin.price, 
+                        targetPrice: coin.price * (1 + TARGET_PROFIT_PCT),
+                        stopLoss: coin.price * (1 - STOP_LOSS_PCT),
+                        status: 'open',
+                        pnl: 0,
+                        openTime: Date.now(),
+                        closeTime: null
+                    };
+
+                    if (isFirebaseConnected && tradesRef) {
+                        try {
+                            const newDocRef = doc(tradesRef);
+                            newTrade.docId = newDocRef.id;
+                            await setDoc(newDocRef, newTrade);
+                        } catch(e) { console.error("Error saving to Firebase", e); }
+                    } else {
+                        newTrade.docId = 'local_' + Date.now();
+                        virtualTrades.push(newTrade);
+                        updateDashboardUI();
+                    }
+                    playAlertSound();
+                }
+            }
+        };
+
+        const manageVirtualTrades = async (currentMarketData) => {
+            for (let trade of virtualTrades) {
+                if (trade.status === 'open') {
+                    const coin = currentMarketData.find(c => c.symbol === trade.symbol);
+                    if (coin) {
+                        trade.currentPrice = coin.price; 
+                        
+                        let shouldClose = false;
+                        let finalStatus = '';
+                        let finalPnl = 0;
+
+                        if (coin.price >= trade.targetPrice) {
+                            shouldClose = true;
+                            finalStatus = 'won';
+                            finalPnl = TARGET_PROFIT_PCT * 100;
+                            playAlertSound(); 
+                        } else if (coin.price <= trade.stopLoss) {
+                            shouldClose = true;
+                            finalStatus = 'lost';
+                            finalPnl = -STOP_LOSS_PCT * 100;
+                        }
+
+                        if (shouldClose) {
+                            if (isFirebaseConnected && tradesRef && !trade.docId.startsWith('local_')) {
+                                try {
+                                    const tradeDocRef = doc(tradesRef, trade.docId);
+                                    await updateDoc(tradeDocRef, {
+                                        status: finalStatus,
+                                        pnl: finalPnl,
+                                        closeTime: Date.now(),
+                                        currentPrice: coin.price
+                                    });
+                                } catch(e) { console.error("Error updating Firebase", e); }
+                            } else {
+                                trade.status = finalStatus;
+                                trade.pnl = finalPnl;
+                                trade.closeTime = Date.now();
+                            }
+                        }
+                    }
+                }
+            }
+            updateDashboardUI();
+        };
+
         const fetchMarketData = async () => {
             if(!isFirstLoad) setStatus('fetching');
             try {
-                // جلب البيانات من السيرفر الحالي
                 const response = await fetch(API_ENDPOINTS[currentEndpointIndex]);
-                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                if (!response.ok) throw new Error(`HTTP error`);
                 const data = await response.json();
                 
                 allCryptoData = data
                     .filter(item => item.symbol.endsWith(TARGET_QUOTE_ASSET))
                     .map(item => {
-                        const quoteVolume = Number(item.quoteVolume);
+                        const quoteVolume = parseFloat(item.quoteVolume);
                         if (isNaN(quoteVolume) || quoteVolume <= 0) return null;
 
-                        const changePct = Number(item.priceChangePercent);
-                        const price = Number(item.lastPrice);
-                        const high = Number(item.highPrice);
-                        const low = Number(item.lowPrice);
-                        const avgPrice = Number(item.weightedAvgPrice);
+                        const changePct = parseFloat(item.priceChangePercent);
+                        const price = parseFloat(item.lastPrice);
+                        const high = parseFloat(item.highPrice);
+                        const low = parseFloat(item.lowPrice);
+                        const avgPrice = parseFloat(item.weightedAvgPrice);
                         
                         const dailyRange = high - low;
                         const pricePosition = dailyRange > 0 ? (price - low) / dailyRange : 0;
-                        const rangePercent = dailyRange > 0 ? (dailyRange / low) * 100 : 0;
                         
-                        // 1. حساب السيولة اللحظية (السرعة)
                         let localVelocity = 0;
                         if (previousPrices[item.symbol]) {
                             localVelocity = ((price - previousPrices[item.symbol]) / previousPrices[item.symbol]) * 100;
                         }
                         
-                        // 2. حساب الضخ الفجائي للأموال (Volume Spike)
                         let volSpikeAmt = 0;
                         if (previousVolumes[item.symbol]) {
                             volSpikeAmt = quoteVolume - previousVolumes[item.symbol]; 
                         }
                         
-                        // حفظ البيانات للمرة الجاية
                         previousPrices[item.symbol] = price;
                         previousVolumes[item.symbol] = quoteVolume;
 
-                        let signalType = "none";
-                        let signalBadge = "";
-                        let signalScore = 0; 
+                        let signalType = "none", signalBadge = "", signalScore = 0; 
 
-                        // استراتيجيات الرادار بالترتيب (الأقوى يظهر أولاً)
-                        
                         if (localVelocity > 0.3) {
-                            // سرعة مرعبة (بمب شغال دلوقتي)
                             signalType = "spike";
                             signalBadge = `<span class="signal-badge signal-spike">⚡ سيولة لحظية (انفجار)</span>`;
                             signalScore = 5;
                         }
                         else if (volSpikeAmt > 50000 && changePct > 0) {
-                            // حوت دخل ضخ 50 ألف دولار كاش في 10 ثواني
                             signalType = "volume";
                             signalBadge = `<span class="signal-badge signal-volume">🌊 ضخ سيولة حيتان</span>`;
                             signalScore = 4;
                         }
                         else if (pricePosition > 0.95 && changePct > 2 && price > avgPrice) {
-                            // واقف على قمة وجاهز يكسر
                             signalType = "breakout";
                             signalBadge = `<span class="signal-badge signal-breakout">🔥 اختراق قمة</span>`;
                             signalScore = 3;
                         }
                         else if (((price - low) / low) > 0.05 && changePct < 5 && price > avgPrice) {
-                            // ارتداد قوي من القاع
                             signalType = "whale";
                             signalBadge = `<span class="signal-badge signal-whale">🐋 ارتداد من القاع</span>`;
                             signalScore = 2;
-                        }
-                        else if (rangePercent > 1 && rangePercent < 5 && pricePosition > 0.85) {
-                            // تجميع وحشر سعري
-                            signalType = "squeeze";
-                            signalBadge = `<span class="signal-badge signal-squeeze">🧲 ضغط وتجميع</span>`;
-                            signalScore = 1;
                         }
 
                         return {
@@ -467,56 +648,45 @@
                             isBullish: changePct >= 0,
                             signalType: signalType,
                             signalBadge: signalBadge,
-                            signalScore: signalScore,
-                            volSpikeAmt: volSpikeAmt
+                            signalScore: signalScore
                         };
                     })
                     .filter(item => item !== null); 
 
+                manageVirtualTrades(allCryptoData);
+                allCryptoData.forEach(coin => attemptTradeEntry(coin));
+
                 setStatus('connected');
-                const now = new Date();
-                lastUpdateTimeSpan.innerText = `تحديث: ${now.toLocaleTimeString('ar-EG')}`;
+                lastUpdateTimeSpan.innerText = `تحديث: ${new Date().toLocaleTimeString('ar-EG')}`;
 
             } catch (error) {
-                console.error("Fetch Error:", error);
-                // تبديل السيرفر في حالة الفشل (لتجنب الحظر)
                 currentEndpointIndex = (currentEndpointIndex + 1) % API_ENDPOINTS.length;
                 setStatus('error'); 
-                return; // إيقاف التنفيذ لو في خطأ في النت بجد
+                return; 
             }
 
-            // فصلنا رسم الجدول عن الاتصال عشان لو في خطأ في الإشعارات ميفصلش الموقع
             try {
-                renderTable(true); 
+                renderTable(); 
                 if (isFirstLoad) isFirstLoad = false;
-            } catch (renderError) {
-                console.error("Render Error:", renderError);
-            }
+            } catch (renderError) { console.error("Render Error"); }
         };
 
-        const renderTable = (isDataRefresh = false) => {
+        const renderTable = () => {
             const searchTerm = searchInput.value.toLowerCase().trim();
-            const minVol = Number(minVolumeSelect.value); 
+            const minVol = parseFloat(minVolumeSelect.value); 
             const trendDirection = trendFilterSelect.value;
             const sortBy = sortSelect.value;
             const strategy = strategySelect.value; 
 
-            // فلترة القائمة بناءً على اختيارات المستخدم
             let filteredData = allCryptoData.filter(item => {
-                // الفلتر الرقمي للسيولة (الـ 2 مليون وغيرها هتشتغل بدقة هنا)
                 if (item.volume < minVol) return false;
-                
                 if (!item.baseAsset.toLowerCase().includes(searchTerm)) return false;
                 if (trendDirection === 'bullish' && !item.isBullish) return false;
                 if (trendDirection === 'bearish' && item.isBullish) return false;
-
                 if (strategy === 'golden_only') return item.signalScore > 0; 
-                if (strategy !== 'none') return item.signalType === strategy;
-                
                 return true;
             });
 
-            // الترتيب
             filteredData.sort((a, b) => {
                 if (sortBy === 'signal') {
                     if (b.signalScore !== a.signalScore) return b.signalScore - a.signalScore;
@@ -529,31 +699,6 @@
 
             pairCountSpan.innerText = `${filteredData.length} فرصة`;
 
-            // نظام التنبيه الذكي (بيشتغل بس لو البيانات اتحدثت، مش لو غيرنا الفلتر)
-            if (isDataRefresh && !isFirstLoad && (strategy === 'golden_only' || strategy !== 'none')) {
-                const currentVisibleGolden = filteredData.filter(i => i.signalScore >= 3).map(i => i.symbol);
-                for (const symbol of currentVisibleGolden) {
-                    if (!previousAlertedSymbols.has(symbol)) {
-                        playAlertSound();
-                        if (window.Notification && Notification.permission === "granted") {
-                            try {
-                                const coin = filteredData.find(c => c.symbol === symbol);
-                                new Notification(`🚀 فرصة قوية: ${coin.baseAsset}`, { body: `الرادار رصد حركة غير طبيعية للعملة الآن.` });
-                            } catch (e) {
-                                console.log("الإشعارات غير مدعومة");
-                            }
-                        }
-                        break; // رن مرة واحدة بس في كل تحديث
-                    }
-                }
-                // حفظ الفرص اللي رنت عشان مترنش تاني
-                previousAlertedSymbols = new Set(currentVisibleGolden);
-            } else if (!isDataRefresh) {
-                // لو المستخدم هو اللي بيغير الفلتر بإيده، بنحدث الذاكرة عشان ميرنش غلط المرة الجاية
-                previousAlertedSymbols = new Set(filteredData.filter(i => i.signalScore >= 3).map(i => i.symbol));
-            }
-
-            // رسم الجدول
             if (filteredData.length === 0) {
                 tableBody.innerHTML = '';
                 emptyState.classList.remove('hidden');
@@ -567,9 +712,7 @@
             displayData.forEach(item => {
                 const isBull = item.isBullish;
                 const colorClass = isBull ? 'text-brand-green' : 'text-brand-red';
-                
-                let rowClasses = 'hover:bg-gray-800 border-b border-gray-800/50';
-                if (item.signalScore > 0) rowClasses = 'golden-opportunity border-b border-gray-800/50';
+                let rowClasses = item.signalScore > 0 ? 'golden-opportunity border-b border-gray-800/50' : 'hover:bg-gray-800 border-b border-gray-800/50';
 
                 html += `
                     <tr class="${rowClasses} transition-colors">
@@ -578,7 +721,7 @@
                         </td>
                         <td class="px-2 sm:px-4 lg:px-6 py-3 whitespace-nowrap">
                             <div class="mb-1.5">${item.signalBadge || '<span class="text-xs text-gray-600">-</span>'}</div>
-                            <button onclick="openTechScan('${item.symbol}', ${item.price})" class="text-[10px] sm:text-xs bg-brand-blue bg-opacity-10 border border-brand-blue border-opacity-50 text-brand-blue hover:bg-brand-blue hover:text-white px-2 py-1 rounded inline-flex items-center gap-1 transition-colors">
+                            <button onclick="window.openTechScan('${item.symbol}', ${item.price})" class="text-[10px] sm:text-xs bg-brand-blue bg-opacity-10 border border-brand-blue border-opacity-50 text-brand-blue hover:bg-brand-blue hover:text-white px-2 py-1 rounded inline-flex items-center gap-1 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 فحص المؤشرات 
                             </button>
@@ -652,40 +795,38 @@
         };
 
         window.openTechScan = async (symbol, currentPrice) => {
+            const scanModal = document.getElementById('scan-modal');
+            const scanModalContent = document.getElementById('scan-modal-content');
+            
             document.getElementById('modal-coin-name').innerText = getBaseAsset(symbol);
             document.getElementById('modal-trade-btn').href = `https://www.binance.com/ar/trade/${symbol}`;
             
             const resetHtml = '<div class="h-3 bg-gray-700 rounded w-1/2 animate-pulse mt-1"></div>';
             ['modal-sma', 'modal-ema', 'modal-rsi', 'modal-momentum', 'modal-bb'].forEach(id => document.getElementById(id).innerHTML = resetHtml);
             document.getElementById('modal-decision').className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-gray-800 border-gray-700 text-gray-300 animate-pulse';
-            document.getElementById('modal-decision').innerText = 'جاري استدعاء وتحليل الشارت من باينانس...';
+            document.getElementById('modal-decision').innerText = 'جاري استدعاء وتحليل الشارت...';
             
             scanModal.classList.remove('hidden');
             setTimeout(() => scanModalContent.classList.add('modal-enter-active'), 10);
 
             try {
-                // سحب بيانات الشموع اليومية من باينانس للفحص
                 const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=200`);
                 if (!res.ok) throw new Error('Network error');
                 const klines = await res.json();
-                
                 if (klines.length < 50) throw new Error('العملة جديدة، لا يوجد بيانات كافية للفحص.');
 
                 const closes = klines.map(k => parseFloat(k[4]));
 
                 const sma200 = calculateSMA(closes, 200);
                 const isAboveSMA = sma200 ? currentPrice > sma200 : null;
-                
                 const ema20 = calculateEMA(closes.slice(-50), 20); 
                 const isAboveEMA = ema20 ? currentPrice > ema20 : null;
-
                 const rsi = calculateRSI(closes.slice(-30), 14);
                 const momentum = calculateMomentum(closes.slice(-20), 10);
                 const bb = calculateBollingerBands(closes.slice(-30), 20);
 
-                // تحديث الشاشة بالنتائج
-                document.getElementById('modal-sma').innerHTML = isAboveSMA === null ? `<span class="text-gray-500">-</span>` : isAboveSMA ? `<span class="text-brand-green">🟢 إيجابي (صاعد)</span>` : `<span class="text-brand-red">🔴 سلبي (هابط)</span>`;
-                document.getElementById('modal-ema').innerHTML = isAboveEMA === null ? `<span class="text-gray-500">-</span>` : isAboveEMA ? `<span class="text-brand-green">🟢 ترند قوي</span>` : `<span class="text-brand-red">🔴 ترند ضعيف</span>`;
+                document.getElementById('modal-sma').innerHTML = isAboveSMA === null ? `-` : isAboveSMA ? `<span class="text-brand-green">🟢 إيجابي (صاعد)</span>` : `<span class="text-brand-red">🔴 سلبي (هابط)</span>`;
+                document.getElementById('modal-ema').innerHTML = isAboveEMA === null ? `-` : isAboveEMA ? `<span class="text-brand-green">🟢 ترند قوي</span>` : `<span class="text-brand-red">🔴 ترند ضعيف</span>`;
                 
                 const rsiEl = document.getElementById('modal-rsi');
                 if (!rsi) rsiEl.innerHTML = "-";
@@ -705,7 +846,6 @@
                 else if (currentPrice < bb.lower) bbEl.innerHTML = `<span class="text-brand-red">📉 هبوط حاد</span>`;
                 else bbEl.innerHTML = `<span class="text-gray-400">⚖️ تذبذب داخلي</span>`;
 
-                // القرار النهائي
                 let score = 0; let maxScore = 0;
                 if(isAboveSMA !== null) { maxScore++; if(isAboveSMA) score++; }
                 if(isAboveEMA !== null) { maxScore++; if(isAboveEMA) score++; }
@@ -723,30 +863,30 @@
                     decisionEl.innerHTML = '👍 فرصة جيدة. الزخم إيجابي وتقدر تدخل بس خلي هدفك قريب (سكالبنج).';
                 } else if (rsi && rsi > 70) {
                     decisionEl.className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-gold bg-opacity-20 border-brand-gold text-brand-gold';
-                    decisionEl.innerHTML = '⚠️ احذر! العملة صعدت كتير وفي منطقة تشبع، الدخول دلوقتي مخاطرة.';
+                    decisionEl.innerHTML = '⚠️ احذر! العملة في منطقة تشبع، الدخول دلوقتي مخاطرة.';
                 } else {
                     decisionEl.className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-red bg-opacity-20 border-brand-red text-brand-red';
                     decisionEl.innerHTML = '🛑 لا تدخل! المؤشرات سلبية والترند العام لا يدعم الصعود.';
                 }
-
             } catch (e) {
                 document.getElementById('modal-decision').className = 'mt-4 p-3 rounded-lg border text-center font-bold text-sm bg-brand-red bg-opacity-20 border-brand-red text-brand-red';
-                document.getElementById('modal-decision').innerHTML = `⚠️ تعذر الفحص: العملة جديدة جداً أو هناك مشكلة في الاتصال.`;
+                document.getElementById('modal-decision').innerHTML = `⚠️ تعذر الفحص: العملة جديدة جداً.`;
             }
         };
 
         window.closeScanModal = () => {
+            const scanModal = document.getElementById('scan-modal');
+            const scanModalContent = document.getElementById('scan-modal-content');
             scanModalContent.classList.remove('modal-enter-active');
             setTimeout(() => scanModal.classList.add('hidden'), 300);
         };
 
-        // ربط الفلاتر بتحديث الجدول (بنبعت false عشان منعملش تنبيه صوتي واحنا بنغير الفلتر بإيدنا)
         ['input', 'change'].forEach(evt => {
-            searchInput.addEventListener(evt, () => renderTable(false));
-            minVolumeSelect.addEventListener(evt, () => renderTable(false));
-            trendFilterSelect.addEventListener(evt, () => renderTable(false));
-            sortSelect.addEventListener(evt, () => renderTable(false));
-            strategySelect.addEventListener(evt, () => renderTable(false));
+            searchInput.addEventListener(evt, renderTable);
+            minVolumeSelect.addEventListener(evt, renderTable);
+            trendFilterSelect.addEventListener(evt, renderTable);
+            sortSelect.addEventListener(evt, renderTable);
+            strategySelect.addEventListener(evt, renderTable);
         });
 
         document.getElementById('refresh-btn').addEventListener('click', () => {
@@ -755,14 +895,49 @@
             updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
         });
 
-        const initApp = () => {
-            fetchMarketData();
-            updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
+        const initFirebase = async () => {
+            if (firebaseConfig && firebaseConfig.apiKey) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    await signInAnonymously(auth);
+                    
+                    userId = auth.currentUser?.uid;
+                    if (userId) {
+                        tradesRef = collection(db, 'users', userId, 'trades');
+                        isFirebaseConnected = true;
+                        setDbStatus('connected');
+                        
+                        onSnapshot(tradesRef, (snapshot) => {
+                            const loadedTrades = [];
+                            snapshot.forEach(docSnap => {
+                                loadedTrades.push({ docId: docSnap.id, ...docSnap.data() });
+                            });
+                            virtualTrades = loadedTrades;
+                            updateDashboardUI();
+                        }, (error) => {
+                            console.error("Firestore Error:", error);
+                            setDbStatus('error');
+                            isFirebaseConnected = false;
+                        });
+                    }
+                } catch (error) {
+                    console.error("Firebase init failed:", error);
+                    setDbStatus('error');
+                    isFirebaseConnected = false;
+                }
+            } else {
+                setDbStatus('unconfigured');
+            }
         };
 
-        document.addEventListener('DOMContentLoaded', initApp);
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initFirebase();
+            fetchMarketData();
+            updateInterval = setInterval(fetchMarketData, REFRESH_RATE_MS);
+        });
     </script>
 </body>
 </html>
-
-```
