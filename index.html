@@ -1,4 +1,4 @@
-`
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -424,7 +424,7 @@
                 dbStatusBadge.innerHTML = `محفظة مؤقتة (الجلسة الحالية)`;
                 dbStatusBadge.className = 'text-[10px] bg-gray-600 bg-opacity-20 border border-gray-600 border-opacity-30 text-gray-400 px-2 py-1 rounded-full font-bold shadow-sm';
             }
-        }
+        };
 
         const updateDashboardUI = () => {
             let won = 0, lost = 0, open = 0, totalPnl = 0;
@@ -907,7 +907,7 @@
                     if (userId) {
                         tradesRef = collection(db, 'users', userId, 'trades');
                         isFirebaseConnected = true;
-                        setDbStatus('connected');
+                        setDbStatus('connected'); // تم ربط الحالة بالواجهة فوراً
                         
                         onSnapshot(tradesRef, (snapshot) => {
                             const loadedTrades = [];
@@ -942,4 +942,3 @@
 </html>
 
 ```
-
