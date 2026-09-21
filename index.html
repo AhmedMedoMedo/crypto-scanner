@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -34,6 +33,7 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
+    <!-- Header -->
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -55,36 +55,37 @@
 
     <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
         
+        <!-- Settings Section -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-4 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-2 border-b border-gray-800">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                <h2 class="text-sm font-bold text-white">إعدادات الرادار (Filters & Targets)</h2>
+                <h2 class="text-sm font-bold text-white">إعدادات الرادار (يتم حفظها تلقائياً)</h2>
             </div>
             
             <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div class="input-group">
                     <label>الإطار الزمني (Timeframe)</label>
                     <select id="setting-tf">
-                        <option value="15m" selected>15 دقيقة</option>
+                        <option value="15m">15 دقيقة</option>
                         <option value="1h">1 ساعة</option>
                         <option value="4h">4 ساعات</option>
                     </select>
                 </div>
                 <div class="input-group">
                     <label>وقف الخسارة الأولي (%)</label>
-                    <input type="number" id="setting-sl" value="2.0" step="0.1">
+                    <input type="number" id="setting-sl" step="0.1">
                 </div>
                 <div class="input-group">
                     <label>هدف تفعيل الملاحقة (%)</label>
-                    <input type="number" id="setting-tp" value="2.0" step="0.1">
+                    <input type="number" id="setting-tp" step="0.1">
                 </div>
                 <div class="input-group">
                     <label>مسافة الملاحقة (%)</label>
-                    <input type="number" id="setting-trail" value="1.0" step="0.1">
+                    <input type="number" id="setting-trail" step="0.1">
                 </div>
                 <div class="input-group">
                     <label>مضاعف السيولة (Volume)</label>
-                    <input type="number" id="setting-vol" value="2.0" step="0.1">
+                    <input type="number" id="setting-vol" step="0.1">
                 </div>
             </div>
             <div class="mt-3 flex justify-end">
@@ -94,6 +95,7 @@
             </div>
         </section>
 
+        <!-- Dashboard Stats -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-xl">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="stat-box">
@@ -115,6 +117,7 @@
                 </div>
             </div>
 
+            <!-- Open Trades -->
             <div>
                 <h3 class="text-xs font-bold text-gray-400 mb-3 flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
@@ -125,11 +128,21 @@
                 </div>
             </div>
 
+            <!-- Closed Trades History -->
             <div class="mt-8 pt-6 border-t border-gray-800">
-                <h3 class="text-xs font-bold text-gray-400 mb-3 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    سجل الصفقات المغلقة (Historical Trades)
-                </h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                    <h3 class="text-xs font-bold text-gray-400 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        سجل الصفقات المغلقة
+                        <span id="history-summary" class="text-[10px] font-normal text-gray-500 mr-1 bg-gray-800 px-2 py-0.5 rounded-full border border-gray-700">
+                            (رابحة: 0 | خاسرة: 0)
+                        </span>
+                    </h3>
+                    <button id="clear-history-btn" class="flex items-center gap-1 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-2.5 py-1 rounded border border-red-500/30 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        مسح السجل بالكامل
+                    </button>
+                </div>
                 <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-2" id="closed-trades-list">
                     <div class="text-xs text-gray-500 text-center py-4 bg-gray-800/20 rounded-lg border border-gray-800/50">لم يتم إغلاق أي صفقة بعد</div>
                 </div>
@@ -140,7 +153,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // بيانات فايربيز الحقيقية الخاصة بك
         const firebaseConfig = {
@@ -155,9 +168,37 @@
         let app, auth, db, tradesRef, userId;
         let virtualTrades = [];
         let isFirebaseConnected = false;
-        
-        let SETTINGS = { tf: '15m', sl_perc: 0.02, min_tp: 0.02, trail_dist: 0.01, vol_mult: 2.0 };
         let lastTradeTime = {}; 
+
+        // --- 1. إدارة الإعدادات وحفظها (Local Storage) ---
+        const defaultSettings = { tf: '15m', sl_perc: 0.02, min_tp: 0.02, trail_dist: 0.01, vol_mult: 2.0 };
+        let SETTINGS = JSON.parse(localStorage.getItem('momentumSettings')) || defaultSettings;
+
+        const loadSettingsToUI = () => {
+            document.getElementById('setting-tf').value = SETTINGS.tf;
+            document.getElementById('setting-sl').value = (SETTINGS.sl_perc * 100).toFixed(1);
+            document.getElementById('setting-tp').value = (SETTINGS.min_tp * 100).toFixed(1);
+            document.getElementById('setting-trail').value = (SETTINGS.trail_dist * 100).toFixed(1);
+            document.getElementById('setting-vol').value = SETTINGS.vol_mult.toFixed(1);
+        };
+        loadSettingsToUI(); // تشغيل فوري عند فتح الصفحة
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            SETTINGS.tf = document.getElementById('setting-tf').value;
+            SETTINGS.sl_perc = parseFloat(document.getElementById('setting-sl').value) / 100;
+            SETTINGS.min_tp = parseFloat(document.getElementById('setting-tp').value) / 100;
+            SETTINGS.trail_dist = parseFloat(document.getElementById('setting-trail').value) / 100;
+            SETTINGS.vol_mult = parseFloat(document.getElementById('setting-vol').value);
+            
+            // حفظ في المتصفح
+            localStorage.setItem('momentumSettings', JSON.stringify(SETTINGS));
+
+            const btn = document.getElementById('save-settings-btn');
+            btn.innerText = "تم الحفظ بنجاح ✓";
+            btn.classList.replace('bg-brand-blue', 'bg-brand-green');
+            setTimeout(() => { btn.innerText = "حفظ الإعدادات"; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); }, 2000);
+            scanMarket();
+        });
 
         // --- الدوال الرياضية للمؤشرات ---
         const calcSMA = (data, period) => {
@@ -196,7 +237,7 @@
 
         const setDbStatus = (status) => {
             const badge = document.getElementById('db-status-badge');
-            if (!badge) return; // حماية من أخطاء الـ DOM
+            if (!badge) return;
             
             if (status === 'connected') {
                 badge.innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سجل سحابي متصل`;
@@ -205,7 +246,7 @@
                 badge.innerHTML = `<span class="w-2 h-2 bg-brand-red rounded-full"></span> خطأ في الاتصال`;
                 badge.className = 'text-[10px] bg-brand-red/20 border border-brand-red/30 text-brand-red px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5';
             } else {
-                badge.innerHTML = `محفظة مؤقتة (الجلسة الحالية)`;
+                badge.innerHTML = `محفظة مؤقتة (محلية)`;
                 badge.className = 'text-[10px] bg-gray-600/20 border border-gray-600/30 text-gray-400 px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5';
             }
         };
@@ -235,7 +276,10 @@
                 profitEl.className = `text-2xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
                 document.getElementById('dash-open').innerText = openTrades.length;
 
-                // --- 1. رسم الصفقات المفتوحة (مع أيقونة باينانس) ---
+                // تحديث ملخص السجل
+                document.getElementById('history-summary').innerText = `(رابحة: ${won} | خاسرة: ${lost})`;
+
+                // --- 1. رسم الصفقات المفتوحة (مع أيقونة باينانس المباشرة) ---
                 let openHtml = '';
                 openTrades.forEach(t => {
                     const currentPnl = ((t.currentPrice - t.entryPrice) / t.entryPrice) * 100;
@@ -247,8 +291,8 @@
                             <div class="flex justify-between items-center mb-1">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-white font-bold text-xs">${t.symbol}</span>
-                                    <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_blank" class="text-gray-400 hover:text-brand-gold transition-colors" title="تداول على باينانس">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                    <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_blank" class="text-gray-400 hover:text-brand-gold transition-colors bg-gray-900 rounded-full p-1" title="تداول على باينانس">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                     </a>
                                 </div>
                                 <span class="dir-ltr font-bold text-[10px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
@@ -258,7 +302,7 @@
                         </div>`;
                 });
 
-                if(!openHtml) openHtml = '<div class="col-span-full text-xs text-gray-500 text-center py-4 bg-gray-800/50 rounded-lg border border-gray-800">لا توجد صفقات مفتوحة حالياً...</div>';
+                if(!openHtml) openHtml = '<div class="col-span-full text-xs text-gray-500 text-center py-4 bg-gray-800/50 rounded-lg border border-gray-800">لا توجد صفقات مفتوحة حالياً... بانتظار الفرص القوية</div>';
                 document.getElementById('active-trades-list').innerHTML = openHtml;
 
                 // --- 2. رسم الصفقات المغلقة (مع مدة الاستغراق) ---
@@ -271,12 +315,17 @@
                     const bgColor = isWin ? 'bg-brand-green/10 border-brand-green/30' : 'bg-brand-red/10 border-brand-red/30';
                     const icon = isWin ? '✓ هدف' : '✗ وقف';
                     
-                    // حساب المدة
+                    // حساب مدة الصفقة
                     let durationStr = 'غير محدد';
                     if (t.openTime && t.closeTime) {
                         const diffMins = Math.max(1, Math.floor((t.closeTime - t.openTime) / 60000));
-                        if (diffMins < 60) durationStr = `${diffMins} دقيقة`;
-                        else durationStr = `${(diffMins / 60).toFixed(1)} ساعة`;
+                        if (diffMins < 60) {
+                            durationStr = `${diffMins} دقيقة`;
+                        } else {
+                            const hours = Math.floor(diffMins / 60);
+                            const mins = diffMins % 60;
+                            durationStr = `${hours}س ${mins}د`;
+                        }
                     }
 
                     const timeStr = new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -287,7 +336,7 @@
                                 <span class="font-bold text-white text-xs">${t.symbol}</span>
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[9px] text-gray-500">${timeStr}</span>
-                                    <span class="text-[8px] text-brand-blue bg-blue-900/30 border border-blue-900/50 px-1 rounded-sm">⏱ ${durationStr}</span>
+                                    <span class="text-[8px] text-gray-400 bg-gray-900 border border-gray-700 px-1 rounded-sm">⏱ ${durationStr}</span>
                                 </div>
                             </div>
                             <div class="text-[10px] text-gray-400 w-1/3 text-center hidden sm:block">
@@ -308,48 +357,74 @@
             }
         };
 
+        // --- 2. زر مسح السجل (حذف الصفقات المغلقة فقط) ---
+        document.getElementById('clear-history-btn').addEventListener('click', async () => {
+            const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+            if (closedTrades.length === 0) {
+                alert("السجل فارغ بالفعل.");
+                return;
+            }
+            
+            const confirmed = confirm(`هل أنت متأكد من حذف السجل؟ سيتم مسح ${closedTrades.length} صفقة مغلقة وتصفير الإحصائيات.`);
+            if (!confirmed) return;
+
+            const btn = document.getElementById('clear-history-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `جاري الحذف...`;
+
+            for (let t of closedTrades) {
+                if (isFirebaseConnected && tradesRef && t.docId && !t.docId.startsWith('local_')) {
+                    try { await deleteDoc(doc(tradesRef, t.docId)); } catch(e) { console.error("Error deleting doc", e); }
+                }
+            }
+
+            // تحديث المصفوفة المحلية لإزالة الصفقات المغلقة فوراً
+            virtualTrades = virtualTrades.filter(t => t.status === 'open');
+            updateDashboardUI();
+            
+            btn.innerHTML = originalText;
+        });
+
         const manageOpenTrades = async (symbol, currentPrice, currentLow, currentHigh) => {
             const trade = virtualTrades.find(t => t.symbol === symbol && t.status === 'open');
             if (!trade) return;
 
-            // تحديث السعر الأعلى
-            trade.maxPrice = Math.max(trade.maxPrice || currentPrice, currentPrice, currentHigh);
-            
-            // تفعيل الملاحقة إذا تحقق الهدف الأول
-            const targetActivationPrice = trade.entryPrice * (1 + SETTINGS.min_tp);
-            if (trade.maxPrice >= targetActivationPrice) trade.trailActive = true;
+            try {
+                trade.maxPrice = Math.max(trade.maxPrice || currentPrice, currentPrice, currentHigh);
+                
+                const targetActivationPrice = trade.entryPrice * (1 + SETTINGS.min_tp);
+                if (trade.maxPrice >= targetActivationPrice) trade.trailActive = true;
 
-            // حساب الوقف الديناميكي
-            let currentSL = trade.trailActive 
-                ? trade.maxPrice * (1 - SETTINGS.trail_dist) 
-                : trade.entryPrice * (1 - SETTINGS.sl_perc);
+                let currentSL = trade.trailActive 
+                    ? trade.maxPrice * (1 - SETTINGS.trail_dist) 
+                    : trade.entryPrice * (1 - SETTINGS.sl_perc);
 
-            trade.slLevel = Math.max(trade.slLevel || currentSL, currentSL);
+                trade.slLevel = Math.max(trade.slLevel || currentSL, currentSL);
 
-            // هل ضرب الوقف أو نزل عنه؟
-            if (currentLow <= trade.slLevel || currentPrice <= trade.slLevel) {
-                const finalPnl = ((trade.slLevel - trade.entryPrice) / trade.entryPrice) * 100;
-                trade.status = finalPnl > 0 ? 'won' : 'lost';
-                trade.pnl = finalPnl;
-                trade.closeTime = Date.now();
-                lastTradeTime[symbol] = Date.now(); // Cooldown لتجنب الدخول الفوري مجدداً
+                if (currentLow <= trade.slLevel || currentPrice <= trade.slLevel) {
+                    const finalPnl = ((trade.slLevel - trade.entryPrice) / trade.entryPrice) * 100;
+                    trade.status = finalPnl > 0 ? 'won' : 'lost';
+                    trade.pnl = finalPnl;
+                    trade.closeTime = Date.now();
+                    lastTradeTime[symbol] = Date.now(); 
 
-                if (isFirebaseConnected && tradesRef && trade.docId && !trade.docId.startsWith('local_')) {
-                    try { await updateDoc(doc(tradesRef, trade.docId), { status: trade.status, pnl: trade.pnl, closeTime: trade.closeTime, slLevel: trade.slLevel }); } catch (e) {}
+                    if (isFirebaseConnected && tradesRef && trade.docId && !trade.docId.startsWith('local_')) {
+                        await updateDoc(doc(tradesRef, trade.docId), { status: trade.status, pnl: trade.pnl, closeTime: trade.closeTime, slLevel: trade.slLevel });
+                    }
+                } else {
+                    if (isFirebaseConnected && tradesRef && trade.docId && !trade.docId.startsWith('local_')) {
+                        updateDoc(doc(tradesRef, trade.docId), { currentPrice: currentPrice, maxPrice: trade.maxPrice, trailActive: trade.trailActive, slLevel: trade.slLevel });
+                    }
                 }
-            } else {
-                // حفظ التحديثات في السحابة
-                if (isFirebaseConnected && tradesRef && trade.docId && !trade.docId.startsWith('local_')) {
-                    try { updateDoc(doc(tradesRef, trade.docId), { currentPrice: currentPrice, maxPrice: trade.maxPrice, trailActive: trade.trailActive, slLevel: trade.slLevel }); } catch (e) {}
-                }
+            } catch (error) {
+                console.error(`Error managing trade for ${symbol}:`, error);
             }
-            updateDashboardUI();
         };
 
         const enterNewTrade = async (symbol, price) => {
             if(virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) return;
-            if(price < 0.001) return; // منع العملات الصفرية الخطيرة
-            if(lastTradeTime[symbol] && (Date.now() - lastTradeTime[symbol] < 120000)) return; // كولداون دقيقتين
+            if(price < 0.001) return; 
+            if(lastTradeTime[symbol] && (Date.now() - lastTradeTime[symbol] < 60000)) return; 
 
             const newTrade = {
                 symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price,
@@ -373,6 +448,7 @@
         const scanMarket = async () => {
             try {
                 const tickRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+                if(!tickRes.ok) return;
                 const tickers = await tickRes.json();
                 
                 const topCoins = tickers
@@ -381,41 +457,47 @@
                     .slice(0, 40);
 
                 for (let coin of topCoins) {
-                    const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=50`);
-                    const klines = await klineRes.json();
-                    
-                    const closes = klines.map(k => parseFloat(k[4]));
-                    const opens = klines.map(k => parseFloat(k[1]));
-                    const highs = klines.map(k => parseFloat(k[2]));
-                    const lows = klines.map(k => parseFloat(k[3]));
-                    const volumes = klines.map(k => parseFloat(k[5])); 
+                    try {
+                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=50`);
+                        if(!klineRes.ok) continue;
+                        const klines = await klineRes.json();
+                        
+                        const closes = klines.map(k => parseFloat(k[4]));
+                        const opens = klines.map(k => parseFloat(k[1]));
+                        const highs = klines.map(k => parseFloat(k[2]));
+                        const lows = klines.map(k => parseFloat(k[3]));
+                        const volumes = klines.map(k => parseFloat(k[5])); 
 
-                    const currentPrice = closes[closes.length - 1];
-                    const currentOpen = opens[opens.length - 1];
-                    const currentHigh = highs[highs.length - 1];
-                    const currentLow = lows[lows.length - 1];
-                    const currentVol = volumes[volumes.length - 1];
+                        const currentPrice = closes[closes.length - 1];
+                        const currentOpen = opens[opens.length - 1];
+                        const currentHigh = highs[highs.length - 1];
+                        const currentLow = lows[lows.length - 1];
+                        const currentVol = volumes[volumes.length - 1];
 
-                    await manageOpenTrades(coin.symbol, currentPrice, currentLow, currentHigh);
+                        await manageOpenTrades(coin.symbol, currentPrice, currentLow, currentHigh);
+                        updateDashboardUI(); // تحديث سريع بعد الملاحقة
 
-                    const ema9 = calcEMA(closes, 9);
-                    const ema21 = calcEMA(closes, 21);
-                    const volAvg20 = calcSMA(volumes, 20);
-                    const rsi = calcRSI(closes, 14);
+                        const ema9 = calcEMA(closes, 9);
+                        const ema21 = calcEMA(closes, 21);
+                        const volAvg20 = calcSMA(volumes, 20);
+                        const rsi = calcRSI(closes, 14);
 
-                    if(!ema9 || !ema21 || !volAvg20 || !rsi) continue;
+                        if(!ema9 || !ema21 || !volAvg20 || !rsi) continue;
 
-                    const cond_vol = currentVol > (volAvg20 * SETTINGS.vol_mult);
-                    const cond_candle = currentPrice > currentOpen;
-                    const cond_trend = (currentPrice > ema9) && (ema9 > ema21);
-                    const cond_rsi = (rsi > 55) && (rsi < 85);
-                    
-                    if (cond_vol && cond_candle && cond_trend && cond_rsi) {
-                        enterNewTrade(coin.symbol, currentPrice);
+                        const cond_vol = currentVol > (volAvg20 * SETTINGS.vol_mult);
+                        const cond_candle = currentPrice > currentOpen;
+                        const cond_trend = (currentPrice > ema9) && (ema9 > ema21);
+                        const cond_rsi = (rsi > 55) && (rsi < 85);
+                        
+                        if (cond_vol && cond_candle && cond_trend && cond_rsi) {
+                            enterNewTrade(coin.symbol, currentPrice);
+                        }
+                    } catch (e) {
+                        // تجاهل أخطاء العملات الفردية لضمان استمرار عمل الرادار
                     }
                 }
             } catch (err) {
-                console.error("Scanner Error: ", err);
+                console.error("Scanner General Error: ", err);
             }
         };
 
@@ -452,20 +534,6 @@
                 isFirebaseConnected = false;
             }
         };
-
-        document.getElementById('save-settings-btn').addEventListener('click', () => {
-            SETTINGS.tf = document.getElementById('setting-tf').value;
-            SETTINGS.sl_perc = parseFloat(document.getElementById('setting-sl').value) / 100;
-            SETTINGS.min_tp = parseFloat(document.getElementById('setting-tp').value) / 100;
-            SETTINGS.trail_dist = parseFloat(document.getElementById('setting-trail').value) / 100;
-            SETTINGS.vol_mult = parseFloat(document.getElementById('setting-vol').value);
-            
-            const btn = document.getElementById('save-settings-btn');
-            btn.innerText = "تم الحفظ ✓";
-            btn.classList.replace('bg-brand-blue', 'bg-brand-green');
-            setTimeout(() => { btn.innerText = "حفظ الإعدادات"; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); }, 2000);
-            scanMarket();
-        });
 
         document.addEventListener('DOMContentLoaded', () => {
             initFirebase();
