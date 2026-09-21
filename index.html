@@ -42,17 +42,19 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold text-white leading-tight">Momentum PRO</h1>
-                    <span class="text-[10px] text-brand-gold font-mono tracking-wider"> Ahmed STRATEGY</span>
+                    <span class="text-[10px] text-brand-gold font-mono tracking-wider">PINE SCRIPT STRATEGY</span>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
+                <!-- Sound Toggle -->
                 <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full bg-gray-800 border border-gray-700" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </button>
                 
-                <div id="db-status-badge" class="text-[10px] bg-gray-800 border border-gray-700 text-gray-400 px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5">
+                <!-- Cloud Status -->
+                <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5">
                     <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     جاري الاتصال...
                 </div>
@@ -60,7 +62,16 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
+    <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
+
+        <!-- 🔴 NEW: Market Health Indicator 🔴 -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-lg flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div id="market-health-pulse" class="w-3 h-3 rounded-full bg-gray-600 animate-pulse"></div>
+                <h2 class="text-xs font-bold text-gray-300">مؤشر حالة السوق (Market Health):</h2>
+            </div>
+            <div id="market-health-text" class="text-xs font-bold text-gray-500">جاري تحليل مسار البيتكوين...</div>
+        </div>
         
         <!-- Settings Section -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-4 shadow-lg">
@@ -139,17 +150,17 @@
 
             <!-- Closed Trades History -->
             <div class="mt-8 pt-6 border-t border-gray-800">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                <div class="flex items-center justify-between mb-3">
                     <h3 class="text-xs font-bold text-gray-400 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         سجل الصفقات المغلقة
                         <span id="history-summary" class="text-[10px] font-normal text-gray-500 mr-1 bg-gray-800 px-2 py-0.5 rounded-full border border-gray-700">
-                            (رابحة: 0 | خاسرة: 0)
+                            (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
                         </span>
                     </h3>
                     <button id="clear-history-btn" class="flex items-center gap-1 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-2.5 py-1 rounded border border-red-500/30 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        مسح السجل بالكامل
+                        مسح السجل
                     </button>
                 </div>
                 <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-2" id="closed-trades-list">
@@ -164,6 +175,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // Firebase Configuration (YOUR DATA)
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
             authDomain: "smartscanner-a5e0d.firebaseapp.com",
@@ -173,11 +185,13 @@
             appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
         };
 
+        // Global Variables
         let app, auth, db, tradesRef, userId;
         let virtualTrades = [];
         let isFirebaseConnected = false;
         let lastTradeTime = {}; 
         
+        // Sound Setup
         let soundEnabled = false;
         let audioCtx = null;
 
@@ -194,25 +208,29 @@
                 
                 const now = audioCtx.currentTime;
                 if (type === 'open') {
+                    // Double beep for new trade
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.setValueAtTime(800, now + 0.1);
                     gain.gain.setValueAtTime(0.1, now);
                     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
                     osc.start(now);
                     osc.stop(now + 0.3);
                 } else if (type === 'win') {
+                    // Happy chime for win
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.setValueAtTime(880, now + 0.1);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1); // C#
+                    osc.frequency.setValueAtTime(659.25, now + 0.2); // E
                     gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
                     osc.start(now);
-                    osc.stop(now + 0.5);
+                    osc.stop(now + 0.6);
                 } else if (type === 'loss') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.setValueAtTime(200, now + 0.2);
+                    // Low tone for loss
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.setValueAtTime(150, now + 0.2);
                     gain.gain.setValueAtTime(0.05, now);
                     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
                     osc.start(now);
@@ -221,6 +239,7 @@
             } catch(e) { console.error("Sound error", e); }
         };
 
+        // Sound Button Listener
         document.getElementById('sound-toggle-btn').addEventListener('click', () => {
             soundEnabled = !soundEnabled;
             const btn = document.getElementById('sound-toggle-btn');
@@ -230,7 +249,7 @@
                 document.getElementById('sound-icon-off').classList.add('hidden');
                 document.getElementById('sound-icon-on').classList.remove('hidden');
                 btn.classList.add('bg-gray-700', 'border-gray-500');
-                playSound('open'); 
+                playSound('open'); // Test sound
             } else {
                 document.getElementById('sound-icon-off').classList.remove('hidden');
                 document.getElementById('sound-icon-on').classList.add('hidden');
@@ -238,7 +257,7 @@
             }
         });
 
-        // إدارة الإعدادات (Local Storage)
+        // Settings Management with LocalStorage
         const defaultSettings = { tf: '15m', sl_perc: 0.02, min_tp: 0.02, trail_dist: 0.01, vol_mult: 2.0 };
         let SETTINGS = JSON.parse(localStorage.getItem('momentumSettings')) || defaultSettings;
 
@@ -249,7 +268,7 @@
             document.getElementById('setting-trail').value = (SETTINGS.trail_dist * 100).toFixed(1);
             document.getElementById('setting-vol').value = SETTINGS.vol_mult.toFixed(1);
         };
-        loadSettingsToUI(); 
+        loadSettingsToUI(); // Load on start
 
         document.getElementById('save-settings-btn').addEventListener('click', () => {
             SETTINGS.tf = document.getElementById('setting-tf').value;
@@ -264,9 +283,10 @@
             btn.innerText = "تم الحفظ بنجاح ✓";
             btn.classList.replace('bg-brand-blue', 'bg-brand-green');
             setTimeout(() => { btn.innerText = "حفظ الإعدادات"; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); }, 2000);
-            scanMarket();
+            scanMarket(); // Force scan with new settings
         });
 
+        // Technical Analysis Functions
         const calcSMA = (data, period) => {
             if(data.length < period) return null;
             let sum = 0;
@@ -301,6 +321,7 @@
             return 100 - (100 / (1 + (avgGain / avgLoss)));
         };
 
+        // UI Update Functions
         const setDbStatus = (status) => {
             const badge = document.getElementById('db-status-badge');
             if (!badge) return;
@@ -341,15 +362,16 @@
                 profitEl.className = `text-2xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
                 document.getElementById('dash-open').innerText = openTrades.length;
 
-                document.getElementById('history-summary').innerText = `(رابحة: ${won} | خاسرة: ${lost})`;
+                // Update History Summary text
+                document.getElementById('history-summary').innerText = `(إجمالي: ${closedCount} | رابحة: ${won} | خاسرة: ${lost})`;
 
+                // Render Open Trades
                 let openHtml = '';
                 openTrades.forEach(t => {
                     const currentPnl = ((t.currentPrice - t.entryPrice) / t.entryPrice) * 100;
                     const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
                     const trailStatus = t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`;
                     
-                    // تغيير target="_blank" إلى target="_self" للسماح بالرجوع
                     openHtml += `
                         <div class="bg-gray-800 border ${pColor}/30 rounded-lg px-3 py-2 shadow-sm flex flex-col justify-between">
                             <div class="flex justify-between items-center mb-1">
@@ -369,6 +391,7 @@
                 if(!openHtml) openHtml = '<div class="col-span-full text-xs text-gray-500 text-center py-4 bg-gray-800/50 rounded-lg border border-gray-800">لا توجد صفقات مفتوحة حالياً... بانتظار الفرص القوية</div>';
                 document.getElementById('active-trades-list').innerHTML = openHtml;
 
+                // Render Closed Trades
                 let closedHtml = '';
                 const sortedClosed = closedTrades.sort((a, b) => b.closeTime - a.closeTime).slice(0, 50);
 
@@ -378,6 +401,7 @@
                     const bgColor = isWin ? 'bg-brand-green/10 border-brand-green/30' : 'bg-brand-red/10 border-brand-red/30';
                     const icon = isWin ? '✓ هدف' : '✗ وقف';
                     
+                    // حساب مدة الصفقة
                     let durationStr = 'غير محدد';
                     if (t.openTime && t.closeTime) {
                         const diffMins = Math.max(1, Math.floor((t.closeTime - t.openTime) / 60000));
@@ -398,7 +422,7 @@
                                 <span class="font-bold text-white text-xs">${t.symbol}</span>
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[9px] text-gray-500">${timeStr}</span>
-                                    <span class="text-[8px] text-gray-400 bg-gray-900 border border-gray-700 px-1 rounded-sm">⏱ ${durationStr}</span>
+                                    <span class="text-[8px] text-gray-400 bg-gray-900 border border-gray-700 px-1 rounded-sm" title="مدة الصفقة">⏱ ${durationStr}</span>
                                 </div>
                             </div>
                             <div class="text-[10px] text-gray-400 w-1/3 text-center hidden sm:block">
@@ -419,6 +443,7 @@
             }
         };
 
+        // Clear History Button Logic
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
             const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
             if (closedTrades.length === 0) {
@@ -439,12 +464,14 @@
                 }
             }
 
+            // Remove locally as well to update UI immediately
             virtualTrades = virtualTrades.filter(t => t.status === 'open');
             updateDashboardUI();
             
             btn.innerHTML = originalText;
         });
 
+        // Trading Logic
         const manageOpenTrades = async (symbol, currentPrice, currentLow, currentHigh) => {
             const trade = virtualTrades.find(t => t.symbol === symbol && t.status === 'open');
             if (!trade) return;
@@ -466,8 +493,9 @@
                     trade.status = finalPnl > 0 ? 'won' : 'lost';
                     trade.pnl = finalPnl;
                     trade.closeTime = Date.now();
-                    lastTradeTime[symbol] = Date.now(); 
+                    lastTradeTime[symbol] = Date.now(); // Start cooldown
 
+                    // Play correct sound based on result
                     playSound(trade.status === 'won' ? 'win' : 'loss');
 
                     if (isFirebaseConnected && tradesRef && trade.docId && !trade.docId.startsWith('local_')) {
@@ -485,8 +513,8 @@
 
         const enterNewTrade = async (symbol, price) => {
             if(virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) return;
-            if(price < 0.001) return; 
-            if(lastTradeTime[symbol] && (Date.now() - lastTradeTime[symbol] < 60000)) return; 
+            if(price < 0.001) return; // Ignore zero-value coins (Anti-Crash/Loop)
+            if(lastTradeTime[symbol] && (Date.now() - lastTradeTime[symbol] < 60000)) return; // 1 min cooldown
 
             const newTrade = {
                 symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price,
@@ -494,7 +522,7 @@
                 status: 'open', pnl: 0, openTime: Date.now()
             };
 
-            playSound('open');
+            playSound('open'); // Alert for new entry
 
             if (isFirebaseConnected && tradesRef) {
                 try {
@@ -509,8 +537,45 @@
             updateDashboardUI();
         };
 
+        // 🔴 NEW: Market Health Analyzer 🔴
+        const analyzeMarketHealth = async () => {
+            try {
+                // Fetch BTC data on 1h timeframe for a reliable macro trend
+                const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=25`);
+                if(!klineRes.ok) return;
+                const klines = await klineRes.json();
+                const closes = klines.map(k => parseFloat(k[4]));
+                
+                const currentPrice = closes[closes.length - 1];
+                const ema9 = calcEMA(closes, 9);
+                const ema21 = calcEMA(closes, 21);
+                
+                const pulse = document.getElementById('market-health-pulse');
+                const text = document.getElementById('market-health-text');
+                
+                if (!ema9 || !ema21) return;
+
+                if (currentPrice > ema9 && ema9 > ema21) {
+                    pulse.className = 'w-3 h-3 rounded-full bg-brand-green animate-pulse shadow-[0_0_8px_#10B981]';
+                    text.innerHTML = '<span class="text-brand-green">🟢 إيجابي (آمن) - البيتكوين في مسار صاعد</span>';
+                } else if (currentPrice < ema9 && ema9 < ema21) {
+                    pulse.className = 'w-3 h-3 rounded-full bg-brand-red animate-pulse shadow-[0_0_8px_#EF4444]';
+                    text.innerHTML = '<span class="text-brand-red">🔴 سلبي جداً (خطر) - تجنب الدخول حالياً</span>';
+                } else {
+                    pulse.className = 'w-3 h-3 rounded-full bg-brand-gold animate-pulse shadow-[0_0_8px_#F59E0B]';
+                    text.innerHTML = '<span class="text-brand-gold">🟡 متذبذب (حذر) - يفضل تقليل حجم الدخول</span>';
+                }
+            } catch (error) {
+                console.error("Market Health Error:", error);
+            }
+        };
+
         const scanMarket = async () => {
             try {
+                // 1. Update Market Health Indicator first
+                await analyzeMarketHealth();
+
+                // 2. Scan Coins
                 const tickRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
                 if(!tickRes.ok) return;
                 const tickers = await tickRes.json();
@@ -539,7 +604,7 @@
                         const currentVol = volumes[volumes.length - 1];
 
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow, currentHigh);
-                        updateDashboardUI(); 
+                        updateDashboardUI(); // Update UI after checking stops
 
                         const ema9 = calcEMA(closes, 9);
                         const ema21 = calcEMA(closes, 21);
@@ -557,7 +622,7 @@
                             enterNewTrade(coin.symbol, currentPrice);
                         }
                     } catch (e) {
-                        
+                        // Ignore specific coin errors to prevent crash
                     }
                 }
             } catch (err) {
@@ -575,6 +640,7 @@
                 
                 userId = auth.currentUser?.uid;
                 if (userId) {
+                    // Using momentum_pro_trades for a clean slate
                     tradesRef = collection(db, 'users', userId, 'momentum_pro_trades');
                     isFirebaseConnected = true;
                     setDbStatus('connected'); 
@@ -599,10 +665,11 @@
             }
         };
 
+        // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
             initFirebase();
             scanMarket();
-            setInterval(scanMarket, 15000); 
+            setInterval(scanMarket, 15000); // Scan every 15 seconds
         });
     </script>
 </body>
