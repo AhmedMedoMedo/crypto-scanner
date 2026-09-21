@@ -1,5 +1,4 @@
-
-
+`
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -849,7 +848,7 @@
                 let score = 0; let maxScore = 0;
                 if(isAboveSMA !== null) { maxScore++; if(isAboveSMA) score++; }
                 if(isAboveEMA !== null) { maxScore++; if(isAboveEMA) score++; }
-                if(rsi !== null) { maxScore++; if(rsi >= 40 && rsi <= 70) score++; }
+                if(isWithRSI = rsi !== null) { maxScore++; if(rsi >= 40 && rsi <= 70) score++; }
                 if(momentum !== null) { maxScore++; if(momentum > 0) score++; }
 
                 const decisionEl = document.getElementById('modal-decision');
@@ -896,7 +895,7 @@
         });
 
         const initFirebase = async () => {
-            if (firebaseConfig && firebaseConfig.apiKey) {
+            if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyAH2hiXyrnTDSa9vQJid8aFsryJk2jcHg") {
                 try {
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
@@ -943,3 +942,4 @@
 </html>
 
 ```
+
