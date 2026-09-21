@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -49,7 +50,7 @@
             
             <div class="flex items-center gap-3">
                 <!-- Sound Toggle -->
-                <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full bg-gray-800 border border-gray-700 hover:border-brand-gold shadow-sm" title="تفعيل التنبيهات الصوتية">
+                <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </button>
@@ -92,6 +93,15 @@
                     <div id="market-health-bar" class="h-1.5 rounded-full transition-all duration-1000 ease-out w-0 bg-gray-500"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- شريط النشاط اللحظي (Live Activity Console) -->
+        <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
+            </span>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400">🚀 بدء تشغيل محرك الرادار...</div>
         </div>
         
         <!-- Settings Section -->
@@ -255,9 +265,33 @@
             setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); }, 1500);
         });
 
-        // --- Sound System ---
-        let soundEnabled = false;
+        // --- Sound System (Persistent & Auto-Unlock) ---
+        let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
         let audioCtx = null;
+
+        const updateSoundUI = () => {
+            const btn = document.getElementById('sound-toggle-btn');
+            if (soundEnabled) {
+                document.getElementById('sound-icon-off').classList.add('hidden');
+                document.getElementById('sound-icon-on').classList.remove('hidden');
+                btn.classList.add('bg-gray-800', 'border-brand-gold'); btn.classList.remove('border-gray-700');
+            } else {
+                document.getElementById('sound-icon-off').classList.remove('hidden');
+                document.getElementById('sound-icon-on').classList.add('hidden');
+                btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
+            }
+        };
+        updateSoundUI(); // Set UI on load
+
+        const unlockAudio = () => {
+            if (soundEnabled && !audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+        };
+        // Unlock on first click anywhere in the page to bypass browser autoplay policy
+        document.body.addEventListener('click', unlockAudio, { once: true });
+
         const playSound = (type) => {
             if (!soundEnabled) return;
             try {
@@ -292,20 +326,22 @@
 
         document.getElementById('sound-toggle-btn').addEventListener('click', () => {
             soundEnabled = !soundEnabled;
-            const btn = document.getElementById('sound-toggle-btn');
-            if (soundEnabled) {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                document.getElementById('sound-icon-off').classList.add('hidden');
-                document.getElementById('sound-icon-on').classList.remove('hidden');
-                btn.classList.add('bg-gray-800', 'border-brand-gold'); btn.classList.remove('border-gray-700');
-                playSound('open'); 
-            } else {
-                document.getElementById('sound-icon-off').classList.remove('hidden');
-                document.getElementById('sound-icon-on').classList.add('hidden');
-                btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
-            }
+            localStorage.setItem('momentumSoundEnabled', soundEnabled);
+            updateSoundUI();
+            if(soundEnabled) playSound('open'); // Test sound on manual click
         });
+
+        // --- Live Console Update ---
+        const updateConsole = (text, type = 'normal') => {
+            const consoleEl = document.getElementById('live-console-text');
+            let color = 'text-gray-400';
+            if(type === 'success') color = 'text-brand-green font-bold';
+            if(type === 'warning') color = 'text-brand-gold';
+            if(type === 'error') color = 'text-brand-red';
+            
+            const time = new Date().toLocaleTimeString('ar-EG', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            consoleEl.innerHTML = `<span class="text-gray-600 mr-2">[${time}]</span> <span class="${color}">${text}</span>`;
+        };
 
         // --- Math & Indicators ---
         const calcEMA = (data, period) => {
@@ -385,7 +421,7 @@
                             <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-white font-bold text-xs">${t.symbol}</span>
-                                    <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_blank" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
+                                    <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                     </a>
                                 </div>
@@ -464,6 +500,7 @@
             if (isCheckingMarket) return;
             isCheckingMarket = true;
             try {
+                updateConsole("🤖 جاري استدعاء محرك الذكاء الاصطناعي لتحليل السوق...");
                 const btcRes = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=250');
                 if(!btcRes.ok) throw new Error("API Error");
                 const btcKlines = await btcRes.json();
@@ -511,7 +548,10 @@
                     bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-red shadow-[0_0_10px_#EF4444]';
                     text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
                 }
-            } catch (error) { console.error("Market Health Error", error); } 
+            } catch (error) { 
+                console.error("Market Health Error", error);
+                updateConsole("⚠️ خطأ في تحليل السوق العام", "error");
+            } 
             finally { isCheckingMarket = false; }
         };
 
@@ -548,6 +588,7 @@
                     exitCooldowns[symbol] = Date.now() + cooldownMs;
                     
                     playSound(trade.status === 'won' ? 'win' : 'loss');
+                    updateConsole(`🔔 إغلاق صفقة ${symbol} ${trade.status === 'won' ? 'بربح' : 'بوقف خسارة'}`, trade.status === 'won' ? 'success' : 'error');
                     
                     if (isFirebaseConnected && tradesRef && trade.docId) {
                         await updateDoc(doc(tradesRef, trade.docId), { 
@@ -569,7 +610,10 @@
             
             // Cooldown & AI Protection
             if (exitCooldowns[symbol] && Date.now() < exitCooldowns[symbol]) return;
-            if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') return;
+            if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') {
+                updateConsole(`⛔ تم تجاهل ${symbol} بسبب الحماية الآلية (السوق خطر)`);
+                return;
+            }
 
             const newTrade = {
                 symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, 
@@ -578,6 +622,8 @@
             };
             
             playSound('open');
+            updateConsole(`🚀 اقتناص صفقة جديدة: ${symbol}`, 'success');
+
             if (isFirebaseConnected && tradesRef) {
                 try {
                     const newDoc = doc(tradesRef);
@@ -590,8 +636,9 @@
         const scanMarket = async () => {
             try {
                 await analyzeMarketHealth();
+                updateConsole("📡 جاري سحب بيانات العملات الأعلى سيولة...");
                 const tickRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-                if(!tickRes.ok) return;
+                if(!tickRes.ok) throw new Error("Ticker Error");
                 const tickers = await tickRes.json();
                 
                 const topCoins = tickers
@@ -599,6 +646,9 @@
                     .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
                     .slice(0, 50); 
 
+                updateConsole(`⚙️ جاري تحليل شموع ${topCoins.length} عملة لتطبيق الشروط...`);
+
+                let foundNew = false;
                 for (let coin of topCoins) {
                     try {
                         const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=50`);
@@ -616,7 +666,6 @@
                         const currentVol = volumes[volumes.length - 1];
 
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow);
-                        updateDashboardUI();
 
                         const ema9 = calcEMA(closes, 9);
                         const ema21 = calcEMA(closes, 21);
@@ -632,11 +681,19 @@
                         const cond_rsi = (rsi > 55) && (rsi < 85);
                         
                         if (cond_vol && cond_candle && cond_trend && cond_rsi) {
+                            foundNew = true;
                             enterNewTrade(coin.symbol, currentPrice);
                         }
                     } catch (e) { /* skip */ }
                 }
-            } catch (err) { console.error("Scan error", err); }
+                updateDashboardUI();
+                if(!foundNew) {
+                    updateConsole("⏳ اكتمل الفحص. لم يتم رصد أي اختراقات جديدة للزخم. انتظار الدورة القادمة...");
+                }
+            } catch (err) { 
+                console.error("Scan error", err);
+                updateConsole("⚠️ خطأ في الاتصال بالشبكة. يتم إعادة المحاولة...", "warning");
+            }
         };
 
         const setDbStatus = (status) => {
@@ -652,6 +709,7 @@
 
         const initFirebase = async () => {
             try {
+                updateConsole("🔗 جاري تهيئة الاتصال السحابي وقواعد البيانات...");
                 app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
                 await signInAnonymously(auth);
                 userId = auth.currentUser?.uid;
@@ -663,7 +721,7 @@
                         virtualTrades = loaded; updateDashboardUI();
                     }, (err) => { setDbStatus('error'); isFirebaseConnected = false; });
                 }
-            } catch (error) { setDbStatus('error'); isFirebaseConnected = false; }
+            } catch (error) { setDbStatus('error'); isFirebaseConnected = false; updateConsole("⚠️ فشل الاتصال بقاعدة البيانات", "error"); }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
