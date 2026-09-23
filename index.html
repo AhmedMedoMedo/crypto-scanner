@@ -1,9 +1,10 @@
+Ahmed
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Momentum PRO | Pine Script Strategy</title>
+    <title>Momentum PRO | Multi-Strategy Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
@@ -13,7 +14,7 @@
                     fontFamily: { sans: ['Cairo', 'sans-serif'] },
                     colors: {
                         gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' },
-                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B' }
+                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B', purple: '#8B5CF6' }
                     }
                 }
             }
@@ -30,6 +31,11 @@
         .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
         .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
+        
+        /* Strategy Badge Colors */
+        .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-dip { background-color: rgba(139, 92, 246, 0.15); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -43,12 +49,11 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-black text-white leading-tight">Momentum PRO</h1>
-                    <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase"> Ahmed Ai system </span>
+                    <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">Multi-Strategy Engine</span>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Sound Toggle -->
                 <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -83,7 +88,7 @@
                 <div class="flex items-center gap-2 bg-gray-950 px-3 py-2 rounded-lg border border-gray-800">
                     <label for="setting-auto-kill" class="text-[10px] font-bold text-gray-300 cursor-pointer flex items-center gap-2">
                         <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-3.5 h-3.5 cursor-pointer">
-                        تفعيل الحماية الآلية (منع الصفقات وقت الخطر)
+                        تفعيل الحماية الآلية (منع الدخول وقت الخطر)
                     </label>
                 </div>
             </div>
@@ -94,30 +99,47 @@
             </div>
         </div>
 
-        <!-- شريط النشاط اللحظي (Live Activity Console) -->
+        <!-- Live Activity Console -->
         <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
             <span class="relative flex h-2.5 w-2.5">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
             </span>
-            <div id="live-console-text" class="text-[11px] font-mono text-gray-400">🚀 بدء تشغيل محرك الرادار...</div>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400">🚀 بدء تشغيل محرك الرادار المتعدد...</div>
         </div>
         
         <!-- Settings Section -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                <h2 class="text-sm font-bold text-white">إعدادات الرادار (Filters & Targets)</h2>
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (Target 5%-10%+)</h2>
+                </div>
             </div>
             
+            <!-- Strategy Toggles -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-800">
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
+                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الاختراق (Breakout) 🟢</label>
+                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الارتداد (Dip Sniper) 🟣</label>
+                    <input type="checkbox" id="strat-dip" class="accent-brand-purple w-4 h-4">
+                </div>
+            </div>
+
+            <!-- Param Settings -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div class="input-group">
-                    <label>الإطار الزمني (Timeframe)</label>
+                    <label>الإطار الزمني الأساسي</label>
                     <select id="setting-tf">
-                        <option value="1m">1 دقيقة (قنص سريع)</option>
-                        <option value="5m">5 دقائق (خطف)</option>
                         <option value="15m" selected>15 دقيقة (أساسي)</option>
-                        <option value="1h">1 ساعة (اتجاه)</option>
+                        <option value="1h">1 ساعة (أهداف أبعد)</option>
                         <option value="4h">4 ساعات (استثمار)</option>
                     </select>
                 </div>
@@ -127,7 +149,7 @@
                 </div>
                 <div class="input-group">
                     <label>هدف تفعيل الملاحقة (%)</label>
-                    <input type="number" id="setting-tp" step="0.1">
+                    <input type="number" id="setting-tp" step="0.1" title="يُفضل 5% للأهداف الكبيرة">
                 </div>
                 <div class="input-group">
                     <label>مسافة الملاحقة (%)</label>
@@ -139,7 +161,7 @@
                 </div>
                 <div class="input-group">
                     <label>فترة التبريد (دقائق)</label>
-                    <input type="number" id="setting-cooldown" step="1" min="0" placeholder="مثال: 5">
+                    <input type="number" id="setting-cooldown" step="1" min="0">
                 </div>
                 <div class="col-span-full mt-2 flex justify-end">
                     <button id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
@@ -207,17 +229,17 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         سجل الصفقات المغلقة (Historical Trades)
                         <span id="history-summary" class="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block">
-                            (إجمالي: 0 | رابحة: <span class="text-brand-green font-bold">0</span> | خاسرة: <span class="text-brand-red font-bold">0</span>)
+                            (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
                         </span>
                     </h3>
                     <button id="clear-history-btn" class="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        مسح السجل وتصفير العداد
+                        مسح السجل
                     </button>
                 </div>
                 
                 <div id="history-summary-mobile" class="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden">
-                    (إجمالي: 0 | رابحة: <span class="text-brand-green font-bold">0</span> | خاسرة: <span class="text-brand-red font-bold">0</span>)
+                    (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
                 </div>
 
                 <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="closed-trades-list">
@@ -250,25 +272,50 @@
         const exitCooldowns = {};
         const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 'EURUSDT', 'XAUTUSDT', 'PAXGUSDT', 'BUSDUSDT', 'AEURUSDT', 'USDSUSDT'];
 
-        // --- Settings ---
-        const defaultSettings = { tf: '15m', sl_perc: 0.02, min_tp: 0.02, trail_dist: 0.01, vol_mult: 2.0, cooldown_mins: 5, auto_kill: true };
-        let SETTINGS = JSON.parse(localStorage.getItem('momentumSettingsV5')) || defaultSettings;
-        if(SETTINGS.cooldown_mins === undefined) SETTINGS.cooldown_mins = 5;
-
-        // --- Stats Filter Settings ---
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter') || 'all';
+        const defaultSettings = { 
+            tf: '15m', 
+            sl_perc: 0.03, 
+            min_tp: 0.05, 
+            trail_dist: 0.015, 
+            vol_mult: 2.0, 
+            cooldown_mins: 15, 
+            auto_kill: true, 
+            strats: { momentum: true, breakout: true, dip: true } 
+        };
+        
+        let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v7') || '24';
+        
+        try {
+            const saved = localStorage.getItem('momentumSettingsV7_final');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                SETTINGS = { ...defaultSettings, ...parsed };
+                if (!SETTINGS.strats) SETTINGS.strats = { ...defaultSettings.strats };
+            }
+        } catch (e) { console.error("Settings error, using defaults", e); }
 
         const loadSettingsToUI = () => {
-            document.getElementById('setting-tf').value = SETTINGS.tf || '15m';
+            document.getElementById('setting-tf').value = SETTINGS.tf;
             document.getElementById('setting-sl').value = (SETTINGS.sl_perc * 100).toFixed(1);
             document.getElementById('setting-tp').value = (SETTINGS.min_tp * 100).toFixed(1);
             document.getElementById('setting-trail').value = (SETTINGS.trail_dist * 100).toFixed(1);
             document.getElementById('setting-vol').value = SETTINGS.vol_mult.toFixed(1);
             document.getElementById('setting-cooldown').value = SETTINGS.cooldown_mins;
-            document.getElementById('setting-auto-kill').checked = SETTINGS.auto_kill !== false; 
+            document.getElementById('setting-auto-kill').checked = SETTINGS.auto_kill; 
+            
+            document.getElementById('strat-momentum').checked = SETTINGS.strats.momentum;
+            document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
+            document.getElementById('strat-dip').checked = SETTINGS.strats.dip;
+            
             document.getElementById('stats-time-filter').value = statsTimeFilter;
         };
-        loadSettingsToUI();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettingsToUI();
+            initFirebase();
+            startScannerLoop();
+        });
 
         document.getElementById('save-settings-btn').addEventListener('click', () => {
             SETTINGS.tf = document.getElementById('setting-tf').value;
@@ -279,7 +326,13 @@
             SETTINGS.cooldown_mins = parseInt(document.getElementById('setting-cooldown').value) || 0;
             SETTINGS.auto_kill = document.getElementById('setting-auto-kill').checked;
             
-            localStorage.setItem('momentumSettingsV5', JSON.stringify(SETTINGS));
+            SETTINGS.strats = {
+                momentum: document.getElementById('strat-momentum').checked,
+                breakout: document.getElementById('strat-breakout').checked,
+                dip: document.getElementById('strat-dip').checked
+            };
+            
+            localStorage.setItem('momentumSettingsV7_final', JSON.stringify(SETTINGS));
             const btn = document.getElementById('save-settings-btn');
             const originalText = btn.innerText;
             btn.innerText = "تم الحفظ ✓";
@@ -289,11 +342,10 @@
 
         document.getElementById('stats-time-filter').addEventListener('change', (e) => {
             statsTimeFilter = e.target.value;
-            localStorage.setItem('momentumStatsTimeFilter', statsTimeFilter);
-            updateDashboardUI(); // Re-render stats based on new filter
+            localStorage.setItem('momentumStatsTimeFilter_v7', statsTimeFilter);
+            updateDashboardUI();
         });
 
-        // --- Sound System ---
         let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
         let audioCtx = null;
 
@@ -333,7 +385,6 @@
                     osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); 
                     gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                     osc.start(now); osc.stop(now + 0.1);
-                    
                     const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
                     osc2.connect(gain2); gain2.connect(audioCtx.destination);
                     osc2.type = 'sine'; osc2.frequency.setValueAtTime(1046.50, now + 0.15); 
@@ -348,7 +399,7 @@
                     gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
                     osc.start(now); osc.stop(now + 0.5);
                 }
-            } catch(e) { console.warn("Audio skipped", e); }
+            } catch(e) {}
         };
 
         document.getElementById('sound-toggle-btn').addEventListener('click', () => {
@@ -358,9 +409,9 @@
             if(soundEnabled) playSound('open'); 
         });
 
-        // --- Live Console Update ---
         const updateConsole = (text, type = 'normal') => {
             const consoleEl = document.getElementById('live-console-text');
+            if(!consoleEl) return;
             let color = 'text-gray-400';
             if(type === 'success') color = 'text-brand-green font-bold';
             if(type === 'warning') color = 'text-brand-gold';
@@ -370,7 +421,6 @@
             consoleEl.innerHTML = `<span class="text-gray-600 mr-2">[${time}]</span> <span class="${color}">${text}</span>`;
         };
 
-        // --- Math & Indicators ---
         const calcEMA = (data, period) => {
             if(data.length < period) return null;
             let k = 2 / (period + 1);
@@ -400,6 +450,16 @@
             if (avgLoss === 0) return 100;
             return 100 - (100 / (1 + (avgGain / avgLoss)));
         };
+        const calcBollingerBands = (data, period = 20, multiplier = 2) => {
+            if(data.length < period) return null;
+            const sma = calcSMA(data, period);
+            let sum = 0;
+            for(let i = data.length - period; i < data.length; i++) {
+                sum += Math.pow(data[i] - sma, 2);
+            }
+            const stdDev = Math.sqrt(sum / period);
+            return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma };
+        };
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -409,30 +469,27 @@
             const remainingMins = mins % 60;
             return `${hours}س ${remainingMins}د`;
         };
-        
-        // Helper to format "Time Ago" for open trades
+
         const formatTimeAgo = (openTimeMs) => {
             if (!openTimeMs) return '';
             const now = Date.now();
             const diffMs = now - openTimeMs;
-            
             const mins = Math.floor(diffMs / 60000);
             if (mins < 1) return 'منذ لحظات';
             if (mins < 60) return `منذ ${mins} دقيقة`;
-            
             const hours = Math.floor(mins / 60);
             const remainingMins = mins % 60;
-            
-            if (hours < 24) {
-                if (remainingMins === 0) return `منذ ${hours} ساعة`;
-                return `منذ ${hours} س و ${remainingMins} د`;
-            }
-            
+            if (hours < 24) return remainingMins === 0 ? `منذ ${hours} ساعة` : `منذ ${hours}س و ${remainingMins}د`;
             const days = Math.floor(hours / 24);
             return `منذ ${days} يوم`;
         };
 
-        // --- UI Updates ---
+        const getStrategyBadge = (stratName) => {
+            if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded">Breakout</span>';
+            if(stratName === 'Dip Sniper') return '<span class="badge-dip text-[8px] font-bold px-1.5 py-0.5 rounded">Dip Sniper</span>';
+            return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded">Momentum</span>'; 
+        };
+
         const updateDashboardUI = () => {
             try {
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
@@ -446,7 +503,6 @@
                 }
 
                 let won = 0, lost = 0, totalPnl = 0;
-                
                 filteredClosedTrades.forEach(trade => {
                     if(trade.status === 'won') won++;
                     if(trade.status === 'lost') lost++;
@@ -468,33 +524,33 @@
                 document.getElementById('history-summary-mobile').innerHTML = summaryText;
 
                 let openHtml = '';
-                
-                // Sort open trades by time (newest first)
                 const sortedOpenTrades = openTrades.sort((a, b) => (b.openTime || 0) - (a.openTime || 0));
                 
                 sortedOpenTrades.forEach(t => {
                     const currentPnl = ((t.currentPrice - t.entryPrice) / t.entryPrice) * 100;
                     const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
                     const trailStatus = t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`;
-                    
                     const timeAgoText = formatTimeAgo(t.openTime);
+                    const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
                     
                     openHtml += `
                         <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-5 pb-2.5 px-3">
-                            <!-- Time Ago Badge -->
                             <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                 ${timeAgoText}
                             </div>
                             
-                            <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5 mt-1">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-white font-bold text-xs">${t.symbol}</span>
+                            <div class="flex justify-between items-start mb-1.5 border-b border-gray-700/50 pb-1.5 mt-2 gap-1">
+                                <div class="flex flex-wrap items-center gap-1 min-w-0">
+                                    <span class="text-white font-bold text-xs truncate max-w-[80px]" title="${t.symbol}">${t.symbol}</span>
+                                    ${stratBadge}
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
                                     <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                     </a>
                                 </div>
-                                <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
                             </div>
                             <div class="flex justify-between items-center mb-1 text-[10px]">
                                 <span class="text-gray-400">الدخول:</span>
@@ -517,23 +573,26 @@
                     const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
                     const bgColor = isWin ? 'bg-brand-green/5 border-brand-green/20' : 'bg-brand-red/5 border-brand-red/20';
                     const icon = isWin ? '✓' : '✗';
-                    
-                    let durationStr = (t.openTime && t.closeTime && t.closeTime > t.openTime) ? formatDuration(t.closeTime - t.openTime) : 'غير محدد';
+                    const durationStr = (t.openTime && t.closeTime && t.closeTime > t.openTime) ? formatDuration(t.closeTime - t.openTime) : 'غير محدد';
                     const timeStr = t.closeTime ? new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
 
                     closedHtml += `
-                        <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2">
-                            <div class="flex flex-col w-1/3">
-                                <span class="font-bold text-white text-xs">${t.symbol}</span>
+                        <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2 gap-2">
+                            <div class="flex flex-col flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-1">
+                                    <span class="font-bold text-white text-xs truncate max-w-[90px]" title="${t.symbol}">${t.symbol}</span>
+                                    ${stratBadge}
+                                </div>
                                 <span class="text-[9px] text-gray-500 font-mono mt-0.5">${timeStr}</span>
                             </div>
-                            <div class="flex justify-center w-1/3">
-                                <span class="text-[10px] text-gray-400 bg-gray-950 border border-gray-800 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-inner">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <div class="flex justify-center shrink-0 hidden sm:flex">
+                                <span class="text-[9px] text-gray-400 bg-gray-950 border border-gray-800 px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-inner">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     ${durationStr}
                                 </span>
                             </div>
-                            <div class="flex items-center justify-end gap-2 w-1/3">
+                            <div class="flex items-center justify-end gap-2 shrink-0 w-auto">
                                 <span class="dir-ltr font-black text-xs ${pColor}">${(t.pnl || 0) > 0 ? '+' : ''}${(t.pnl || 0).toFixed(2)}%</span>
                                 <span class="${pColor} font-bold text-sm bg-gray-950 w-5 h-5 flex items-center justify-center rounded border ${pColor.replace('text', 'border')}/50 shadow-sm">${icon}</span>
                             </div>
@@ -548,28 +607,24 @@
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
             const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
             if (closedTrades.length === 0) return alert("السجل فارغ بالفعل.");
-            if (!confirm(`هل أنت متأكد من حذف ${closedTrades.length} صفقة مغلقة وتصفير العداد؟`)) return;
-            
+            if (!confirm(`هل أنت متأكد من حذف ${closedTrades.length} صفقة مغلقة؟`)) return;
             const btn = document.getElementById('clear-history-btn');
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `جاري الحذف...`;
-            
             try {
                 for (let t of closedTrades) {
                     if (isFirebaseConnected && tradesRef && t.docId) await deleteDoc(doc(tradesRef, t.docId));
                 }
                 virtualTrades = virtualTrades.filter(t => t.status === 'open');
                 updateDashboardUI();
-            } catch(e) { console.error("Delete error", e); }
-            finally { btn.innerHTML = originalHTML; }
+            } catch(e) {} finally { btn.innerHTML = originalHTML; }
         });
 
-        // --- AI Market Engine ---
         const analyzeMarketHealth = async () => {
             if (isCheckingMarket) return;
             isCheckingMarket = true;
             try {
-                updateConsole("🤖 جاري استدعاء محرك الذكاء الاصطناعي لتحليل السوق...");
+                updateConsole("🤖 جاري تحليل حالة السوق العامة (BTC)...");
                 const btcRes = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=250');
                 if(!btcRes.ok) throw new Error("API Error");
                 const btcKlines = await btcRes.json();
@@ -582,10 +637,11 @@
                 const btcRsi = calcRSI(btcCloses, 14);
 
                 let score = 0; let tags = [];
-
-                if (btcCurrentPrice > btcEma200) { score += 30; tags.push('ترند عام صاعد 🟢'); } else { tags.push('ترند عام هابط 🔴'); }
-                if (btcEma20 > btcEma50) { score += 40; tags.push('زخم شرائي 🟢'); } else { tags.push('ضغط بيعي 🔴'); }
-                if (btcRsi > 45 && btcRsi < 75) { score += 30; tags.push('عزم صحي 🟢'); } else if (btcRsi >= 75) { score += 10; tags.push('تشبع شرائي 🟡'); } else { tags.push('عزم سلبي 🔴'); }
+                if(btcEma200) {
+                    if (btcCurrentPrice > btcEma200) { score += 30; tags.push('ترند صاعد'); }
+                    if (btcEma20 > btcEma50) { score += 40; tags.push('زخم شرائي'); }
+                    if (btcRsi > 45 && btcRsi < 75) { score += 30; } else if (btcRsi >= 75) { score += 10; }
+                } else { score = 50; } // Fallback
 
                 const container = document.getElementById('market-health-container');
                 const glow = document.getElementById('market-health-glow');
@@ -619,24 +675,22 @@
                 }
             } catch (error) { 
                 console.error("Market Health Error", error);
-                updateConsole("⚠️ خطأ في تحليل السوق العام", "error");
+                updateConsole("⚠️ خطأ في تحليل السوق العام، جاري المحاولة...", "warning");
             } 
             finally { isCheckingMarket = false; }
         };
 
-        // --- Core Trading Logic ---
         const manageOpenTrades = async (symbol, currentPrice, currentLow) => {
             const trade = virtualTrades.find(t => t.symbol === symbol && t.status === 'open');
             if (!trade) return;
             try {
-                // Track max price strictly from live prices seen AFTER entry
                 trade.maxPrice = Math.max(trade.maxPrice || trade.entryPrice, currentPrice);
                 trade.currentPrice = currentPrice;
                 
                 const targetActivationPrice = trade.entryPrice * (1 + SETTINGS.min_tp);
-                
                 if (trade.maxPrice >= targetActivationPrice && !trade.trailActive) {
                     trade.trailActive = true;
+                    updateConsole(`✨ تفعيل الملاحقة لـ ${symbol} (${trade.strategy})`, 'success');
                 }
 
                 let currentSL = trade.trailActive 
@@ -645,7 +699,6 @@
 
                 trade.slLevel = Math.max(trade.slLevel || currentSL, currentSL);
 
-                // Exit Condition
                 if (currentPrice <= trade.slLevel || currentLow <= trade.slLevel) {
                     const exitExecutionPrice = Math.min(currentPrice, trade.slLevel);
                     const finalPnl = ((exitExecutionPrice - trade.entryPrice) / trade.entryPrice) * 100;
@@ -657,7 +710,7 @@
                     exitCooldowns[symbol] = Date.now() + cooldownMs;
                     
                     playSound(trade.status === 'won' ? 'win' : 'loss');
-                    updateConsole(`🔔 إغلاق صفقة ${symbol} ${trade.status === 'won' ? 'بربح' : 'بوقف خسارة'}`, trade.status === 'won' ? 'success' : 'error');
+                    updateConsole(`🔔 إغلاق ${symbol} (${trade.strategy}) ${trade.status === 'won' ? 'بربح' : 'بوقف خسارة'}`, trade.status === 'won' ? 'success' : 'error');
                     
                     if (isFirebaseConnected && tradesRef && trade.docId) {
                         await updateDoc(doc(tradesRef, trade.docId), { 
@@ -674,24 +727,26 @@
             } catch (error) { console.error("Manage trade error", error); }
         };
 
-        const enterNewTrade = async (symbol, price) => {
+        const enterNewTrade = async (symbol, price, strategyName) => {
             if(virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) return;
-            
-            // Cooldown & AI Protection
             if (exitCooldowns[symbol] && Date.now() < exitCooldowns[symbol]) return;
-            if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') {
-                updateConsole(`⛔ تم تجاهل ${symbol} بسبب الحماية الآلية (السوق خطر)`);
-                return;
-            }
+            if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') return;
 
             const newTrade = {
-                symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, 
-                trailActive: false, slLevel: price * (1 - SETTINGS.sl_perc), 
-                status: 'open', pnl: 0, openTime: Date.now()
+                symbol: symbol, 
+                entryPrice: price, 
+                currentPrice: price, 
+                maxPrice: price, 
+                trailActive: false, 
+                slLevel: price * (1 - SETTINGS.sl_perc), 
+                status: 'open', 
+                pnl: 0, 
+                openTime: Date.now(),
+                strategy: strategyName
             };
             
             playSound('open');
-            updateConsole(`🚀 اقتناص صفقة جديدة: ${symbol}`, 'success');
+            updateConsole(`🚀 اقتناص صفقة: ${symbol} [${strategyName}]`, 'success');
 
             if (isFirebaseConnected && tradesRef) {
                 try {
@@ -705,7 +760,7 @@
         const scanMarket = async () => {
             try {
                 await analyzeMarketHealth();
-                updateConsole("📡 جاري سحب بيانات العملات الأعلى سيولة...");
+                updateConsole("📡 جاري سحب بيانات العملات من باينانس...");
                 const tickRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
                 if(!tickRes.ok) throw new Error("Ticker Error");
                 const tickers = await tickRes.json();
@@ -713,65 +768,81 @@
                 const topCoins = tickers
                     .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.lastPrice) > 0.001 && !BLACKLIST.includes(t.symbol))
                     .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-                    .slice(0, 50); 
-
-                updateConsole(`⚙️ جاري تحليل شموع ${topCoins.length} عملة لتطبيق الشروط...`);
+                    .slice(0, 80); 
 
                 let foundNew = false;
                 for (let coin of topCoins) {
                     try {
-                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=50`);
+                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=60`);
                         if(!klineRes.ok) continue;
                         const klines = await klineRes.json();
                         
                         const closes = klines.map(k => parseFloat(k[4]));
                         const opens = klines.map(k => parseFloat(k[1]));
-                        const volumes = klines.map(k => parseFloat(k[5])); 
+                        const highs = klines.map(k => parseFloat(k[2]));
                         const lows = klines.map(k => parseFloat(k[3]));
+                        const volumes = klines.map(k => parseFloat(k[5])); 
 
-                        // السعر اللحظي (للشمعة الحالية المفتوحة)
                         const currentPrice = closes[closes.length - 1];
                         const currentLow = lows[lows.length - 1];
 
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow);
 
-                        // فصل بيانات الشمعة المغلقة
                         const closedCloses = closes.slice(0, -1);
                         const closedOpens = opens.slice(0, -1);
+                        const closedHighs = highs.slice(0, -1);
+                        const closedLows = lows.slice(0, -1);
                         const closedVolumes = volumes.slice(0, -1);
 
                         const closedPrice = closedCloses[closedCloses.length - 1];
                         const closedOpen = closedOpens[closedOpens.length - 1];
                         const closedVol = closedVolumes[closedVolumes.length - 1];
+                        const closedLow = closedLows[closedLows.length - 1];
+                        const prevClosedHigh = closedHighs[closedHighs.length - 2];
 
-                        // حساب المؤشرات
                         const ema9 = calcEMA(closedCloses, 9);
                         const ema21 = calcEMA(closedCloses, 21);
+                        const ema50 = calcEMA(closedCloses, 50);
                         const volAvg20 = calcSMA(closedVolumes, 20);
                         const rsi = calcRSI(closedCloses, 14);
+                        const bb = calcBollingerBands(closedCloses, 20, 2);
 
-                        if(!ema9 || !ema21 || !volAvg20 || !rsi) continue;
+                        if(!ema9 || !ema21 || !ema50 || !volAvg20 || !rsi || !bb) continue;
 
-                        // PINE SCRIPT STRATEGY
-                        const cond_vol = closedVol > (volAvg20 * SETTINGS.vol_mult);
-                        const cond_candle = closedPrice > closedOpen;
-                        const cond_trend = (closedPrice > ema9) && (ema9 > ema21);
-                        const cond_rsi = (rsi > 55) && (rsi < 85);
-                        
-                        if (cond_vol && cond_candle && cond_trend && cond_rsi) {
-                            foundNew = true;
-                            enterNewTrade(coin.symbol, currentPrice);
+                        const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
+                        const isGreenCandle = closedPrice > closedOpen;
+
+                        // 1. Momentum 
+                        if (SETTINGS.strats.momentum && isVolumeSpike && isGreenCandle && closedPrice > ema9 && ema9 > ema21 && rsi > 55 && rsi < 75) {
+                            enterNewTrade(coin.symbol, currentPrice, 'Momentum');
+                            foundNew = true; continue;
                         }
-                    } catch (e) { /* skip */ }
+
+                        // 2. Breakout
+                        if (SETTINGS.strats.breakout && isVolumeSpike && isGreenCandle && closedPrice > prevClosedHigh && closedPrice > bb.sma && rsi > 65) {
+                            enterNewTrade(coin.symbol, currentPrice, 'Breakout');
+                            foundNew = true; continue;
+                        }
+
+                        // 3. Dip Sniper
+                        if (SETTINGS.strats.dip && ema21 > ema50 && closedLow <= bb.lower && isGreenCandle && rsi < 45) {
+                            enterNewTrade(coin.symbol, currentPrice, 'Dip Sniper');
+                            foundNew = true; continue;
+                        }
+
+                    } catch (e) {}
                 }
                 updateDashboardUI();
-                if(!foundNew) {
-                    updateConsole("⏳ اكتمل الفحص. لم يتم رصد أي اختراقات جديدة للزخم. انتظار الدورة القادمة...");
-                }
+                if(!foundNew) updateConsole("⏳ اكتمل الفحص. انتظار الفرص القادمة...");
             } catch (err) { 
                 console.error("Scan error", err);
-                updateConsole("⚠️ خطأ في الاتصال بالشبكة. يتم إعادة المحاولة...", "warning");
+                updateConsole("⚠️ خطأ في الاتصال. يتم إعادة المحاولة...", "warning");
             }
+        };
+
+        const startScannerLoop = async () => {
+            await scanMarket();
+            setTimeout(startScannerLoop, 15000); 
         };
 
         const setDbStatus = (status) => {
@@ -787,12 +858,12 @@
 
         const initFirebase = async () => {
             try {
-                updateConsole("🔗 جاري تهيئة الاتصال السحابي وقواعد البيانات...");
+                updateConsole("🔗 جاري تهيئة الاتصال السحابي...");
                 app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
                 await signInAnonymously(auth);
                 userId = auth.currentUser?.uid;
                 if (userId) {
-                    tradesRef = collection(db, 'users', userId, 'momentum_pro_final'); 
+                    tradesRef = collection(db, 'users', userId, 'momentum_pro_v8'); 
                     isFirebaseConnected = true; setDbStatus('connected'); 
                     onSnapshot(tradesRef, (snapshot) => {
                         const loaded = []; snapshot.forEach(docSnap => loaded.push({ docId: docSnap.id, ...docSnap.data() }));
@@ -801,10 +872,6 @@
                 }
             } catch (error) { setDbStatus('error'); isFirebaseConnected = false; updateConsole("⚠️ فشل الاتصال بقاعدة البيانات", "error"); }
         };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initFirebase(); scanMarket(); setInterval(scanMarket, 15000);
-        });
     </script>
 </body>
 </html>
