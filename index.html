@@ -30,6 +30,11 @@
         .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
         .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
+        
+        /* Strategy Badge Colors (Kept old ones just for historical closed trades rendering safely) */
+        .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-dip { background-color: rgba(139, 92, 246, 0.15); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -48,6 +53,7 @@
             </div>
             
             <div class="flex items-center gap-3">
+                <!-- Sound Toggle -->
                 <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -68,18 +74,20 @@
             <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
                 <div class="flex items-center gap-3">
-                    <div id="market-health-score-circle" class="w-12 h-12 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">
+                    <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">
                         --%
                     </div>
-                    <div>
+                    <div class="flex flex-col">
                         <h2 class="text-xs font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
                         </h2>
                         <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري قياس نبض البيتكوين (BTC)...</div>
+                        <!-- New Element for Market History -->
+                        <div id="market-health-history" class="text-[9.5px] text-brand-gold mt-1.5 hidden bg-gray-950/60 px-2 py-0.5 rounded border border-gray-800/80 w-fit font-mono"></div>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 bg-gray-950 px-3 py-2 rounded-lg border border-gray-800">
+                <div class="flex items-center gap-2 bg-gray-950 px-3 py-2 rounded-lg border border-gray-800 shrink-0">
                     <label for="setting-auto-kill" class="text-[10px] font-bold text-gray-300 cursor-pointer flex items-center gap-2">
                         <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-3.5 h-3.5 cursor-pointer">
                         تفعيل الحماية الآلية (منع الدخول وقت الخطر)
@@ -95,11 +103,11 @@
 
         <!-- Live Activity Console -->
         <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
-            <span class="relative flex h-2.5 w-2.5">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
             </span>
-            <div id="live-console-text" class="text-[11px] font-mono text-gray-400">🚀 بدء تشغيل محرك الرادار المتعدد...</div>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 بدء تشغيل محرك الرادار المتعدد...</div>
         </div>
         
         <!-- Settings Section -->
@@ -107,27 +115,19 @@
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (Target 5%-10%+)</h2>
+                    <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (Target +5%-10%)</h2>
                 </div>
             </div>
             
-            <!-- Strategy Toggles -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-4 border-b border-gray-800">
+            <!-- Strategy Toggles (Only Momentum & Breakout) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
-                    <label class="!mb-0 cursor-pointer flex-1 text-white text-[11px] font-bold">الزخم (Momentum) 🔵</label>
-                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-3.5 h-3.5">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
+                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-4 h-4">
                 </div>
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
-                    <label class="!mb-0 cursor-pointer flex-1 text-white text-[11px] font-bold">الاختراق (Breakout) 🟢</label>
-                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-3.5 h-3.5">
-                </div>
-                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
-                    <label class="!mb-0 cursor-pointer flex-1 text-white text-[11px] font-bold">الارتداد (Dip Sniper) 🟣</label>
-                    <input type="checkbox" id="strat-dip" class="accent-brand-purple w-3.5 h-3.5">
-                </div>
-                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-brand-gold/30 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
-                    <label class="!mb-0 cursor-pointer flex-1 text-brand-gold text-[11px] font-bold">الأوردر بلوك (SMC) 🟠</label>
-                    <input type="checkbox" id="strat-smc" class="accent-brand-gold w-3.5 h-3.5">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الاختراق (Breakout) 🟢</label>
+                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-4 h-4">
                 </div>
             </div>
 
@@ -215,7 +215,7 @@
                     <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
                     الصفقات المفتوحة حالياً (قيد المراقبة والملاحقة)
                 </h3>
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="active-trades-list">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
                     <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">جاري مسح السوق بحثاً عن فرص...</div>
                 </div>
             </div>
@@ -267,10 +267,13 @@
         let isCheckingMarket = false;
         let globalMarketStatus = 'neutral';
         
+        let currentMarketScore = null;
+        let previousMarketScore = null;
+        let lastScoreChangeTime = null;
+
         const exitCooldowns = {};
         const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 'EURUSDT', 'XAUTUSDT', 'PAXGUSDT', 'BUSDUSDT', 'AEURUSDT', 'USDSUSDT'];
 
-        // --- Safe Settings System ---
         const defaultSettings = { 
             tf: '15m', 
             sl_perc: 0.03, 
@@ -279,7 +282,7 @@
             vol_mult: 2.0, 
             cooldown_mins: 15, 
             auto_kill: true, 
-            strats: { momentum: true, breakout: true, dip: true, smc: true } 
+            strats: { momentum: true, breakout: true } 
         };
         
         let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
@@ -291,7 +294,6 @@
                 const parsed = JSON.parse(saved);
                 SETTINGS = { ...defaultSettings, ...parsed };
                 if (!SETTINGS.strats) SETTINGS.strats = { ...defaultSettings.strats };
-                if (SETTINGS.strats.smc === undefined) SETTINGS.strats.smc = true;
             }
         } catch (e) { console.error("Settings error, using defaults", e); }
 
@@ -304,10 +306,8 @@
             document.getElementById('setting-cooldown').value = SETTINGS.cooldown_mins;
             document.getElementById('setting-auto-kill').checked = SETTINGS.auto_kill; 
             
-            document.getElementById('strat-momentum').checked = SETTINGS.strats.momentum;
-            document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
-            document.getElementById('strat-dip').checked = SETTINGS.strats.dip;
-            document.getElementById('strat-smc').checked = SETTINGS.strats.smc;
+            if(document.getElementById('strat-momentum')) document.getElementById('strat-momentum').checked = SETTINGS.strats.momentum;
+            if(document.getElementById('strat-breakout')) document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
             
             document.getElementById('stats-time-filter').value = statsTimeFilter;
         };
@@ -328,10 +328,8 @@
             SETTINGS.auto_kill = document.getElementById('setting-auto-kill').checked;
             
             SETTINGS.strats = {
-                momentum: document.getElementById('strat-momentum').checked,
-                breakout: document.getElementById('strat-breakout').checked,
-                dip: document.getElementById('strat-dip').checked,
-                smc: document.getElementById('strat-smc').checked
+                momentum: document.getElementById('strat-momentum') ? document.getElementById('strat-momentum').checked : true,
+                breakout: document.getElementById('strat-breakout') ? document.getElementById('strat-breakout').checked : true
             };
             
             localStorage.setItem('momentumSettingsV8_final', JSON.stringify(SETTINGS));
@@ -348,7 +346,6 @@
             updateDashboardUI();
         });
 
-        // --- Sound System ---
         let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
         let audioCtx = null;
 
@@ -412,7 +409,6 @@
             if(soundEnabled) playSound('open'); 
         });
 
-        // --- Live Console ---
         const updateConsole = (text, type = 'normal') => {
             const consoleEl = document.getElementById('live-console-text');
             if(!consoleEl) return;
@@ -422,10 +418,9 @@
             if(type === 'error') color = 'text-brand-red';
             
             const time = new Date().toLocaleTimeString('ar-EG', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            consoleEl.innerHTML = `<span class="text-gray-600 mr-2">[${time}]</span> <span class="${color}">${text}</span>`;
+            consoleEl.innerHTML = `<span class="text-gray-600 mr-2 shrink-0">[${time}]</span> <span class="${color}">${text}</span>`;
         };
 
-        // --- Math & Indicators ---
         const calcEMA = (data, period) => {
             if(data.length < period) return null;
             let k = 2 / (period + 1);
@@ -465,21 +460,6 @@
             const stdDev = Math.sqrt(sum / period);
             return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma };
         };
-        const calcATR = (highs, lows, closes, period = 14) => {
-            if(closes.length <= period) return null;
-            let trArray = [];
-            for(let i = 1; i < closes.length; i++) {
-                let hl = highs[i] - lows[i];
-                let hc = Math.abs(highs[i] - closes[i-1]);
-                let lc = Math.abs(lows[i] - closes[i-1]);
-                trArray.push(Math.max(hl, hc, lc));
-            }
-            let sum = 0;
-            for(let i = trArray.length - period; i < trArray.length; i++) {
-                sum += trArray[i];
-            }
-            return sum / period;
-        };
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -505,13 +485,13 @@
         };
 
         const getStrategyBadge = (stratName) => {
-            if(stratName === 'Breakout') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-green/15 text-brand-green border border-brand-green/30">Breakout</span>';
-            if(stratName === 'Dip Sniper') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-purple/15 text-brand-purple border border-brand-purple/30">Dip Sniper</span>';
-            if(stratName === 'Order Block') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/30">Order Block</span>';
-            return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-blue/15 text-brand-blue border border-brand-blue/30">Momentum</span>'; 
+            if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
+            // Keeping historical badges just in case user has old closed trades from them
+            if(stratName === 'Dip Sniper') return '<span class="badge-dip text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Dip Sniper</span>';
+            if(stratName === 'Order Block' || stratName === 'SMC') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0 text-brand-gold bg-brand-gold/15 border border-brand-gold/30">Order Block</span>';
+            return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
         };
 
-        // --- UI Updates ---
         const updateDashboardUI = () => {
             try {
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
@@ -556,18 +536,18 @@
                     const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
                     
                     openHtml += `
-                        <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-5 pb-2.5 px-3">
+                        <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
                             <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                 ${timeAgoText}
                             </div>
                             
-                            <div class="flex justify-between items-start mb-1.5 border-b border-gray-700/50 pb-1.5 mt-2 gap-1">
-                                <div class="flex flex-wrap items-center gap-1 min-w-0">
-                                    <span class="text-white font-bold text-xs truncate max-w-[80px]" title="${t.symbol}">${t.symbol}</span>
+                            <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5 gap-2">
+                                <div class="flex items-center gap-1 min-w-0 overflow-hidden">
+                                    <span class="text-white font-bold text-xs truncate" title="${t.symbol}">${t.symbol}</span>
                                     ${stratBadge}
                                 </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
+                                <div class="flex items-center gap-1 shrink-0">
                                     <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
                                     <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -602,8 +582,8 @@
                     closedHtml += `
                         <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2 gap-2">
                             <div class="flex flex-col flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-1">
-                                    <span class="font-bold text-white text-xs truncate max-w-[90px]" title="${t.symbol}">${t.symbol}</span>
+                                <div class="flex items-center gap-1 overflow-hidden">
+                                    <span class="font-bold text-white text-xs truncate" title="${t.symbol}">${t.symbol}</span>
                                     ${stratBadge}
                                 </div>
                                 <span class="text-[9px] text-gray-500 font-mono mt-0.5">${timeStr}</span>
@@ -663,13 +643,25 @@
                     if (btcCurrentPrice > btcEma200) { score += 30; tags.push('ترند صاعد'); }
                     if (btcEma20 > btcEma50) { score += 40; tags.push('زخم شرائي'); }
                     if (btcRsi > 45 && btcRsi < 75) { score += 30; } else if (btcRsi >= 75) { score += 10; }
-                } else { score = 50; } // Fallback
+                } else { score = 50; } 
 
+                // History Tracking Logic
+                if (currentMarketScore !== null && score !== currentMarketScore) {
+                    previousMarketScore = currentMarketScore;
+                    lastScoreChangeTime = Date.now();
+                } else if (currentMarketScore === null) {
+                    currentMarketScore = score;
+                    lastScoreChangeTime = Date.now();
+                }
+                currentMarketScore = score;
+
+                // UI Updates
                 const container = document.getElementById('market-health-container');
                 const glow = document.getElementById('market-health-glow');
                 const circle = document.getElementById('market-health-score-circle');
                 const text = document.getElementById('market-health-text');
                 const bar = document.getElementById('market-health-bar');
+                const historyEl = document.getElementById('market-health-history');
 
                 circle.innerText = score + '%'; bar.style.width = score + '%';
 
@@ -677,24 +669,35 @@
                     globalMarketStatus = 'bullish';
                     container.className = 'bg-gray-900 border border-brand-green/40 rounded-xl p-4 shadow-[0_0_25px_rgba(16,185,129,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
                     glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-green to-transparent opacity-80';
-                    circle.className = 'w-12 h-12 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-green text-brand-green bg-brand-green/10 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
+                    circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-green text-brand-green bg-brand-green/10 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
                     bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-green shadow-[0_0_10px_#10B981]';
                     text.innerHTML = '<span class="text-brand-green text-xs">🚀 خاااااااارق (سوق ناري وآمن جداً للانفجارات)</span>';
                 } else if (score >= 40) {
                     globalMarketStatus = 'neutral';
                     container.className = 'bg-gray-900 border border-brand-gold/40 rounded-xl p-4 shadow-[0_0_25px_rgba(245,158,11,0.1)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
                     glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-60';
-                    circle.className = 'w-12 h-12 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-gold text-brand-gold bg-brand-gold/10 shadow-[0_0_15px_rgba(245,158,11,0.2)]';
+                    circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-gold text-brand-gold bg-brand-gold/10 shadow-[0_0_15px_rgba(245,158,11,0.2)]';
                     bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-gold shadow-[0_0_10px_#F59E0B]';
                     text.innerHTML = '<span class="text-brand-gold text-xs">🟡 إيجابي بحذر (السوق مستقر وجيد للتداول)</span>';
                 } else {
                     globalMarketStatus = 'bearish';
                     container.className = 'bg-gray-900 border border-brand-red/40 rounded-xl p-4 shadow-[0_0_25px_rgba(239,68,68,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
                     glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-red to-transparent opacity-80';
-                    circle.className = 'w-12 h-12 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-red text-brand-red bg-brand-red/10 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+                    circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-red text-brand-red bg-brand-red/10 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
                     bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-red shadow-[0_0_10px_#EF4444]';
                     text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
                 }
+
+                // Update History Text
+                if (previousMarketScore !== null) {
+                    const timeAgo = formatTimeAgo(lastScoreChangeTime);
+                    historyEl.innerHTML = `النتيجة السابقة كانت <span class="text-white font-bold">${previousMarketScore}%</span> (تغيرت ${timeAgo})`;
+                    historyEl.classList.remove('hidden');
+                } else {
+                    historyEl.innerHTML = `النتيجة مستقرة على <span class="text-white font-bold">${score}%</span> منذ بدء الرادار`;
+                    historyEl.classList.remove('hidden');
+                }
+
             } catch (error) { 
                 console.error("Market Health Error", error);
                 updateConsole("⚠️ خطأ في تحليل السوق العام، جاري المحاولة...", "warning");
@@ -795,8 +798,7 @@
                 let foundNew = false;
                 for (let coin of topCoins) {
                     try {
-                        // Increased limit to 250 for accurate EMA200 and historic OB search
-                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=250`);
+                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=60`);
                         if(!klineRes.ok) continue;
                         const klines = await klineRes.json();
                         
@@ -807,16 +809,13 @@
                         const volumes = klines.map(k => parseFloat(k[5])); 
 
                         const currentPrice = closes[closes.length - 1];
-                        const currentOpen = opens[opens.length - 1];
                         const currentLow = lows[lows.length - 1];
-                        const currentVol = volumes[volumes.length - 1];
 
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow);
 
                         const closedCloses = closes.slice(0, -1);
                         const closedOpens = opens.slice(0, -1);
                         const closedHighs = highs.slice(0, -1);
-                        const closedLows = lows.slice(0, -1);
                         const closedVolumes = volumes.slice(0, -1);
 
                         const closedPrice = closedCloses[closedCloses.length - 1];
@@ -824,17 +823,13 @@
                         const closedVol = closedVolumes[closedVolumes.length - 1];
                         const prevClosedHigh = closedHighs[closedHighs.length - 2];
 
-                        // Indicators
                         const ema9 = calcEMA(closedCloses, 9);
                         const ema21 = calcEMA(closedCloses, 21);
-                        const ema50 = calcEMA(closedCloses, 50);
-                        const ema200 = calcEMA(closedCloses, 200);
                         const volAvg20 = calcSMA(closedVolumes, 20);
                         const rsi = calcRSI(closedCloses, 14);
                         const bb = calcBollingerBands(closedCloses, 20, 2);
-                        const atr = calcATR(closedHighs, closedLows, closedCloses, 14);
 
-                        if(!ema9 || !ema21 || !ema50 || !volAvg20 || !rsi || !bb || !atr) continue;
+                        if(!ema9 || !ema21 || !volAvg20 || !rsi || !bb) continue;
 
                         const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
                         const isGreenCandle = closedPrice > closedOpen;
@@ -846,66 +841,17 @@
                         }
 
                         // 2. Breakout
-                        if (SETTINGS.strats.breakout && isVolumeSpike && isGreenCandle && closedPrice > prevClosedHigh && closedPrice > bb.sma && rsi > 65) {
+                        if (SETTINGS.strats.breakout && isVolumeSpike && isGreenCandle && closedPrice > prevClosedHigh && closedPrice > bb.upper && rsi > 60) {
                             enterNewTrade(coin.symbol, currentPrice, 'Breakout');
                             foundNew = true; continue;
                         }
 
-                        // 3. Dip Sniper
-                        if (SETTINGS.strats.dip && ema21 > ema50 && closedLows[closedLows.length - 1] <= bb.lower && isGreenCandle && rsi < 45) {
-                            enterNewTrade(coin.symbol, currentPrice, 'Dip Sniper');
-                            foundNew = true; continue;
-                        }
-
-                        // 4. NEW: SMC Order Block (Trend + Volatility + Volume + Momentum)
-                        if (SETTINGS.strats.smc && ema200) {
-                            // Pillar 1: Trend (Must be in a macro uptrend)
-                            const isUptrend = closedPrice > ema200 && ema50 > ema200;
-                            
-                            // Pillar 2: Volatility (Filter out dead coins, ATR must be > 0.1% of price)
-                            const hasVolatility = atr > (closedPrice * 0.001);
-
-                            if (isUptrend && hasVolatility) {
-                                let obHigh = null;
-                                let obLow = null;
-                                
-                                // Pillar 3: Order Block Logic (Find last Red candle before a massive Green displacement)
-                                // Scan last 40 candles, skipping the immediate last 5 to ensure it's a structural OB
-                                for (let i = closedCloses.length - 5; i > closedCloses.length - 40; i--) {
-                                    if (i < 1) continue;
-                                    let isRed = closedCloses[i] < closedOpens[i];
-                                    let nextGreen1 = closedCloses[i+1] > closedOpens[i+1];
-                                    let nextGreen2 = closedCloses[i+2] > closedOpens[i+2];
-                                    // Displacement: Price pushed up at least 1.2% from the red candle low
-                                    let displacement = (closedCloses[i+2] - closedLows[i]) / closedLows[i] > 0.012; 
-
-                                    if (isRed && nextGreen1 && nextGreen2 && displacement) {
-                                        obHigh = closedHighs[i];
-                                        obLow = closedLows[i];
-                                        break; // Found our Institutional Zone
-                                    }
-                                }
-
-                                if (obHigh !== null && obLow !== null) {
-                                    // Pillar 4: Pullback & Touch (Price recently dipped into the OB box)
-                                    const touchedOB = (currentLow <= obHigh && currentPrice >= obLow) || (closedLows[closedLows.length - 1] <= obHigh && closedPrice >= obLow);
-                                    
-                                    // Pillar 5: Momentum & Volume Confirmation for the bounce
-                                    const healthyRSI = rsi > 40 && rsi < 70; // Not overbought, room to 10%
-                                    const goodVolume = currentVol > (volAvg20 * 0.8) || closedVol > volAvg20; // Smart money stepping back in
-                                    const bouncingUp = currentPrice > currentOpen; // Live candle is rejecting the downside
-
-                                    if (touchedOB && healthyRSI && goodVolume && bouncingUp) {
-                                        enterNewTrade(coin.symbol, currentPrice, 'Order Block');
-                                        foundNew = true; continue;
-                                    }
-                                }
-                            }
-                        }
-
                     } catch (e) {}
                 }
+                
+                // تحديث الـ UI ليتم عرض الوقت المحدث لمؤشر السوق
                 updateDashboardUI();
+                
                 if(!foundNew) updateConsole("⏳ اكتمل الفحص. انتظار الفرص القادمة...");
             } catch (err) { 
                 console.error("Scan error", err);
