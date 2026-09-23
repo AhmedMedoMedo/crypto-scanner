@@ -83,7 +83,7 @@
                             مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
                         </h2>
                         <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري قياس نبض البيتكوين (BTC)...</div>
-                        <!-- New Element for Market History -->
+                        <!-- Market History (Now with correct previous score and time ago) -->
                         <div id="market-health-history" class="text-[9.5px] text-brand-gold mt-1.5 hidden bg-gray-950/60 px-2 py-0.5 rounded border border-gray-800/80 w-fit font-mono"></div>
                     </div>
                 </div>
@@ -119,7 +119,7 @@
                 </div>
             </div>
             
-            <!-- Strategy Toggles (Only Momentum & Breakout) -->
+            <!-- Strategy Toggles (Only Momentum and Breakout left) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
                     <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
@@ -136,6 +136,8 @@
                 <div class="input-group">
                     <label>الإطار الزمني الأساسي</label>
                     <select id="setting-tf">
+                        <option value="1m">1 دقيقة (سكالبينج سريع)</option>
+                        <option value="5m">5 دقائق (خطف سريع)</option>
                         <option value="15m" selected>15 دقيقة (أساسي)</option>
                         <option value="1h">1 ساعة (أهداف أبعد)</option>
                         <option value="4h">4 ساعات (استثمار)</option>
@@ -267,6 +269,7 @@
         let isCheckingMarket = false;
         let globalMarketStatus = 'neutral';
         
+        // --- Market Health Memory Variables ---
         let currentMarketScore = null;
         let previousMarketScore = null;
         let lastScoreChangeTime = null;
@@ -282,7 +285,7 @@
             vol_mult: 2.0, 
             cooldown_mins: 15, 
             auto_kill: true, 
-            strats: { momentum: true, breakout: true } 
+            strats: { momentum: true, breakout: true } // Removed SMC and Dip
         };
         
         let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
@@ -298,7 +301,14 @@
         } catch (e) { console.error("Settings error, using defaults", e); }
 
         const loadSettingsToUI = () => {
-            document.getElementById('setting-tf').value = SETTINGS.tf;
+            const tfSelect = document.getElementById('setting-tf');
+            if (Array.from(tfSelect.options).some(opt => opt.value === SETTINGS.tf)) {
+                tfSelect.value = SETTINGS.tf;
+            } else {
+                tfSelect.value = '15m'; 
+                SETTINGS.tf = '15m';
+            }
+            
             document.getElementById('setting-sl').value = (SETTINGS.sl_perc * 100).toFixed(1);
             document.getElementById('setting-tp').value = (SETTINGS.min_tp * 100).toFixed(1);
             document.getElementById('setting-trail').value = (SETTINGS.trail_dist * 100).toFixed(1);
@@ -313,6 +323,16 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Load saved market history if available
+            try {
+                const savedHistory = JSON.parse(localStorage.getItem('marketScoreHistory'));
+                if (savedHistory && savedHistory.currentScore !== null) {
+                    currentMarketScore = savedHistory.currentScore;
+                    previousMarketScore = savedHistory.previousScore;
+                    lastScoreChangeTime = savedHistory.lastChangeTime;
+                }
+            } catch (e) { console.error("Failed to load market history"); }
+
             loadSettingsToUI();
             initFirebase();
             startScannerLoop();
@@ -603,7 +623,23 @@
                 if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة في هذه الفترة</div>';
                 document.getElementById('closed-trades-list').innerHTML = closedHtml;
 
+                // Update Market History display during normal UI updates too
+                updateMarketHistoryUI();
+
             } catch (err) { console.error("UI Update Error:", err); }
+        };
+
+        const updateMarketHistoryUI = () => {
+            const historyEl = document.getElementById('market-health-history');
+            if (previousMarketScore !== null && lastScoreChangeTime !== null) {
+                const timeAgo = formatTimeAgo(lastScoreChangeTime);
+                historyEl.innerHTML = `النتيجة السابقة كانت <span class="text-white font-bold">${previousMarketScore}%</span> (تغيرت ${timeAgo})`;
+                historyEl.classList.remove('hidden');
+            } else if (currentMarketScore !== null) {
+                // Initial state where it hasn't changed yet since load
+                historyEl.innerHTML = `النتيجة مستقرة على <span class="text-white font-bold">${currentMarketScore}%</span> منذ بدء الرادار`;
+                historyEl.classList.remove('hidden');
+            }
         };
 
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
@@ -649,9 +685,21 @@
                 if (currentMarketScore !== null && score !== currentMarketScore) {
                     previousMarketScore = currentMarketScore;
                     lastScoreChangeTime = Date.now();
+                    
+                    // Save to local storage to persist across reloads
+                    localStorage.setItem('marketScoreHistory', JSON.stringify({
+                        currentScore: score,
+                        previousScore: previousMarketScore,
+                        lastChangeTime: lastScoreChangeTime
+                    }));
                 } else if (currentMarketScore === null) {
                     currentMarketScore = score;
-                    lastScoreChangeTime = Date.now();
+                    // Initial save
+                     localStorage.setItem('marketScoreHistory', JSON.stringify({
+                        currentScore: score,
+                        previousScore: null,
+                        lastChangeTime: null
+                    }));
                 }
                 currentMarketScore = score;
 
@@ -661,7 +709,6 @@
                 const circle = document.getElementById('market-health-score-circle');
                 const text = document.getElementById('market-health-text');
                 const bar = document.getElementById('market-health-bar');
-                const historyEl = document.getElementById('market-health-history');
 
                 circle.innerText = score + '%'; bar.style.width = score + '%';
 
@@ -688,15 +735,7 @@
                     text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
                 }
 
-                // Update History Text
-                if (previousMarketScore !== null) {
-                    const timeAgo = formatTimeAgo(lastScoreChangeTime);
-                    historyEl.innerHTML = `النتيجة السابقة كانت <span class="text-white font-bold">${previousMarketScore}%</span> (تغيرت ${timeAgo})`;
-                    historyEl.classList.remove('hidden');
-                } else {
-                    historyEl.innerHTML = `النتيجة مستقرة على <span class="text-white font-bold">${score}%</span> منذ بدء الرادار`;
-                    historyEl.classList.remove('hidden');
-                }
+                updateMarketHistoryUI();
 
             } catch (error) { 
                 console.error("Market Health Error", error);
