@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -682,7 +681,46 @@
                         
                         if (cond_vol && cond_candle && cond_trend && cond_rsi) {
                             foundNew = true;
-                            enterNewTrade(coin.symbol, currentPrice);
+                            enterNewTrade(coin.symbol, currentPrice);</comment-tag id="1" text="التعديل ده بيعزل بيانات 'الشمعة اللي شغالة دلوقتي' وبيحسب كل المؤشرات (EMA و RSI) والشروط بناءً على 'الشمعة المغلقة' اللي قبلها (باستخدام slice). وفي نفس الوقت احتفظنا بالسعر اللحظي عشان إدارة الصفقات المفتوحة والستوب لوز يفضل يضرب في وقتها من غير تأخير.
+
+const closes = klines.map(k => parseFloat(k[4]));
+                        const opens = klines.map(k => parseFloat(k[1]));
+                        const volumes = klines.map(k => parseFloat(k[5])); 
+                        const lows = klines.map(k => parseFloat(k[3]));
+
+                        // السعر اللحظي (للشمعة الحالية المفتوحة) عشان نحدث بيه الصفقات المفتوحة والستوب لوز
+                        const currentPrice = closes[closes.length - 1];
+                        const currentLow = lows[lows.length - 1];
+
+                        await manageOpenTrades(coin.symbol, currentPrice, currentLow);
+
+                        // فصل بيانات الشمعة المغلقة (الشمعة اللي قبل الحالية) عشان نبني عليها الاستراتيجية
+                        const closedCloses = closes.slice(0, -1);
+                        const closedOpens = opens.slice(0, -1);
+                        const closedVolumes = volumes.slice(0, -1);
+
+                        const closedPrice = closedCloses[closedCloses.length - 1];
+                        const closedOpen = closedOpens[closedOpens.length - 1];
+                        const closedVol = closedVolumes[closedVolumes.length - 1];
+
+                        // حساب المؤشرات بناءً على الشموع المغلقة فقط
+                        const ema9 = calcEMA(closedCloses, 9);
+                        const ema21 = calcEMA(closedCloses, 21);
+                        const volAvg20 = calcSMA(closedVolumes, 20);
+                        const rsi = calcRSI(closedCloses, 14);
+
+                        if(!ema9 || !ema21 || !volAvg20 || !rsi) continue;
+
+                        // PINE SCRIPT STRATEGY (شروط الدخول مبنية على الشمعة المغلقة)
+                        const cond_vol = closedVol > (volAvg20 * SETTINGS.vol_mult);
+                        const cond_candle = closedPrice > closedOpen;
+                        const cond_trend = (closedPrice > ema9) && (ema9 > ema21);
+                        const cond_rsi = (rsi > 55) && (rsi < 85);
+                        
+                        if (cond_vol && cond_candle && cond_trend && cond_rsi) {
+                            foundNew = true;
+                            // الدخول بيكون بالسعر اللحظي الحالي بعد التأكد من شروط الشمعة المغلقة
+                            enterNewTrade(coin.symbol, currentPrice);" type="suggestion">
                         }
                     } catch (e) { /* skip */ }
                 }
