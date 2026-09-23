@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -280,7 +281,7 @@
                 btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
             }
         };
-        updateSoundUI(); // Set UI on load
+        updateSoundUI(); 
 
         const unlockAudio = () => {
             if (soundEnabled && !audioCtx) {
@@ -288,7 +289,6 @@
                 if (audioCtx.state === 'suspended') audioCtx.resume();
             }
         };
-        // Unlock on first click anywhere in the page to bypass browser autoplay policy
         document.body.addEventListener('click', unlockAudio, { once: true });
 
         const playSound = (type) => {
@@ -327,7 +327,7 @@
             soundEnabled = !soundEnabled;
             localStorage.setItem('momentumSoundEnabled', soundEnabled);
             updateSoundUI();
-            if(soundEnabled) playSound('open'); // Test sound on manual click
+            if(soundEnabled) playSound('open'); 
         });
 
         // --- Live Console Update ---
@@ -654,51 +654,25 @@
                         if(!klineRes.ok) continue;
                         const klines = await klineRes.json();
                         
-                        const closes = klines.map(k => parseFloat(k[4]));
-                        const opens = klines.map(k => parseFloat(k[1]));
-                        const volumes = klines.map(k => parseFloat(k[5])); 
-                        const lows = klines.map(k => parseFloat(k[3]));
+                        // كل بيانات الشموع
+                        const allCloses = klines.map(k => parseFloat(k[4]));
+                        const allOpens = klines.map(k => parseFloat(k[1]));
+                        const allVolumes = klines.map(k => parseFloat(k[5])); 
+                        const allLows = klines.map(k => parseFloat(k[3]));
 
-                        const currentPrice = closes[closes.length - 1];
-                        const currentOpen = opens[opens.length - 1];
-                        const currentLow = lows[lows.length - 1];
-                        const currentVol = volumes[volumes.length - 1];
+                        // السعر اللحظي (للشمعة الحالية المفتوحة)
+                        const currentPrice = allCloses[allCloses.length - 1];
+                        const currentLow = allLows[allLows.length - 1];
 
+                        // تحديث الصفقات المفتوحة والستوب لوز بالسعر اللحظي عشان الحماية
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow);
 
-                        const ema9 = calcEMA(closes, 9);
-                        const ema21 = calcEMA(closes, 21);
-                        const volAvg20 = calcSMA(volumes, 20);
-                        const rsi = calcRSI(closes, 14);
+                        // فصل بيانات الشمعة المغلقة (إزالة آخر شمعة شغالة) عشان التحليل
+                        const closedCloses = allCloses.slice(0, -1);
+                        const closedOpens = allOpens.slice(0, -1);
+                        const closedVolumes = allVolumes.slice(0, -1);
 
-                        if(!ema9 || !ema21 || !volAvg20 || !rsi) continue;
-
-                        // PINE SCRIPT STRATEGY
-                        const cond_vol = currentVol > (volAvg20 * SETTINGS.vol_mult);
-                        const cond_candle = currentPrice > currentOpen;
-                        const cond_trend = (currentPrice > ema9) && (ema9 > ema21);
-                        const cond_rsi = (rsi > 55) && (rsi < 85);
-                        
-                        if (cond_vol && cond_candle && cond_trend && cond_rsi) {
-                            foundNew = true;
-                            enterNewTrade(coin.symbol, currentPrice);</comment-tag id="1" text="التعديل ده بيعزل بيانات 'الشمعة اللي شغالة دلوقتي' وبيحسب كل المؤشرات (EMA و RSI) والشروط بناءً على 'الشمعة المغلقة' اللي قبلها (باستخدام slice). وفي نفس الوقت احتفظنا بالسعر اللحظي عشان إدارة الصفقات المفتوحة والستوب لوز يفضل يضرب في وقتها من غير تأخير.
-
-const closes = klines.map(k => parseFloat(k[4]));
-                        const opens = klines.map(k => parseFloat(k[1]));
-                        const volumes = klines.map(k => parseFloat(k[5])); 
-                        const lows = klines.map(k => parseFloat(k[3]));
-
-                        // السعر اللحظي (للشمعة الحالية المفتوحة) عشان نحدث بيه الصفقات المفتوحة والستوب لوز
-                        const currentPrice = closes[closes.length - 1];
-                        const currentLow = lows[lows.length - 1];
-
-                        await manageOpenTrades(coin.symbol, currentPrice, currentLow);
-
-                        // فصل بيانات الشمعة المغلقة (الشمعة اللي قبل الحالية) عشان نبني عليها الاستراتيجية
-                        const closedCloses = closes.slice(0, -1);
-                        const closedOpens = opens.slice(0, -1);
-                        const closedVolumes = volumes.slice(0, -1);
-
+                        // أسعار الشمعة المغلقة فقط
                         const closedPrice = closedCloses[closedCloses.length - 1];
                         const closedOpen = closedOpens[closedOpens.length - 1];
                         const closedVol = closedVolumes[closedVolumes.length - 1];
@@ -720,7 +694,7 @@ const closes = klines.map(k => parseFloat(k[4]));
                         if (cond_vol && cond_candle && cond_trend && cond_rsi) {
                             foundNew = true;
                             // الدخول بيكون بالسعر اللحظي الحالي بعد التأكد من شروط الشمعة المغلقة
-                            enterNewTrade(coin.symbol, currentPrice);" type="suggestion">
+                            enterNewTrade(coin.symbol, currentPrice);
                         }
                     } catch (e) { /* skip */ }
                 }
@@ -768,3 +742,5 @@ const closes = klines.map(k => parseFloat(k[4]));
     </script>
 </body>
 </html>
+
+```
