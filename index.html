@@ -1,4 +1,3 @@
-Ahmed
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -31,11 +30,6 @@ Ahmed
         .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
         .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
-        
-        /* Strategy Badge Colors */
-        .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .badge-dip { background-color: rgba(139, 92, 246, 0.15); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -118,18 +112,22 @@ Ahmed
             </div>
             
             <!-- Strategy Toggles -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-800">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
-                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
-                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-4 h-4">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white text-[11px] font-bold">الزخم (Momentum) 🔵</label>
+                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-3.5 h-3.5">
                 </div>
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
-                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الاختراق (Breakout) 🟢</label>
-                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-4 h-4">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white text-[11px] font-bold">الاختراق (Breakout) 🟢</label>
+                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-3.5 h-3.5">
                 </div>
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
-                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الارتداد (Dip Sniper) 🟣</label>
-                    <input type="checkbox" id="strat-dip" class="accent-brand-purple w-4 h-4">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white text-[11px] font-bold">الارتداد (Dip Sniper) 🟣</label>
+                    <input type="checkbox" id="strat-dip" class="accent-brand-purple w-3.5 h-3.5">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-brand-gold/30 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                    <label class="!mb-0 cursor-pointer flex-1 text-brand-gold text-[11px] font-bold">الأوردر بلوك (SMC) 🟠</label>
+                    <input type="checkbox" id="strat-smc" class="accent-brand-gold w-3.5 h-3.5">
                 </div>
             </div>
 
@@ -272,6 +270,7 @@ Ahmed
         const exitCooldowns = {};
         const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 'EURUSDT', 'XAUTUSDT', 'PAXGUSDT', 'BUSDUSDT', 'AEURUSDT', 'USDSUSDT'];
 
+        // --- Safe Settings System ---
         const defaultSettings = { 
             tf: '15m', 
             sl_perc: 0.03, 
@@ -280,18 +279,19 @@ Ahmed
             vol_mult: 2.0, 
             cooldown_mins: 15, 
             auto_kill: true, 
-            strats: { momentum: true, breakout: true, dip: true } 
+            strats: { momentum: true, breakout: true, dip: true, smc: true } 
         };
         
         let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v7') || '24';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v8') || '24';
         
         try {
-            const saved = localStorage.getItem('momentumSettingsV7_final');
+            const saved = localStorage.getItem('momentumSettingsV8_final');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 SETTINGS = { ...defaultSettings, ...parsed };
                 if (!SETTINGS.strats) SETTINGS.strats = { ...defaultSettings.strats };
+                if (SETTINGS.strats.smc === undefined) SETTINGS.strats.smc = true;
             }
         } catch (e) { console.error("Settings error, using defaults", e); }
 
@@ -307,6 +307,7 @@ Ahmed
             document.getElementById('strat-momentum').checked = SETTINGS.strats.momentum;
             document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
             document.getElementById('strat-dip').checked = SETTINGS.strats.dip;
+            document.getElementById('strat-smc').checked = SETTINGS.strats.smc;
             
             document.getElementById('stats-time-filter').value = statsTimeFilter;
         };
@@ -329,10 +330,11 @@ Ahmed
             SETTINGS.strats = {
                 momentum: document.getElementById('strat-momentum').checked,
                 breakout: document.getElementById('strat-breakout').checked,
-                dip: document.getElementById('strat-dip').checked
+                dip: document.getElementById('strat-dip').checked,
+                smc: document.getElementById('strat-smc').checked
             };
             
-            localStorage.setItem('momentumSettingsV7_final', JSON.stringify(SETTINGS));
+            localStorage.setItem('momentumSettingsV8_final', JSON.stringify(SETTINGS));
             const btn = document.getElementById('save-settings-btn');
             const originalText = btn.innerText;
             btn.innerText = "تم الحفظ ✓";
@@ -342,10 +344,11 @@ Ahmed
 
         document.getElementById('stats-time-filter').addEventListener('change', (e) => {
             statsTimeFilter = e.target.value;
-            localStorage.setItem('momentumStatsTimeFilter_v7', statsTimeFilter);
+            localStorage.setItem('momentumStatsTimeFilter_v8', statsTimeFilter);
             updateDashboardUI();
         });
 
+        // --- Sound System ---
         let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
         let audioCtx = null;
 
@@ -409,6 +412,7 @@ Ahmed
             if(soundEnabled) playSound('open'); 
         });
 
+        // --- Live Console ---
         const updateConsole = (text, type = 'normal') => {
             const consoleEl = document.getElementById('live-console-text');
             if(!consoleEl) return;
@@ -421,6 +425,7 @@ Ahmed
             consoleEl.innerHTML = `<span class="text-gray-600 mr-2">[${time}]</span> <span class="${color}">${text}</span>`;
         };
 
+        // --- Math & Indicators ---
         const calcEMA = (data, period) => {
             if(data.length < period) return null;
             let k = 2 / (period + 1);
@@ -460,6 +465,21 @@ Ahmed
             const stdDev = Math.sqrt(sum / period);
             return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma };
         };
+        const calcATR = (highs, lows, closes, period = 14) => {
+            if(closes.length <= period) return null;
+            let trArray = [];
+            for(let i = 1; i < closes.length; i++) {
+                let hl = highs[i] - lows[i];
+                let hc = Math.abs(highs[i] - closes[i-1]);
+                let lc = Math.abs(lows[i] - closes[i-1]);
+                trArray.push(Math.max(hl, hc, lc));
+            }
+            let sum = 0;
+            for(let i = trArray.length - period; i < trArray.length; i++) {
+                sum += trArray[i];
+            }
+            return sum / period;
+        };
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -485,11 +505,13 @@ Ahmed
         };
 
         const getStrategyBadge = (stratName) => {
-            if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded">Breakout</span>';
-            if(stratName === 'Dip Sniper') return '<span class="badge-dip text-[8px] font-bold px-1.5 py-0.5 rounded">Dip Sniper</span>';
-            return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded">Momentum</span>'; 
+            if(stratName === 'Breakout') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-green/15 text-brand-green border border-brand-green/30">Breakout</span>';
+            if(stratName === 'Dip Sniper') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-purple/15 text-brand-purple border border-brand-purple/30">Dip Sniper</span>';
+            if(stratName === 'Order Block') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/30">Order Block</span>';
+            return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-blue/15 text-brand-blue border border-brand-blue/30">Momentum</span>'; 
         };
 
+        // --- UI Updates ---
         const updateDashboardUI = () => {
             try {
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
@@ -773,7 +795,8 @@ Ahmed
                 let foundNew = false;
                 for (let coin of topCoins) {
                     try {
-                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=60`);
+                        // Increased limit to 250 for accurate EMA200 and historic OB search
+                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=250`);
                         if(!klineRes.ok) continue;
                         const klines = await klineRes.json();
                         
@@ -784,7 +807,9 @@ Ahmed
                         const volumes = klines.map(k => parseFloat(k[5])); 
 
                         const currentPrice = closes[closes.length - 1];
+                        const currentOpen = opens[opens.length - 1];
                         const currentLow = lows[lows.length - 1];
+                        const currentVol = volumes[volumes.length - 1];
 
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow);
 
@@ -797,17 +822,19 @@ Ahmed
                         const closedPrice = closedCloses[closedCloses.length - 1];
                         const closedOpen = closedOpens[closedOpens.length - 1];
                         const closedVol = closedVolumes[closedVolumes.length - 1];
-                        const closedLow = closedLows[closedLows.length - 1];
                         const prevClosedHigh = closedHighs[closedHighs.length - 2];
 
+                        // Indicators
                         const ema9 = calcEMA(closedCloses, 9);
                         const ema21 = calcEMA(closedCloses, 21);
                         const ema50 = calcEMA(closedCloses, 50);
+                        const ema200 = calcEMA(closedCloses, 200);
                         const volAvg20 = calcSMA(closedVolumes, 20);
                         const rsi = calcRSI(closedCloses, 14);
                         const bb = calcBollingerBands(closedCloses, 20, 2);
+                        const atr = calcATR(closedHighs, closedLows, closedCloses, 14);
 
-                        if(!ema9 || !ema21 || !ema50 || !volAvg20 || !rsi || !bb) continue;
+                        if(!ema9 || !ema21 || !ema50 || !volAvg20 || !rsi || !bb || !atr) continue;
 
                         const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
                         const isGreenCandle = closedPrice > closedOpen;
@@ -825,9 +852,55 @@ Ahmed
                         }
 
                         // 3. Dip Sniper
-                        if (SETTINGS.strats.dip && ema21 > ema50 && closedLow <= bb.lower && isGreenCandle && rsi < 45) {
+                        if (SETTINGS.strats.dip && ema21 > ema50 && closedLows[closedLows.length - 1] <= bb.lower && isGreenCandle && rsi < 45) {
                             enterNewTrade(coin.symbol, currentPrice, 'Dip Sniper');
                             foundNew = true; continue;
+                        }
+
+                        // 4. NEW: SMC Order Block (Trend + Volatility + Volume + Momentum)
+                        if (SETTINGS.strats.smc && ema200) {
+                            // Pillar 1: Trend (Must be in a macro uptrend)
+                            const isUptrend = closedPrice > ema200 && ema50 > ema200;
+                            
+                            // Pillar 2: Volatility (Filter out dead coins, ATR must be > 0.1% of price)
+                            const hasVolatility = atr > (closedPrice * 0.001);
+
+                            if (isUptrend && hasVolatility) {
+                                let obHigh = null;
+                                let obLow = null;
+                                
+                                // Pillar 3: Order Block Logic (Find last Red candle before a massive Green displacement)
+                                // Scan last 40 candles, skipping the immediate last 5 to ensure it's a structural OB
+                                for (let i = closedCloses.length - 5; i > closedCloses.length - 40; i--) {
+                                    if (i < 1) continue;
+                                    let isRed = closedCloses[i] < closedOpens[i];
+                                    let nextGreen1 = closedCloses[i+1] > closedOpens[i+1];
+                                    let nextGreen2 = closedCloses[i+2] > closedOpens[i+2];
+                                    // Displacement: Price pushed up at least 1.2% from the red candle low
+                                    let displacement = (closedCloses[i+2] - closedLows[i]) / closedLows[i] > 0.012; 
+
+                                    if (isRed && nextGreen1 && nextGreen2 && displacement) {
+                                        obHigh = closedHighs[i];
+                                        obLow = closedLows[i];
+                                        break; // Found our Institutional Zone
+                                    }
+                                }
+
+                                if (obHigh !== null && obLow !== null) {
+                                    // Pillar 4: Pullback & Touch (Price recently dipped into the OB box)
+                                    const touchedOB = (currentLow <= obHigh && currentPrice >= obLow) || (closedLows[closedLows.length - 1] <= obHigh && closedPrice >= obLow);
+                                    
+                                    // Pillar 5: Momentum & Volume Confirmation for the bounce
+                                    const healthyRSI = rsi > 40 && rsi < 70; // Not overbought, room to 10%
+                                    const goodVolume = currentVol > (volAvg20 * 0.8) || closedVol > volAvg20; // Smart money stepping back in
+                                    const bouncingUp = currentPrice > currentOpen; // Live candle is rejecting the downside
+
+                                    if (touchedOB && healthyRSI && goodVolume && bouncingUp) {
+                                        enterNewTrade(coin.symbol, currentPrice, 'Order Block');
+                                        foundNew = true; continue;
+                                    }
+                                }
+                            }
                         }
 
                     } catch (e) {}
