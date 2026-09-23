@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Momentum PRO | Multi-Strategy Engine</title>
+    <title>Momentum PRO | Crypto Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
@@ -13,7 +14,7 @@
                     fontFamily: { sans: ['Cairo', 'sans-serif'] },
                     colors: {
                         gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' },
-                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B', purple: '#8B5CF6' }
+                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B' }
                     }
                 }
             }
@@ -31,10 +32,9 @@
         .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
         
-        /* Strategy Badge Colors (Kept old ones just for historical closed trades rendering safely) */
+        /* Strategy Badge Colors */
         .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .badge-dip { background-color: rgba(139, 92, 246, 0.15); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -43,12 +43,20 @@
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                    <!-- أيقونة الشموع اليابانية الجديدة -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- شمعة 1 (صاعدة) -->
+                        <line x1="7" y1="3" x2="7" y2="19"></line>
+                        <rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect>
+                        <!-- شمعة 2 (هابطة مفرغة) -->
+                        <line x1="17" y1="5" x2="17" y2="21"></line>
+                        <rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect>
+                    </svg>
                 </div>
                 <div>
                     <h1 class="text-lg font-black text-white leading-tight">Momentum PRO</h1>
-                    <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase"> Ahmed system ai </span>
+                    <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
             
@@ -119,7 +127,7 @@
                 </div>
             </div>
             
-            <!-- Strategy Toggles (Only Momentum and Breakout left) -->
+            <!-- Strategy Toggles -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
                     <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
@@ -284,7 +292,7 @@
             vol_mult: 2.0, 
             cooldown_mins: 15, 
             auto_kill: true, 
-            strats: { momentum: true, breakout: true } // Removed SMC and Dip
+            strats: { momentum: true, breakout: true } 
         };
         
         let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
@@ -322,7 +330,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Load saved market history if available
             try {
                 const savedHistory = JSON.parse(localStorage.getItem('marketScoreHistoryV2'));
                 if (savedHistory && savedHistory.currentScore !== null) {
@@ -621,7 +628,6 @@
                 if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة في هذه الفترة</div>';
                 document.getElementById('closed-trades-list').innerHTML = closedHtml;
 
-                // Update Market History display during normal UI updates too
                 updateMarketHistoryUI();
 
             } catch (err) { console.error("UI Update Error:", err); }
@@ -675,12 +681,9 @@
                     if (btcRsi > 45 && btcRsi < 75) { score += 30; } else if (btcRsi >= 75) { score += 10; }
                 } else { score = 50; } 
 
-                // History Tracking Logic
                 if (currentMarketScore !== null && score !== currentMarketScore) {
                     currentMarketScore = score;
                     lastScoreChangeTime = Date.now();
-                    
-                    // Save to local storage to persist across reloads
                     localStorage.setItem('marketScoreHistoryV2', JSON.stringify({
                         currentScore: currentMarketScore,
                         lastChangeTime: lastScoreChangeTime
@@ -688,14 +691,12 @@
                 } else if (currentMarketScore === null) {
                     currentMarketScore = score;
                     lastScoreChangeTime = Date.now();
-                    // Initial save
                      localStorage.setItem('marketScoreHistoryV2', JSON.stringify({
                         currentScore: currentMarketScore,
                         lastChangeTime: lastScoreChangeTime
                     }));
                 }
 
-                // UI Updates
                 const container = document.getElementById('market-health-container');
                 const glow = document.getElementById('market-health-glow');
                 const circle = document.getElementById('market-health-score-circle');
@@ -865,13 +866,11 @@
                         const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
                         const isGreenCandle = closedPrice > closedOpen;
 
-                        // 1. Momentum 
                         if (SETTINGS.strats.momentum && isVolumeSpike && isGreenCandle && closedPrice > ema9 && ema9 > ema21 && rsi > 55 && rsi < 75) {
                             enterNewTrade(coin.symbol, currentPrice, 'Momentum');
                             foundNew = true; continue;
                         }
 
-                        // 2. Breakout
                         if (SETTINGS.strats.breakout && isVolumeSpike && isGreenCandle && closedPrice > prevClosedHigh && closedPrice > bb.upper && rsi > 60) {
                             enterNewTrade(coin.symbol, currentPrice, 'Breakout');
                             foundNew = true; continue;
@@ -880,7 +879,6 @@
                     } catch (e) {}
                 }
                 
-                // تحديث الـ UI ليتم عرض الوقت المحدث لمؤشر السوق
                 updateDashboardUI();
                 
                 if(!foundNew) updateConsole("⏳ اكتمل الفحص. انتظار الفرص القادمة...");
