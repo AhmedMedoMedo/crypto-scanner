@@ -31,14 +31,14 @@
         .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
         
-        /* Strategy Badge Colors */
+        /* ألوان الشارات للاستراتيجيات */
         .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
-    <!-- Header -->
+    <!-- الشريط العلوي -->
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -57,7 +57,7 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Sound Toggle -->
+                <!-- زر الصوت -->
                 <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -73,7 +73,7 @@
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
 
-        <!-- Market Matrix Indicator -->
+        <!-- مؤشر حالة السوق -->
         <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
             <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
@@ -87,7 +87,7 @@
                             مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
                         </h2>
                         <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري قياس نبض البيتكوين (BTC)...</div>
-                        <!-- Market History -->
+                        <!-- تاريخ المؤشر -->
                         <div id="market-health-history" class="text-[10px] text-gray-400 mt-1.5 hidden bg-gray-950/80 px-2.5 py-1 rounded border border-gray-800/80 w-fit flex items-center gap-1"></div>
                     </div>
                 </div>
@@ -105,7 +105,7 @@
             </div>
         </div>
 
-        <!-- Live Activity Console -->
+        <!-- شريط الأنشطة الحية -->
         <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
             <span class="relative flex h-2.5 w-2.5 shrink-0">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
@@ -114,16 +114,16 @@
             <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 بدء تشغيل محرك الرادار المتعدد...</div>
         </div>
         
-        <!-- Settings Section -->
+        <!-- قسم الإعدادات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (Target +5%-10%)</h2>
+                    <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (الهدف +5%-10%)</h2>
                 </div>
             </div>
             
-            <!-- Strategy Toggles -->
+            <!-- تفعيل الاستراتيجيات -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
                     <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
@@ -135,7 +135,7 @@
                 </div>
             </div>
 
-            <!-- Param Settings -->
+            <!-- إعدادات المعلمات -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div class="input-group">
                     <label>الإطار الزمني الأساسي</label>
@@ -175,7 +175,7 @@
             </div>
         </section>
 
-        <!-- Dashboard Stats -->
+        <!-- لوحة الإحصائيات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                 <h2 class="text-sm font-bold text-white flex items-center gap-2">
@@ -210,28 +210,35 @@
                     <div class="text-3xl font-black text-gray-300 dir-ltr" id="dash-profit">0.00%</div>
                 </div>
                 <div class="stat-box border-brand-green/30 bg-brand-green/5">
-                    <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase tracking-wider">صفقات مفتوحة للرادار</div>
+                    <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase tracking-wider">صفقات مفتوحة</div>
                     <div class="text-3xl font-black text-brand-green" id="dash-open">0</div>
                 </div>
             </div>
 
-            <!-- Open Trades -->
+            <!-- الصفقات المفتوحة مع فلتر الترتيب -->
             <div>
-                <h3 class="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2 pb-2 border-b border-gray-800">
-                    <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
-                    الصفقات المفتوحة حالياً (مرتبة حسب قوة الإشارة)
-                </h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
+                        الصفقات المفتوحة حالياً
+                    </h3>
+                    <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
+                        <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
+                        <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
+                        <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
+                    </select>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
                     <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">جاري مسح السوق بحثاً عن فرص...</div>
                 </div>
             </div>
 
-            <!-- Closed Trades History -->
+            <!-- سجل الصفقات المغلقة -->
             <div class="mt-8 pt-6 border-t border-gray-800">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                     <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        سجل الصفقات المغلقة (Historical Trades)
+                        سجل الصفقات المغلقة
                         <span id="history-summary" class="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block">
                             (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
                         </span>
@@ -273,11 +280,9 @@
         let isCheckingMarket = false;
         let globalMarketStatus = 'neutral';
         
-        // --- Market Health Memory Variables ---
-        let currentMarketScore = 50; // Fallback score
+        // --- متغيرات الذاكرة ---
+        let currentMarketScore = null;
         let lastScoreChangeTime = null;
-
-        // --- Trade Health Monitor Cache ---
         const tradeHealthCache = {};
 
         const exitCooldowns = {};
@@ -296,6 +301,7 @@
         
         let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
         let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v8') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v8') || 'time_desc';
         
         try {
             const saved = localStorage.getItem('momentumSettingsV8_final');
@@ -326,6 +332,10 @@
             if(document.getElementById('strat-breakout')) document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
             
             document.getElementById('stats-time-filter').value = statsTimeFilter;
+            
+            if(document.getElementById('open-trades-sort')) {
+                document.getElementById('open-trades-sort').value = openTradesSort;
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -367,6 +377,12 @@
         document.getElementById('stats-time-filter').addEventListener('change', (e) => {
             statsTimeFilter = e.target.value;
             localStorage.setItem('momentumStatsTimeFilter_v8', statsTimeFilter);
+            updateDashboardUI();
+        });
+
+        document.getElementById('open-trades-sort').addEventListener('change', (e) => {
+            openTradesSort = e.target.value;
+            localStorage.setItem('momentumOpenTradesSort_v8', openTradesSort);
             updateDashboardUI();
         });
 
@@ -445,6 +461,7 @@
             consoleEl.innerHTML = `<span class="text-gray-600 mr-2 shrink-0">[${time}]</span> <span class="${color}">${text}</span>`;
         };
 
+        // --- الرياضيات والمؤشرات ---
         const calcEMA = (data, period) => {
             if(data.length < period) return null;
             let k = 2 / (period + 1);
@@ -510,8 +527,6 @@
 
         const getStrategyBadge = (stratName) => {
             if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
-            if(stratName === 'Dip Sniper') return '<span class="badge-dip text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Dip Sniper</span>';
-            if(stratName === 'Order Block' || stratName === 'SMC') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0 text-brand-gold bg-brand-gold/15 border border-brand-gold/30">Order Block</span>';
             return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
         };
 
@@ -522,30 +537,24 @@
             return { text: 'text-brand-red', bg: 'bg-brand-red' };
         };
 
-        // --- NEW: Trade Strength Calculation Function ---
+        // --- خوارزمية قياس قوة الإشارة Trade Strength Algorithm ---
         const calculateTradeStrength = (isLive, strategy, price, open, high, low, vol, volAvg, rsi, ema9, ema21, bbUpper, btcScore, entryPrice = null) => {
             let b = { trend: 0, volume: 0, rsi: 0, setup: 0, btc: 0, candle: 0, confirm: 0 };
 
-            // 1. Trend Strength (20%)
             if (ema9 > ema21) {
                 let trendStrength = ((ema9 - ema21) / ema21) * 100;
                 b.trend = price > ema9 ? 15 + Math.min(5, trendStrength * 5) : 10;
-            } else {
-                b.trend = 0;
-            }
+            } else { b.trend = 0; }
 
-            // 2. Volume Strength (20%)
             let volRatio = volAvg > 0 ? (vol / volAvg) : 1;
             b.volume = Math.min(20, volRatio * 10); 
 
-            // 3. RSI Quality (15%)
             if (rsi >= 55 && rsi <= 72) b.rsi = 15;
             else if (rsi > 72 && rsi <= 80) b.rsi = 12;
             else if (rsi >= 50 && rsi < 55) b.rsi = 10;
             else if (rsi > 80) b.rsi = 5; 
             else b.rsi = 2; 
 
-            // 4. Setup Quality (15%)
             if (strategy === 'Breakout') {
                 b.setup = price > bbUpper ? 15 : (price > bbUpper * 0.99 ? 10 : 5);
             } else {
@@ -553,16 +562,13 @@
                 b.setup = pDist < 1 ? 15 : (pDist < 2 ? 10 : 5);
             }
 
-            // 5. BTC Market Health (15%)
             b.btc = Math.min(15, (btcScore / 100) * 15);
 
-            // 6. Candle Quality (10%)
             let body = Math.abs(price - open);
             let range = high - low;
             let bodyRatio = range > 0 ? body / range : 0;
             b.candle = price >= open ? Math.min(10, bodyRatio * 15) : 2; 
 
-            // 7. Price Confirmation (5%)
             if (isLive && entryPrice) {
                 let pnl = ((price - entryPrice) / entryPrice) * 100;
                 b.confirm = pnl > 0.5 ? 5 : (pnl > 0 ? 3 : 0);
@@ -620,8 +626,22 @@
                 document.getElementById('history-summary-mobile').innerHTML = summaryText;
 
                 let openHtml = '';
-                // NEW: Sort open trades intelligently from highest Live Score to lowest.
-                const sortedOpenTrades = openTrades.sort((a, b) => (b.liveScore || 0) - (a.liveScore || 0));
+                
+                // --- فلتر الترتيب للصفقات المفتوحة ---
+                const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
+                const sortedOpenTrades = openTrades.sort((a, b) => {
+                    if (sortFilter === 'score_desc') {
+                        if ((b.liveScore || 0) === (a.liveScore || 0)) {
+                             return (b.openTime || 0) - (a.openTime || 0);
+                        }
+                        return (b.liveScore || 0) - (a.liveScore || 0);
+                    } else if (sortFilter === 'time_desc') {
+                        return (b.openTime || 0) - (a.openTime || 0);
+                    } else if (sortFilter === 'time_asc') {
+                        return (a.openTime || 0) - (b.openTime || 0);
+                    }
+                    return 0;
+                });
                 
                 sortedOpenTrades.forEach(t => {
                     const currentPnl = ((t.currentPrice - t.entryPrice) / t.entryPrice) * 100;
@@ -632,28 +652,27 @@
                     
                     const health = tradeHealthCache[t.symbol] || { text: '⏳ فحص مستمر...', class: 'text-gray-400 border-gray-700 bg-gray-900' };
                     
-                    // --- Trade Strength UI logic ---
                     const sColor = getScoreColorClass(t.liveScore || t.entryScore || 0);
                     const brk = t.liveBreakdown || t.entryBreakdown || {trend:0,volume:0,rsi:0,setup:0,btc:0,candle:0,confirm:0};
                     const displayScore = t.liveScore || t.entryScore || '--';
 
                     const scoreHtml = `
-                        <div class="mb-2 mt-1 px-1">
+                        <div class="mb-2 mt-1 px-1 border-t border-gray-700/50 pt-2">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-[9px] font-bold text-gray-400">Live Score</span>
                                 <span class="text-xs font-black ${sColor.text}">${displayScore}%</span>
                             </div>
-                            <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800">
+                            <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5">
                                 <div class="h-1 rounded-full ${sColor.bg} transition-all duration-500" style="width: ${displayScore}%"></div>
                             </div>
-                            <div class="flex flex-wrap gap-1 mt-1.5 justify-center">
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="Trend">Tr:${brk.trend}/20</span>
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="Volume">Vo:${brk.volume}/20</span>
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="RSI">RS:${brk.rsi}/15</span>
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="Setup">St:${brk.setup}/15</span>
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="BTC Health">BT:${brk.btc}/15</span>
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="Candle">Cn:${brk.candle}/10</span>
-                                <span class="text-[7px] text-gray-500 bg-gray-900 px-1 rounded border border-gray-800" title="Confirmation">Cf:${brk.confirm}/5</span>
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Trend">Tr:${brk.trend}/20</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Volume">Vo:${brk.volume}/20</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="RSI">RS:${brk.rsi}/15</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Setup">St:${brk.setup}/15</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="BTC Health">BT:${brk.btc}/15</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Candle">Cn:${brk.candle}/10</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Confirmation">Cf:${brk.confirm}/5</span>
                             </div>
                         </div>`;
                     
@@ -679,7 +698,7 @@
                             
                             ${scoreHtml}
 
-                            <div class="flex justify-between items-center mb-1 text-[10px]">
+                            <div class="flex justify-between items-center mb-1 text-[10px] mt-2">
                                 <span class="text-gray-400">الدخول:</span>
                                 <span class="text-gray-300 font-mono">${(t.entryPrice || 0).toPrecision(5)}</span>
                             </div>
@@ -707,7 +726,7 @@
                     const timeStr = t.closeTime ? new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '--:--';
                     const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
                     
-                    const entryScoreBadge = t.entryScore ? `<span class="text-[8px] bg-gray-900 border border-gray-700 px-1 rounded text-gray-400" title="Entry Strength Score">E: ${t.entryScore}%</span>` : '';
+                    const entryScoreBadge = t.entryScore ? `<span class="text-[8px] bg-gray-900 border border-gray-700 px-1 rounded text-gray-400" title="Entry Strength Score">القوة: ${t.entryScore}%</span>` : '';
 
                     closedHtml += `
                         <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2 gap-2">
@@ -839,7 +858,6 @@
             } catch (error) { 
                 console.error("Market Health Error", error);
                 updateConsole("⚠️ خطأ في تحليل السوق العام، سيتم استخدام التقييم السابق.", "warning");
-                // Local fallback to keep system running when offline or rate-limited
             } 
             finally { isCheckingMarket = false; }
         };
@@ -848,7 +866,6 @@
             const trade = virtualTrades.find(t => t.symbol === symbol && t.status === 'open');
             if (!trade) return;
             try {
-                // Update Local Scores
                 if (liveScoreData) {
                     trade.liveScore = liveScoreData.score;
                     trade.liveBreakdown = liveScoreData.breakdown;
@@ -890,7 +907,6 @@
                     }
                 } else {
                     if (isFirebaseConnected && tradesRef && trade.docId) {
-                        // Persist live score to DB asynchronously to avoid blocking
                         updateDoc(doc(tradesRef, trade.docId), { 
                             currentPrice: currentPrice, maxPrice: trade.maxPrice, trailActive: trade.trailActive, slLevel: trade.slLevel,
                             liveScore: trade.liveScore, liveBreakdown: trade.liveBreakdown
@@ -916,7 +932,6 @@
                 pnl: 0, 
                 openTime: Date.now(),
                 strategy: strategyName,
-                // New Score Fields
                 entryScore: entryScoreData.score,
                 entryBreakdown: entryScoreData.breakdown,
                 liveScore: entryScoreData.score,
@@ -924,14 +939,12 @@
                 scoreUpdatedAt: Date.now()
             };
             
-            // LOCAL-FIRST: Push locally to array immediately
             virtualTrades.push(newTrade);
-            updateDashboardUI(); // Render it immediately
+            updateDashboardUI();
             
             playSound('open');
             updateConsole(`🚀 اقتناص صفقة: ${symbol} [${strategyName}] القوة: ${entryScoreData.score}%`, 'success');
 
-            // Async DB sync
             if (isFirebaseConnected && tradesRef) {
                 try {
                     const newDoc = doc(tradesRef);
@@ -954,7 +967,6 @@
                     .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
                     .slice(0, 80); 
 
-                // Ensure open trade symbols are included to scan for Health Monitor & Live Scores
                 const openSymbols = virtualTrades.filter(t => t.status === 'open').map(t => t.symbol);
                 const topSymbolsList = topCoins.map(c => c.symbol);
                 for (let sym of openSymbols) {
@@ -1000,15 +1012,12 @@
 
                         if(!ema9 || !ema21 || !volAvg20 || !rsi || !bb) continue;
 
-                        // Identify Active Trade to calculate Live Score
                         const activeTrade = virtualTrades.find(t => t.symbol === coin.symbol && t.status === 'open');
                         let liveScoreData = null;
 
                         if (activeTrade) {
-                            // Calculate Live Score based on current ticks
                             liveScoreData = calculateTradeStrength(true, activeTrade.strategy, currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore, activeTrade.entryPrice);
                             
-                            // Health Monitor Fallback
                             let hText = '⚖️ مسار مستقر';
                             let hColor = 'text-brand-gold border-brand-gold/30 bg-brand-gold/10';
 
@@ -1025,13 +1034,11 @@
                             tradeHealthCache[coin.symbol] = { text: hText, class: hColor };
                         }
 
-                        // Execute Open Trade Management (with Live Score Data)
                         await manageOpenTrades(coin.symbol, currentPrice, currentLow, liveScoreData);
 
                         const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
                         const isGreenCandle = closedPrice > closedOpen;
 
-                        // Scan for Entry
                         if (SETTINGS.strats.momentum && isVolumeSpike && isGreenCandle && closedPrice > ema9 && ema9 > ema21 && rsi > 55 && rsi < 75) {
                             const entryScoreData = calculateTradeStrength(false, 'Momentum', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore);
                             enterNewTrade(coin.symbol, currentPrice, 'Momentum', entryScoreData);
@@ -1083,10 +1090,7 @@
                     isFirebaseConnected = true; setDbStatus('connected'); 
                     onSnapshot(tradesRef, (snapshot) => {
                         const loaded = []; snapshot.forEach(docSnap => loaded.push({ docId: docSnap.id, ...docSnap.data() }));
-                        // Local-first safety: Only overwrite if we aren't in middle of critical scan,
-                        // or better yet, sync virtualTrades with Firebase loaded data gracefully.
-                        virtualTrades = loaded; 
-                        updateDashboardUI();
+                        virtualTrades = loaded; updateDashboardUI();
                     }, (err) => { setDbStatus('error'); isFirebaseConnected = false; });
                 }
             } catch (error) { setDbStatus('error'); isFirebaseConnected = false; updateConsole("⚠️ فشل الاتصال بقاعدة البيانات", "error"); }
