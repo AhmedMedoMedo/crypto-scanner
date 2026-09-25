@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -42,16 +43,20 @@
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="7" y1="3" x2="7" y2="19"></line>
-                        <rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect>
-                        <line x1="17" y1="5" x2="17" y2="21"></line>
-                        <rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect>
-                    </svg>
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] relative">
+                    <div class="flex gap-1 items-end h-4">
+                        <div class="relative w-1.5 h-full flex flex-col items-center justify-end">
+                            <div class="w-[1px] h-4 bg-white/50 absolute top-0"></div>
+                            <div class="w-full h-2.5 bg-white rounded-sm z-10"></div>
+                        </div>
+                        <div class="relative w-1.5 h-full flex flex-col items-center justify-end">
+                            <div class="w-[1px] h-3 bg-white/30 absolute bottom-0.5"></div>
+                            <div class="w-full h-1.5 bg-white/50 rounded-sm z-10 mb-0.5"></div>
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum PRO</h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum</h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -225,7 +230,6 @@
                     <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
                         <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
                         <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
-                        <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
@@ -527,11 +531,11 @@
         };
 
         const getStrategyBadge = (stratName) => {
-            if(stratName === 'Breakout') return '<span class="badge-breakout text-[10px] font-bold px-2 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
+            if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
             // Keeping historical badges just in case user has old closed trades from them
-            if(stratName === 'Dip Sniper') return '<span class="badge-dip text-[10px] font-bold px-2 py-0.5 rounded ml-1 shrink-0 text-brand-purple">Dip Sniper</span>';
-            if(stratName === 'Order Block' || stratName === 'SMC') return '<span class="text-[10px] font-bold px-2 py-0.5 rounded ml-1 shrink-0 text-brand-gold bg-brand-gold/15 border border-brand-gold/30">Order Block</span>';
-            return '<span class="badge-momentum text-[10px] font-bold px-2 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
+            if(stratName === 'Dip Sniper') return '<span class="badge-dip text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Dip Sniper</span>';
+            if(stratName === 'Order Block' || stratName === 'SMC') return '<span class="text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0 text-brand-gold bg-brand-gold/15 border border-brand-gold/30">Order Block</span>';
+            return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
         };
 
         const updateDashboardUI = () => {
@@ -570,12 +574,7 @@
                 let openHtml = '';
                 const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
                 const sortedOpenTrades = openTrades.sort((a, b) => {
-                    if (sortFilter === 'score_desc') {
-                        if ((b.liveScore || 0) === (a.liveScore || 0)) {
-                             return (b.openTime || 0) - (a.openTime || 0);
-                        }
-                        return (b.liveScore || 0) - (a.liveScore || 0);
-                    } else if (sortFilter === 'time_desc') {
+                    if (sortFilter === 'time_desc') {
                         return (b.openTime || 0) - (a.openTime || 0);
                     } else if (sortFilter === 'time_asc') {
                         return (a.openTime || 0) - (b.openTime || 0);
@@ -639,7 +638,7 @@
                     const durationStr = (t.openTime && t.closeTime && t.closeTime > t.openTime) ? formatDuration(t.closeTime - t.openTime) : 'غير محدد';
                     const timeStr = t.closeTime ? new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '--:--';
                     const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
-                    
+
                     closedHtml += `
                         <div class="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border ${bgColor} hover:bg-gray-800/80 transition-colors mb-3 gap-3">
                             <div class="flex flex-col flex-1 min-w-0">
@@ -907,7 +906,6 @@
 
                         if(!ema9 || !ema21 || !volAvg20 || !rsi || !bb) continue;
 
-                        // --- ميزة فحص حالة الصعود للصفقات المفتوحة (Trade Health Monitor) ---
                         const activeTrade = virtualTrades.find(t => t.symbol === coin.symbol && t.status === 'open');
                         if (activeTrade) {
                             let hText = '⚖️ مسار مستقر';
@@ -925,7 +923,6 @@
                             }
                             tradeHealthCache[coin.symbol] = { text: hText, class: hColor };
                         }
-                        // ------------------------------------------------------------------
 
                         const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
                         const isGreenCandle = closedPrice > closedOpen;
