@@ -779,25 +779,29 @@
                 historyEl.innerHTML = `مستقر على هذه النسبة <span class="text-white font-bold ml-1">${timeAgo}</span>`;
                 historyEl.classList.remove('hidden');
 
-                const previousLogs = marketScoreLog.slice(1, 6); 
-                if (previousLogs.length > 0) {
-                    let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> السجل السابق (آخر 5 نتائج):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full">`;
-                    previousLogs.forEach(entry => {
+                const logsToShow = marketScoreLog.slice(0, 5); 
+                
+                let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> سجل تغيرات السوق (آخر 5):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full">`;
+                
+                if (logsToShow.length > 0) {
+                    logsToShow.forEach((entry, index) => {
                         const timeStr = new Date(entry.time).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', month: 'numeric', day: 'numeric' });
                         const sColor = getScoreColorClass(entry.score);
-                        logHtml += `<div class="bg-gray-950/80 border border-gray-800 px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1">
+                        const isCurrent = index === 0 ? '<span class="absolute -top-1.5 -right-1.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand-blue"></span></span>' : '';
+                        
+                        logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1">
+                            ${isCurrent}
                             <span class="font-black ${sColor.text} text-xs dir-ltr">${entry.score}%</span>
                             <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
                         </div>`;
                     });
-                    logHtml += `</div>`;
-                    logContainer.innerHTML = logHtml;
-                    logContainer.classList.remove('hidden');
-                    logContainer.classList.add('flex');
                 } else {
-                    logContainer.classList.add('hidden');
-                    logContainer.classList.remove('flex');
+                    logHtml += `<div class="col-span-full text-[10px] text-gray-500 text-center py-2 bg-gray-950 rounded-lg border border-gray-800 border-dashed">في انتظار تسجيل أول تغير للسوق...</div>`;
                 }
+                logHtml += `</div>`;
+                logContainer.innerHTML = logHtml;
+                logContainer.classList.remove('hidden');
+                logContainer.classList.add('flex');
             }
         };
 
