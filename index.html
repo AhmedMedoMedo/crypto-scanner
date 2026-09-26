@@ -98,10 +98,12 @@
                     </label>
                 </div>
             </div>
-            <div class="z-10">
+            <div class="z-10 w-full">
                 <div class="w-full bg-gray-950 rounded-full h-1.5 relative overflow-hidden border border-gray-800">
                     <div id="market-health-bar" class="h-1.5 rounded-full transition-all duration-1000 ease-out w-0 bg-gray-500"></div>
                 </div>
+                <!-- سجل السوق -->
+                <div id="market-score-log-container" class="mt-4 flex-col hidden border-t border-gray-800/50 pt-3"></div>
             </div>
         </div>
 
@@ -283,6 +285,7 @@
         // --- متغيرات الذاكرة ---
         let currentMarketScore = null;
         let lastScoreChangeTime = null;
+        let marketScoreLog = [];
         const tradeHealthCache = {};
 
         const exitCooldowns = {};
@@ -340,10 +343,20 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                const savedHistory = JSON.parse(localStorage.getItem('marketScoreHistoryV2'));
-                if (savedHistory && savedHistory.currentScore !== null) {
-                    currentMarketScore = savedHistory.currentScore;
-                    lastScoreChangeTime = savedHistory.lastChangeTime;
+                const savedLog = JSON.parse(localStorage.getItem('marketScoreLogV3'));
+                if (savedLog && Array.isArray(savedLog)) {
+                    marketScoreLog = savedLog;
+                    if (marketScoreLog.length > 0) {
+                        currentMarketScore = marketScoreLog[0].score;
+                        lastScoreChangeTime = marketScoreLog[0].time;
+                    }
+                } else {
+                    const savedHistory = JSON.parse(localStorage.getItem('marketScoreHistoryV2'));
+                    if (savedHistory && savedHistory.currentScore !== null) {
+                        currentMarketScore = savedHistory.currentScore;
+                        lastScoreChangeTime = savedHistory.lastChangeTime;
+                        marketScoreLog = [{ score: currentMarketScore, time: lastScoreChangeTime }];
+                    }
                 }
             } catch (e) { console.error("Failed to load market history"); }
 
@@ -685,7 +698,7 @@
                             
                             <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5 gap-2">
                                 <div class="flex items-center gap-1 min-w-0 overflow-hidden">
-                                    <span class="text-white font-bold text-xs truncate" title="${t.symbol}">${t.symbol}</span>
+                                    <span class="text-white font-bold text-xs flex-wrap" title="${t.symbol}">${t.symbol}</span>
                                     ${stratBadge}
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
@@ -760,10 +773,31 @@
 
         const updateMarketHistoryUI = () => {
             const historyEl = document.getElementById('market-health-history');
+            const logContainer = document.getElementById('market-score-log-container');
             if (lastScoreChangeTime !== null) {
                 const timeAgo = formatTimeAgo(lastScoreChangeTime);
                 historyEl.innerHTML = `مستقر على هذه النسبة <span class="text-white font-bold ml-1">${timeAgo}</span>`;
                 historyEl.classList.remove('hidden');
+
+                const previousLogs = marketScoreLog.slice(1, 6); 
+                if (previousLogs.length > 0) {
+                    let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> السجل السابق (آخر 5 نتائج):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full">`;
+                    previousLogs.forEach(entry => {
+                        const timeStr = new Date(entry.time).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', month: 'numeric', day: 'numeric' });
+                        const sColor = getScoreColorClass(entry.score);
+                        logHtml += `<div class="bg-gray-950/80 border border-gray-800 px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1">
+                            <span class="font-black ${sColor.text} text-xs dir-ltr">${entry.score}%</span>
+                            <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
+                        </div>`;
+                    });
+                    logHtml += `</div>`;
+                    logContainer.innerHTML = logHtml;
+                    logContainer.classList.remove('hidden');
+                    logContainer.classList.add('flex');
+                } else {
+                    logContainer.classList.add('hidden');
+                    logContainer.classList.remove('flex');
+                }
             }
         };
 
@@ -807,19 +841,16 @@
                 } else { score = 50; } 
 
                 if (currentMarketScore !== null && score !== currentMarketScore) {
+                    marketScoreLog.unshift({ score: score, time: Date.now() });
+                    if (marketScoreLog.length > 6) marketScoreLog = marketScoreLog.slice(0, 6);
                     currentMarketScore = score;
                     lastScoreChangeTime = Date.now();
-                    localStorage.setItem('marketScoreHistoryV2', JSON.stringify({
-                        currentScore: currentMarketScore,
-                        lastChangeTime: lastScoreChangeTime
-                    }));
+                    localStorage.setItem('marketScoreLogV3', JSON.stringify(marketScoreLog));
                 } else if (currentMarketScore === null) {
                     currentMarketScore = score;
                     lastScoreChangeTime = Date.now();
-                     localStorage.setItem('marketScoreHistoryV2', JSON.stringify({
-                        currentScore: currentMarketScore,
-                        lastChangeTime: lastScoreChangeTime
-                    }));
+                    marketScoreLog = [{ score: score, time: lastScoreChangeTime }];
+                    localStorage.setItem('marketScoreLogV3', JSON.stringify(marketScoreLog));
                 }
 
                 const container = document.getElementById('market-health-container');
