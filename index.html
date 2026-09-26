@@ -34,6 +34,7 @@
         /* ألوان الشارات للاستراتيجيات */
         .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-sniper { background-color: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -126,7 +127,7 @@
             </div>
             
             <!-- تفعيل الاستراتيجيات -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-800">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
                     <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
                     <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-4 h-4">
@@ -134,6 +135,10 @@
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
                     <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الاختراق (Breakout) 🟢</label>
                     <input type="checkbox" id="strat-breakout" class="accent-brand-green w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">القناص (Sniper) 🟣</label>
+                    <input type="checkbox" id="strat-sniper" class="accent-purple-500 w-4 h-4">
                 </div>
             </div>
 
@@ -299,7 +304,7 @@
             vol_mult: 2.0, 
             cooldown_mins: 15, 
             auto_kill: true, 
-            strats: { momentum: true, breakout: true } 
+            strats: { momentum: true, breakout: true, sniper: true } 
         };
         
         let SETTINGS = { ...defaultSettings, strats: { ...defaultSettings.strats } };
@@ -333,6 +338,7 @@
             
             if(document.getElementById('strat-momentum')) document.getElementById('strat-momentum').checked = SETTINGS.strats.momentum;
             if(document.getElementById('strat-breakout')) document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
+            if(document.getElementById('strat-sniper')) document.getElementById('strat-sniper').checked = SETTINGS.strats.sniper;
             
             document.getElementById('stats-time-filter').value = statsTimeFilter;
             
@@ -376,7 +382,8 @@
             
             SETTINGS.strats = {
                 momentum: document.getElementById('strat-momentum') ? document.getElementById('strat-momentum').checked : true,
-                breakout: document.getElementById('strat-breakout') ? document.getElementById('strat-breakout').checked : true
+                breakout: document.getElementById('strat-breakout') ? document.getElementById('strat-breakout').checked : true,
+                sniper: document.getElementById('strat-sniper') ? document.getElementById('strat-sniper').checked : true
             };
             
             localStorage.setItem('momentumSettingsV8_final', JSON.stringify(SETTINGS));
@@ -539,6 +546,7 @@
         };
 
         const getStrategyBadge = (stratName) => {
+            if(stratName === 'Sniper') return '<span class="badge-sniper text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Sniper</span>';
             if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
             return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
         };
@@ -1041,11 +1049,12 @@
 
                         const ema9 = calcEMA(closedCloses, 9);
                         const ema21 = calcEMA(closedCloses, 21);
+                        const ema50 = calcEMA(closedCloses, 50);
                         const volAvg20 = calcSMA(closedVolumes, 20);
                         const rsi = calcRSI(closedCloses, 14);
                         const bb = calcBollingerBands(closedCloses, 20, 2);
 
-                        if(!ema9 || !ema21 || !volAvg20 || !rsi || !bb) continue;
+                        if(!ema9 || !ema21 || !ema50 || !volAvg20 || !rsi || !bb) continue;
 
                         const activeTrade = virtualTrades.find(t => t.symbol === coin.symbol && t.status === 'open');
                         let liveScoreData = null;
@@ -1073,6 +1082,15 @@
 
                         const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
                         const isGreenCandle = closedPrice > closedOpen;
+                        const candleRange = closedHigh - closedLow;
+                        const closePosition = candleRange > 0 ? (closedPrice - closedLow) / candleRange : 0;
+                        const isStrongClose = closePosition > 0.75; // اغلاق قوي قريب من القمة
+
+                        if (SETTINGS.strats.sniper && isVolumeSpike && isGreenCandle && closedPrice > ema50 && closedPrice > ema9 && ema9 > ema21 && rsi > 52 && rsi < 68 && isStrongClose) {
+                            const entryScoreData = calculateTradeStrength(false, 'Sniper', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore);
+                            enterNewTrade(coin.symbol, currentPrice, 'Sniper', entryScoreData);
+                            foundNew = true; continue;
+                        }
 
                         if (SETTINGS.strats.momentum && isVolumeSpike && isGreenCandle && closedPrice > ema9 && ema9 > ema21 && rsi > 55 && rsi < 75) {
                             const entryScoreData = calculateTradeStrength(false, 'Momentum', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore);
