@@ -861,19 +861,44 @@
                 if(!btcRes.ok) throw new Error("API Error");
                 const btcKlines = await btcRes.json();
                 const btcCloses = btcKlines.map(k => parseFloat(k[4]));
+                const btcVolumes = btcKlines.map(k => parseFloat(k[5]));
                 const btcCurrentPrice = btcCloses[btcCloses.length - 1];
+                const currentVol = btcVolumes[btcVolumes.length - 1];
+                const prevVol = btcVolumes[btcVolumes.length - 2];
 
                 const btcEma20 = calcEMA(btcCloses, 20);
                 const btcEma50 = calcEMA(btcCloses, 50);
                 const btcEma200 = calcEMA(btcCloses, 200);
                 const btcRsi = calcRSI(btcCloses, 14);
+                const btcVolSMA = calcSMA(btcVolumes, 20);
 
-                let score = 0; let tags = [];
-                if(btcEma200) {
-                    if (btcCurrentPrice > btcEma200) { score += 30; tags.push('ترند صاعد'); }
-                    if (btcEma20 > btcEma50) { score += 40; tags.push('زخم شرائي'); }
-                    if (btcRsi > 45 && btcRsi < 75) { score += 30; } else if (btcRsi >= 75) { score += 10; }
-                } else { score = 50; } 
+                let score = 0;
+                if(btcEma200 && btcEma50 && btcEma20) {
+                    // 1. الاتجاه العام (25 نقطة)
+                    if (btcCurrentPrice > btcEma200) score += 15;
+                    if (btcEma50 > btcEma200) score += 10;
+
+                    // 2. الزخم القريب (35 نقطة)
+                    if (btcCurrentPrice > btcEma20) score += 15;
+                    if (btcCurrentPrice > btcEma50) score += 10;
+                    if (btcEma20 > btcEma50) score += 10;
+
+                    // 3. مؤشر RSI (25 نقطة)
+                    if (btcRsi >= 50 && btcRsi <= 65) {
+                        score += 25;
+                    } else if (btcRsi > 65 && btcRsi <= 75) {
+                        score += 15;
+                    } else if (btcRsi >= 45 && btcRsi < 50) {
+                        score += 10;
+                    }
+
+                    // 4. الفوليوم والسيولة (15 نقطة)
+                    if (btcVolSMA && Math.max(currentVol, prevVol) > btcVolSMA) {
+                        score += 15;
+                    }
+                } else {
+                    score = 50; 
+                }
 
                 if (currentMarketScore !== null && score !== currentMarketScore) {
                     marketScoreLog.unshift({ score: score, time: Date.now() });
