@@ -613,6 +613,21 @@
             return { score, breakdown: b };
         };
 
+        window.cancelOpenTrade = async (symbol) => {
+            if (!confirm(`هل أنت متأكد من إلغاء وحذف صفقة ${symbol} المفتوحة؟`)) return;
+            const tradeIndex = virtualTrades.findIndex(t => t.symbol === symbol && t.status === 'open');
+            if (tradeIndex === -1) return;
+            const trade = virtualTrades[tradeIndex];
+            virtualTrades.splice(tradeIndex, 1);
+            updateDashboardUI();
+            updateConsole(`🗑️ تم حذف صفقة ${symbol} بنجاح`, 'warning');
+            if (isFirebaseConnected && tradesRef && trade.docId) {
+                try {
+                    await deleteDoc(doc(tradesRef, trade.docId));
+                } catch(e) { console.error("Error deleting trade:", e); }
+            }
+        };
+
         const updateDashboardUI = () => {
             try {
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
@@ -711,6 +726,9 @@
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
                                     <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                                    <button onclick="window.cancelOpenTrade('${t.symbol}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="إلغاء وحذف الصفقة">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
                                     <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                     </a>
@@ -1154,4 +1172,3 @@
     </script>
 </body>
 </html>
- 
