@@ -233,6 +233,7 @@
                         <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
                         <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
                         <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
+                        <option value="profit_desc">ترتيب حسب: الأكثر ربحاً</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
@@ -613,6 +614,21 @@
             return { score, breakdown: b };
         };
 
+        window.cancelOpenTrade = async (symbol) => {
+            if (!confirm(`هل أنت متأكد من إلغاء وحذف صفقة ${symbol} المفتوحة؟`)) return;
+            const tradeIndex = virtualTrades.findIndex(t => t.symbol === symbol && t.status === 'open');
+            if (tradeIndex === -1) return;
+            const trade = virtualTrades[tradeIndex];
+            virtualTrades.splice(tradeIndex, 1);
+            updateDashboardUI();
+            updateConsole(`🗑️ تم حذف صفقة ${symbol} بنجاح`, 'warning');
+            if (isFirebaseConnected && tradesRef && trade.docId) {
+                try {
+                    await deleteDoc(doc(tradesRef, trade.docId));
+                } catch(e) { console.error("Error deleting trade:", e); }
+            }
+        };
+
         const updateDashboardUI = () => {
             try {
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
@@ -651,7 +667,11 @@
                 // --- فلتر الترتيب للصفقات المفتوحة ---
                 const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
                 const sortedOpenTrades = openTrades.sort((a, b) => {
-                    if (sortFilter === 'score_desc') {
+                    if (sortFilter === 'profit_desc') {
+                        const pnlA = ((a.currentPrice - a.entryPrice) / a.entryPrice) * 100 || 0;
+                        const pnlB = ((b.currentPrice - b.entryPrice) / b.entryPrice) * 100 || 0;
+                        return pnlB - pnlA;
+                    } else if (sortFilter === 'score_desc') {
                         if ((b.liveScore || 0) === (a.liveScore || 0)) {
                              return (b.openTime || 0) - (a.openTime || 0);
                         }
@@ -711,6 +731,9 @@
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
                                     <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                                    <button onclick="window.cancelOpenTrade('${t.symbol}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="إلغاء وحذف الصفقة">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
                                     <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                     </a>
@@ -789,7 +812,7 @@
 
                 const logsToShow = marketScoreLog.slice(0, 5); 
                 
-                let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> سجل تغيرات السوق (آخر 5):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full">`;
+                let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> سجل تغيرات السوق (آخر 5):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full pt-1">`;
                 
                 if (logsToShow.length > 0) {
                     logsToShow.forEach((entry, index) => {
@@ -797,9 +820,13 @@
                         const sColor = getScoreColorClass(entry.score);
                         const isCurrent = index === 0 ? '<span class="absolute -top-1.5 -right-1.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand-blue"></span></span>' : '';
                         
-                        logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1">
+                        const labelText = index === 0 ? 'الحالي' : `#${index + 1}`;
+                        const labelClass = index === 0 ? 'bg-brand-blue text-white border-brand-blue' : 'bg-gray-800 text-gray-400 border-gray-700';
+
+                        logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1 mt-1">
                             ${isCurrent}
-                            <span class="font-black ${sColor.text} text-xs dir-ltr">${entry.score}%</span>
+                            <div class="absolute -top-2.5 right-2 ${labelClass} text-[8px] px-1.5 rounded border font-bold z-10 shadow-sm">${labelText}</div>
+                            <span class="font-black ${sColor.text} text-xs dir-ltr mt-0.5">${entry.score}%</span>
                             <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
                         </div>`;
                     });
@@ -834,23 +861,95 @@
             isCheckingMarket = true;
             try {
                 updateConsole("🤖 جاري تحليل حالة السوق العامة (BTC)...");
-                const btcRes = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=250');
-                if(!btcRes.ok) throw new Error("API Error");
-                const btcKlines = await btcRes.json();
-                const btcCloses = btcKlines.map(k => parseFloat(k[4]));
-                const btcCurrentPrice = btcCloses[btcCloses.length - 1];
+                const [res15m, res4h] = await Promise.all([
+                    fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=100'),
+                    fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=100')
+                ]);
+                
+                if(!res15m.ok || !res4h.ok) throw new Error("API Error");
+                
+                const klines15m = await res15m.json();
+                const klines4h = await res4h.json();
+                
+                const closes15m = klines15m.map(k => parseFloat(k[4]));
+                const volumes15m = klines15m.map(k => parseFloat(k[5]));
+                const opens15m = klines15m.map(k => parseFloat(k[1]));
+                
+                const closes4h = klines4h.map(k => parseFloat(k[4]));
+                
+                const btcCurrentPrice = closes15m[closes15m.length - 1];
+                
+                // مؤشرات 4 ساعات (الاتجاه الماكرو)
+                const ema50_4h = calcEMA(closes4h, 50);
+                const ema200_4h = calcEMA(closes4h, 200);
+                
+                // مؤشرات 15 دقيقة (النبض اللحظي)
+                const ema20_15m = calcEMA(closes15m, 20);
+                const ema50_15m = calcEMA(closes15m, 50);
+                const rsi_15m = calcRSI(closes15m, 14);
+                const volSMA_15m = calcSMA(volumes15m, 20);
+                const currentVol = volumes15m[volumes15m.length - 1];
+                const prevVol = volumes15m[volumes15m.length - 2];
+                
+                let score = 0;
+                
+                if (ema200_4h && ema50_15m) {
+                    // 1. الاتجاه الماكرو (فريم 4 ساعات) - 25 نقطة كحد أقصى (نقاط متدرجة)
+                    let macroScore = 0;
+                    if (btcCurrentPrice > ema200_4h) macroScore += 15;
+                    else if (btcCurrentPrice > ema200_4h * 0.98) macroScore += 5; 
 
-                const btcEma20 = calcEMA(btcCloses, 20);
-                const btcEma50 = calcEMA(btcCloses, 50);
-                const btcEma200 = calcEMA(btcCloses, 200);
-                const btcRsi = calcRSI(btcCloses, 14);
+                    if (ema50_4h > ema200_4h) macroScore += 10;
+                    score += macroScore;
 
-                let score = 0; let tags = [];
-                if(btcEma200) {
-                    if (btcCurrentPrice > btcEma200) { score += 30; tags.push('ترند صاعد'); }
-                    if (btcEma20 > btcEma50) { score += 40; tags.push('زخم شرائي'); }
-                    if (btcRsi > 45 && btcRsi < 75) { score += 30; } else if (btcRsi >= 75) { score += 10; }
-                } else { score = 50; } 
+                    // 2. الزخم القريب (فريم 15 دقيقة) - 35 نقطة (نقاط متدرجة)
+                    let momentumScore = 0;
+                    let priceDist20 = (btcCurrentPrice - ema20_15m) / ema20_15m * 100;
+                    if (priceDist20 > 0.5) momentumScore += 15;
+                    else if (priceDist20 > 0) momentumScore += 10;
+                    else if (priceDist20 > -0.5) momentumScore += 5; 
+                    
+                    if (btcCurrentPrice > ema50_15m) momentumScore += 10;
+                    if (ema20_15m > ema50_15m) momentumScore += 10;
+                    score += momentumScore;
+
+                    // 3. مناطق الـ RSI (فريم 15 دقيقة) - 25 نقطة
+                    let rsiScore = 0;
+                    if (rsi_15m >= 50 && rsi_15m <= 65) rsiScore = 25; 
+                    else if (rsi_15m > 65 && rsi_15m <= 75) rsiScore = 15; 
+                    else if (rsi_15m > 75) rsiScore = 5; 
+                    else if (rsi_15m >= 40 && rsi_15m < 50) rsiScore = 10; 
+                    else rsiScore = 0; 
+                    score += rsiScore;
+
+                    // 4. الفوليوم والسيولة اللحظية (15 نقطة)
+                    if (volSMA_15m) {
+                        let volRatio = Math.max(currentVol, prevVol) / volSMA_15m;
+                        if (volRatio > 1.5) score += 15;
+                        else if (volRatio > 1.0) score += 10;
+                        else if (volRatio > 0.7) score += 5;
+                    }
+                    
+                    // 5. حماية الانهيار المفاجئ للبيتكوين (Flash Dump Protection)
+                    let flashDumpPenalty = 0;
+                    for(let i = 1; i <= 3; i++) {
+                        if (opens15m.length - i >= 0) {
+                            let kOpen = opens15m[opens15m.length - i];
+                            let kClose = closes15m[closes15m.length - i];
+                            let dropPercent = ((kOpen - kClose) / kOpen) * 100;
+                            if (dropPercent > 1.0) { 
+                                flashDumpPenalty = 40; 
+                                break;
+                            }
+                        }
+                    }
+                    score -= flashDumpPenalty;
+                    if (score < 0) score = 0;
+                    if (score > 100) score = 100;
+
+                } else {
+                    score = 50; 
+                }
 
                 if (currentMarketScore !== null && score !== currentMarketScore) {
                     marketScoreLog.unshift({ score: score, time: Date.now() });
@@ -873,14 +972,14 @@
 
                 circle.innerText = score + '%'; bar.style.width = score + '%';
 
-                if (score >= 70) {
+                if (score >= 75) {
                     globalMarketStatus = 'bullish';
                     container.className = 'bg-gray-900 border border-brand-green/40 rounded-xl p-4 shadow-[0_0_25px_rgba(16,185,129,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
                     glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-green to-transparent opacity-80';
                     circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-green text-brand-green bg-brand-green/10 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
                     bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-green shadow-[0_0_10px_#10B981]';
                     text.innerHTML = '<span class="text-brand-green text-xs">🚀 خاااااااارق (سوق ناري وآمن جداً للانفجارات)</span>';
-                } else if (score >= 40) {
+                } else if (score >= 55) {
                     globalMarketStatus = 'neutral';
                     container.className = 'bg-gray-900 border border-brand-gold/40 rounded-xl p-4 shadow-[0_0_25px_rgba(245,158,11,0.1)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
                     glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-60';
