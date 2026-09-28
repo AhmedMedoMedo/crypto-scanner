@@ -233,7 +233,6 @@
                         <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
                         <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
                         <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
-                        <option value="profit_desc">ترتيب حسب: الأكثر ربحاً</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
@@ -667,11 +666,7 @@
                 // --- فلتر الترتيب للصفقات المفتوحة ---
                 const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
                 const sortedOpenTrades = openTrades.sort((a, b) => {
-                    if (sortFilter === 'profit_desc') {
-                        const pnlA = ((a.currentPrice - a.entryPrice) / a.entryPrice) * 100 || 0;
-                        const pnlB = ((b.currentPrice - b.entryPrice) / b.entryPrice) * 100 || 0;
-                        return pnlB - pnlA;
-                    } else if (sortFilter === 'score_desc') {
+                    if (sortFilter === 'score_desc') {
                         if ((b.liveScore || 0) === (a.liveScore || 0)) {
                              return (b.openTime || 0) - (a.openTime || 0);
                         }
