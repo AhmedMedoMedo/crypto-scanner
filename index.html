@@ -224,6 +224,18 @@
 
             <!-- الصفقات المفتوحة مع فلتر الترتيب -->
             <div>
+                <!-- إضافة صفقة يدوية -->
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية:</span>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
+                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
                     <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
@@ -370,6 +382,64 @@
             loadSettingsToUI();
             initFirebase();
             startScannerLoop();
+
+            // إضافة المستمع لزر الإضافة اليدوية
+            const manualAddBtn = document.getElementById('add-manual-btn');
+            if (manualAddBtn) {
+                manualAddBtn.addEventListener('click', async () => {
+                    const inputEl = document.getElementById('manual-symbol-input');
+                    let symbol = inputEl.value.trim().toUpperCase();
+                    if (!symbol) return;
+                    if (!symbol.endsWith('USDT')) symbol += 'USDT';
+
+                    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) {
+                        alert('هذه الصفقة مفتوحة بالفعل في الرادار!');
+                        return;
+                    }
+
+                    const origText = manualAddBtn.innerText;
+                    manualAddBtn.innerText = 'جاري...';
+                    manualAddBtn.disabled = true;
+
+                    try {
+                        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${SETTINGS.tf}&limit=60`);
+                        if (!res.ok) throw new Error("Symbol API Error");
+                        const klines = await res.json();
+                        if (!klines || klines.length === 0) throw new Error("No data");
+
+                        const closes = klines.map(k => parseFloat(k[4]));
+                        const opens = klines.map(k => parseFloat(k[1]));
+                        const highs = klines.map(k => parseFloat(k[2]));
+                        const lows = klines.map(k => parseFloat(k[3]));
+                        const volumes = klines.map(k => parseFloat(k[5]));
+
+                        const currentPrice = closes[closes.length - 1];
+                        const currentOpen = opens[opens.length - 1];
+                        const currentHigh = highs[highs.length - 1];
+                        const currentLow = lows[lows.length - 1];
+                        const currentVol = volumes[volumes.length - 1];
+
+                        const closedCloses = closes.slice(0, -1);
+                        const closedVolumes = volumes.slice(0, -1);
+
+                        const ema9 = calcEMA(closedCloses, 9) || currentPrice;
+                        const ema21 = calcEMA(closedCloses, 21) || currentPrice;
+                        const volAvg20 = calcSMA(closedVolumes, 20) || currentVol;
+                        const rsi = calcRSI(closedCloses, 14) || 50;
+                        const bb = calcBollingerBands(closedCloses, 20, 2) || { upper: currentPrice * 1.05 };
+
+                        const entryScoreData = calculateTradeStrength(false, 'Manual', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50);
+
+                        await enterNewTrade(symbol, currentPrice, 'Manual', entryScoreData);
+                        inputEl.value = '';
+                    } catch (err) {
+                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT) أو تحقق من الاتصال.');
+                    } finally {
+                        manualAddBtn.innerText = origText;
+                        manualAddBtn.disabled = false;
+                    }
+                });
+            }
         });
 
         document.getElementById('save-settings-btn').addEventListener('click', () => {
@@ -405,6 +475,11 @@
             openTradesSort = e.target.value;
             localStorage.setItem('momentumOpenTradesSort_v8', openTradesSort);
             updateDashboardUI();
+        });
+
+        document.getElementById('setting-auto-kill').addEventListener('change', (e) => {
+            SETTINGS.auto_kill = e.target.checked;
+            localStorage.setItem('momentumSettingsV8_final', JSON.stringify(SETTINGS));
         });
 
         let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
@@ -549,6 +624,7 @@
         const getStrategyBadge = (stratName) => {
             if(stratName === 'Sniper') return '<span class="badge-sniper text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Sniper</span>';
             if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
+            if(stratName === 'Manual') return '<span class="bg-gray-800 text-gray-300 border border-gray-600 text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Manual</span>';
             return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
         };
 
@@ -1061,7 +1137,7 @@
         const enterNewTrade = async (symbol, price, strategyName, entryScoreData) => {
             if(virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) return;
             if (exitCooldowns[symbol] && Date.now() < exitCooldowns[symbol]) return;
-            if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') return;
+            if (SETTINGS.auto_kill && globalMarketStatus === 'bearish' && strategyName !== 'Manual') return;
 
             const newTrade = {
                 symbol: symbol, 
