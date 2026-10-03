@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v13 (Server Bypass)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v14 (Final Fix)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -286,8 +286,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v13') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v13') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v14') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v14') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -503,7 +503,7 @@
             }
 
             // ==========================================
-            // التحديث الاختراقي: الاعتماد على السيرفر (Server Bypass)
+            // التحديث الاختراقي: الاعتماد على السيرفر بعد تصحيح الرابط 100%
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -530,8 +530,8 @@
                         }
                     };
 
-                    // إرسال البيانات مباشرة إلى سيرفر Render الخاص بك وتخطي حظر متصفحات الهاتف
-                    const response = await fetch('https://momentum-backend-1s2b.onrender.com/update-settings', {
+                    // إرسال البيانات مباشرة إلى الرابط الصحيح في Render وتخطي حظر متصفحات الهاتف
+                    const response = await fetch('https://momentum-backend-io3b.onrender.com/update-settings', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(newSettings)
@@ -557,11 +557,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v13', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v14', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v13', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v14', openTradesSort); updateDashboardUI();
             });
         });
 
