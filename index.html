@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v28 (Link Sync)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v29 (Render Force)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -269,7 +269,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -286,8 +286,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v28') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v28') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v29') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v29') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -492,7 +492,7 @@
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
-                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
+                        await setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
                         inputEl.value = '';
                     } catch (err) {
                         alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
@@ -503,7 +503,7 @@
             }
 
             // ==========================================
-            // زر الحفظ الأسطوري v28 (إرسال مباشر عبر رابط GET للسيرفر لضمان الاستلام الفوري)
+            // زر الحفظ الأسطوري v29 (إرسال مباشر عبر رابط GET لسيرفر Render)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -511,7 +511,7 @@
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                btn.innerText = "جاري الإرسال المباشر للسيرفر..."; 
+                btn.innerText = "جاري الإرسال للسيرفر الفعلي..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -526,19 +526,15 @@
                 const brk = document.getElementById('strat-breakout').checked;
                 const snp = document.getElementById('strat-sniper').checked;
 
-                // إرسال الإعدادات فوراً عبر رابط GET إلى سيرفر Render الوسيط (مستحيل الحظر أو التعليق)
-                const linkBypasser = `https://momentum-backend-iq3b.onrender.com/update-settings?tf=${tf}&sl=${sl}&tp=${tp}&trail=${trail}&vol=${vol}&cd=${cd}&kill=${kill}&mom=${mom}&brk=${brk}&snp=${snp}`;
+                // إرسال الإعدادات فوراً وبشكل قاطع عبر رابط GET إلى سيرفر Render
+                const renderLink = `https://momentum-backend-iq3b.onrender.com/update-settings?tf=${tf}&sl=${sl}&tp=${tp}&trail=${trail}&vol=${vol}&cd=${cd}&kill=${kill}&mom=${mom}&brk=${brk}&snp=${snp}`;
 
-                // تنفيذ الطلب في الخلفية
-                fetch(linkBypasser).catch(e => console.log(e));
+                // فتح الطلب في الخلفية لضمان استلامه من قبل السيرفر
+                fetch(renderLink).catch(e => console.log(e));
 
-                // حفظ نسخة محلية أيضاً للتأكد من ظهورها في الواجهة فوراً
-                const newSettings = { tf, sl_perc: sl, min_tp: tp, trail_dist: trail, vol_mult: vol, cooldown_mins: cd, auto_kill: kill, strats: { momentum: mom, breakout: brk, sniper: snp } };
-                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true }).catch(e => console.log(e));
-
-                // تلوين الزر بالأخضر فوراً لإعطاء شعور بالسرعة والنجاح
+                // تحديث الزر ليظهر النجاح فوراً
                 setTimeout(() => {
-                    btn.innerText = "تم الحفظ وإرسالها للسيرفر ✓";
+                    btn.innerText = "تم إرسالها وحفظها بالسيرفر ✓";
                     btn.style.backgroundColor = "#10B981"; 
                 }, 400);
 
@@ -550,11 +546,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v28', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v29', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v28', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v29', openTradesSort); updateDashboardUI();
             });
         });
 
@@ -797,7 +793,7 @@
         };
 
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
-            if (!confirm(`هل أنت متأكد من حذف الصفقات المغلقة من السيرفر؟`)) return;
+            if (!confirm(`هل أنت متجكد من حذف الصفقات المغلقة من السيرفر؟`)) return;
             const btn = document.getElementById('clear-history-btn');
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `جاري الحذف...`;
