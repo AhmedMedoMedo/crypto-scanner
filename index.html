@@ -30,8 +30,6 @@
         .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
         .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
-        
-        /* ألوان الشارات للاستراتيجيات */
         .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .badge-sniper { background-color: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
@@ -39,17 +37,11 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
-    <!-- الشريط العلوي -->
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="7" y1="3" x2="7" y2="19"></line>
-                        <rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect>
-                        <line x1="17" y1="5" x2="17" y2="21"></line>
-                        <rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect>
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="3" x2="7" y2="19"></line><rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect><line x1="17" y1="5" x2="17" y2="21"></line><rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect></svg>
                 </div>
                 <div>
                     <h1 class="text-lg font-black text-white leading-tight">Momentum</h1>
@@ -58,12 +50,10 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- زر الصوت -->
                 <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </button>
-                
                 <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
                     <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     جاري الاتصال...
@@ -74,59 +64,45 @@
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
 
-        <!-- مؤشر حالة السوق -->
         <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
             <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
                 <div class="flex items-center gap-3">
-                    <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">
-                        --%
-                    </div>
+                    <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">--%</div>
                     <div class="flex flex-col">
                         <h2 class="text-xs font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
                         </h2>
                         <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري استلام البيانات من السيرفر...</div>
-                        <!-- تاريخ المؤشر -->
                         <div id="market-health-history" class="text-[10px] text-gray-400 mt-1.5 hidden bg-gray-950/80 px-2.5 py-1 rounded border border-gray-800/80 w-fit flex items-center gap-1"></div>
                     </div>
-                </div>
-                <div class="flex items-center gap-2 bg-gray-950 px-3 py-2 rounded-lg border border-gray-800 shrink-0">
-                    <label for="setting-auto-kill" class="text-[10px] font-bold text-gray-300 cursor-pointer flex items-center gap-2">
-                        <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-3.5 h-3.5 cursor-pointer">
-                        تفعيل الحماية الآلية (منع الدخول وقت الخطر)
-                    </label>
                 </div>
             </div>
             <div class="z-10 w-full">
                 <div class="w-full bg-gray-950 rounded-full h-1.5 relative overflow-hidden border border-gray-800">
                     <div id="market-health-bar" class="h-1.5 rounded-full transition-all duration-1000 ease-out w-0 bg-gray-500"></div>
                 </div>
-                <!-- سجل السوق -->
                 <div id="market-score-log-container" class="mt-4 flex-col hidden border-t border-gray-800/50 pt-3"></div>
             </div>
         </div>
 
-        <!-- شريط الأنشطة الحية -->
         <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
             <span class="relative flex h-2.5 w-2.5 shrink-0">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
             </span>
-            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر بنجاح... الواجهة الأصلية تعمل بكامل التفاصيل والتحديث اللحظي.</div>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر السحابي... الأسعار تنبض وتتحدث تلقائياً.</div>
         </div>
         
-        <!-- قسم الإعدادات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     <h2 class="text-sm font-bold text-white">إعدادات الرادار السحابية (تُرسل وتُنفذ فوراً)</h2>
                 </div>
             </div>
             
-            <!-- تفعيل الاستراتيجيات -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-800">
                 <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
                     <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
@@ -142,16 +118,14 @@
                 </div>
             </div>
 
-            <!-- إعدادات المعلمات -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div class="input-group">
                     <label>الإطار الزمني الأساسي</label>
                     <select id="setting-tf">
-                        <option value="1m">1 دقيقة (سكالبينج سريع)</option>
-                        <option value="5m">5 دقائق (خطف سريع)</option>
-                        <option value="15m" selected>15 دقيقة (أساسي)</option>
-                        <option value="1h">1 ساعة (أهداف أبعد)</option>
-                        <option value="4h">4 ساعات (استثمار)</option>
+                        <option value="1m">1 دقيقة</option>
+                        <option value="5m">5 دقائق</option>
+                        <option value="15m" selected>15 دقيقة</option>
+                        <option value="1h">1 ساعة</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -159,8 +133,8 @@
                     <input type="number" id="setting-sl" step="0.1">
                 </div>
                 <div class="input-group">
-                    <label>هدف تفعيل الملاحقة (%)</label>
-                    <input type="number" id="setting-tp" step="0.1" title="يُفضل 5% للأهداف الكبيرة">
+                    <label>هدف الملاحقة (%)</label>
+                    <input type="number" id="setting-tp" step="0.1">
                 </div>
                 <div class="input-group">
                     <label>مسافة الملاحقة (%)</label>
@@ -174,15 +148,18 @@
                     <label>فترة التبريد (دقائق)</label>
                     <input type="number" id="setting-cooldown" step="1" min="0">
                 </div>
-                <div class="col-span-full mt-2 flex justify-end">
-                    <button id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
+                <div class="col-span-full flex items-center justify-between mt-2 pt-3 border-t border-gray-800">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-4 h-4 cursor-pointer">
+                        <label for="setting-auto-kill" class="text-xs font-bold text-gray-300 cursor-pointer !mb-0">تفعيل الحماية الآلية (إيقاف الشراء وقت الهبوط)</label>
+                    </div>
+                    <button id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md">
                         حفظ وإرسال للسيرفر 🚀
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- لوحة الإحصائيات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                 <h2 class="text-sm font-bold text-white flex items-center gap-2">
@@ -192,13 +169,8 @@
                 <div class="input-group sm:w-48">
                     <select id="stats-time-filter" class="!py-1.5 !text-xs !bg-gray-950 !text-brand-gold !font-bold !border-gray-700">
                         <option value="all">كل الأوقات</option>
-                        <option value="1">آخر ساعة</option>
-                        <option value="4">آخر 4 ساعات</option>
-                        <option value="6">آخر 6 ساعات</option>
-                        <option value="12">آخر 12 ساعة</option>
                         <option value="24" selected>آخر 24 ساعة</option>
                         <option value="168">آخر 7 أيام</option>
-                        <option value="720">آخر 30 يوم</option>
                     </select>
                 </div>
             </div>
@@ -209,7 +181,7 @@
                     <div class="text-3xl font-black text-white" id="dash-total">0</div>
                 </div>
                 <div class="stat-box">
-                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح (Win Rate)</div>
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح</div>
                     <div class="text-3xl font-black text-brand-blue" id="dash-winrate">0.0%</div>
                 </div>
                 <div class="stat-box">
@@ -222,9 +194,7 @@
                 </div>
             </div>
 
-            <!-- الصفقات المفتوحة مع فلتر الترتيب -->
             <div>
-                <!-- إضافة صفقة يدوية -->
                 <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                     <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -232,7 +202,7 @@
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
                         <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
-                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
+                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
                     </div>
                 </div>
 
@@ -243,9 +213,7 @@
                     </h3>
                     <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
                         <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
-                        <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
                         <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
-                        <option value="profit_desc">ترتيب حسب: الأكثر ربحاً</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
@@ -253,7 +221,6 @@
                 </div>
             </div>
 
-            <!-- سجل الصفقات المغلقة -->
             <div class="mt-8 pt-6 border-t border-gray-800">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                     <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
@@ -269,10 +236,6 @@
                     </button>
                 </div>
                 
-                <div id="history-summary-mobile" class="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden">
-                    (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
-                </div>
-
                 <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="closed-trades-list">
                     <div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة بعد</div>
                 </div>
@@ -301,7 +264,6 @@
         let lastScoreChangeTime = null;
         let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v8') || '24';
         let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v8') || 'time_desc';
-        let livePricesCache = {}; 
 
         // دوال المساعدة للواجهة
         const formatDuration = (ms) => {
@@ -309,22 +271,17 @@
             const mins = Math.max(1, Math.floor(ms / 60000));
             if (mins < 60) return `${mins}د`;
             const hours = Math.floor(mins / 60);
-            const remainingMins = mins % 60;
-            return `${hours}س و ${remainingMins}د`;
+            return `${hours}س و ${mins % 60}د`;
         };
 
         const formatTimeAgo = (openTimeMs) => {
             if (!openTimeMs) return '';
-            const now = Date.now();
-            const diffMs = now - openTimeMs;
-            const mins = Math.floor(diffMs / 60000);
+            const mins = Math.floor((Date.now() - openTimeMs) / 60000);
             if (mins < 1) return 'منذ لحظات';
             if (mins < 60) return `منذ ${mins} دقيقة`;
             const hours = Math.floor(mins / 60);
-            const remainingMins = mins % 60;
-            if (hours < 24) return remainingMins === 0 ? `منذ ${hours} ساعة` : `منذ ${hours}س و ${remainingMins}د`;
-            const days = Math.floor(hours / 24);
-            return `منذ ${days} يوم`;
+            if (hours < 24) return `منذ ${hours}س و ${mins % 60}د`;
+            return `منذ ${Math.floor(hours / 24)} يوم`;
         };
 
         const getStrategyBadge = (stratName) => {
@@ -341,48 +298,49 @@
             return { text: 'text-brand-red', bg: 'bg-brand-red' };
         };
 
-        let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
-        let audioCtx = null;
-        const updateSoundUI = () => {
-            const btn = document.getElementById('sound-toggle-btn');
-            if (soundEnabled) {
-                document.getElementById('sound-icon-off').classList.add('hidden');
-                document.getElementById('sound-icon-on').classList.remove('hidden');
-                btn.classList.add('bg-gray-800', 'border-brand-gold'); btn.classList.remove('border-gray-700');
-            } else {
-                document.getElementById('sound-icon-off').classList.remove('hidden');
-                document.getElementById('sound-icon-on').classList.add('hidden');
-                btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
-            }
-        };
-        updateSoundUI();
-        document.body.addEventListener('click', () => { if (soundEnabled && !audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } }, { once: true });
-        
-        const playSound = (type) => {
-            if (!soundEnabled) return;
+        // --- محرك الأسعار اللحظية (يحدث الأرقام بدون تحميل الصفحة) ---
+        const fetchLivePrices = async () => {
+            const openTrades = virtualTrades.filter(t => t.status === 'open');
+            if (openTrades.length === 0) return;
+
+            // تجميع الرموز لطلبها في رسالة واحدة لباينانس
+            const symbols = openTrades.map(t => t.symbol);
+            const symbolsParam = encodeURIComponent(JSON.stringify(symbols));
+
             try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
-                if (type === 'open') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); 
-                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now); osc.stop(now + 0.1);
-                    const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
-                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(1046.50, now + 0.15); 
-                    gain2.gain.setValueAtTime(0.1, now + 0.15); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                    osc2.start(now + 0.15); osc2.stop(now + 0.3);
-                } else if (type === 'win') {
-                    osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554.37, now + 0.1); osc.frequency.setValueAtTime(659.25, now + 0.2); 
-                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-                    osc.start(now); osc.stop(now + 0.6);
+                const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${symbolsParam}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    data.forEach(item => {
+                        const trade = openTrades.find(t => t.symbol === item.symbol);
+                        if (trade) {
+                            const currentPrice = parseFloat(item.price);
+                            const pnl = ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
+
+                            // تحديث عناصر HTML مباشرة باستخدام الـ ID
+                            const priceEl = document.getElementById(`price-${item.symbol}`);
+                            const pnlEl = document.getElementById(`pnl-${item.symbol}`);
+                            const cardEl = document.getElementById(`card-${item.symbol}`);
+
+                            if (priceEl) priceEl.innerText = currentPrice.toPrecision(5);
+                            
+                            if (pnlEl && cardEl) {
+                                pnlEl.innerText = (pnl > 0 ? '+' : '') + pnl.toFixed(2) + '%';
+                                
+                                if (pnl >= 0) {
+                                    pnlEl.className = 'dir-ltr font-black text-[11px] text-brand-green';
+                                    cardEl.className = 'bg-gray-800 border border-brand-green/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3';
+                                } else {
+                                    pnlEl.className = 'dir-ltr font-black text-[11px] text-brand-red';
+                                    cardEl.className = 'bg-gray-800 border border-brand-red/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3';
+                                }
+                            }
+                        }
+                    });
                 }
             } catch(e) {}
         };
-        document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled); updateSoundUI(); if(soundEnabled) playSound('open'); });
 
         // تحميل الإعدادات من السيرفر السحابي
         const loadCloudSettings = async () => {
@@ -406,38 +364,13 @@
             } catch(e) {}
         };
 
-        // دالة جلب الأسعار المباشرة المستمرة (Polling)
-        const fetchLivePrices = async () => {
-            const openTrades = virtualTrades.filter(t => t.status === 'open');
-            if (openTrades.length === 0) return;
-
-            let needsUpdate = false;
-            await Promise.all(openTrades.map(async (t) => {
-                try {
-                    const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${t.symbol}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const newPrice = parseFloat(data.price);
-                        if (livePricesCache[t.symbol] !== newPrice) {
-                            livePricesCache[t.symbol] = newPrice;
-                            needsUpdate = true;
-                        }
-                    }
-                } catch(e) {}
-            }));
-
-            if (needsUpdate) {
-                updateDashboardUI();
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', () => {
             loadCloudSettings();
             document.getElementById('stats-time-filter').value = statsTimeFilter;
             document.getElementById('open-trades-sort').value = openTradesSort;
 
-            // تشغيل التحديث اللحظي للأسعار كل 3 ثوانٍ
-            setInterval(fetchLivePrices, 3000);
+            // تشغيل محرك الأسعار اللحظي كل ثانيتين
+            setInterval(fetchLivePrices, 2000);
 
             // الاستماع لحالة السوق من السيرفر السحابي
             onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
@@ -452,21 +385,18 @@
                 }
             });
 
-            // الاستماع لبيانات الصفقات من السيرفر السحابي
+            // الاستماع لبيانات الصفقات
             onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
-                const oldCount = virtualTrades.filter(t => t.status === 'open').length;
                 virtualTrades = [];
                 snapshot.forEach(docSnap => virtualTrades.push({ docId: docSnap.id, ...docSnap.data() }));
                 
-                const newCount = virtualTrades.filter(t => t.status === 'open').length;
-                if (newCount > oldCount) playSound('open');
-                else if (oldCount > newCount) playSound('win');
-                
-                // جلب الأسعار فوراً عند استلام صفقة جديدة ثم تحديث الواجهة
-                fetchLivePrices().then(() => updateDashboardUI());
+                // نقوم برسم الواجهة (مرة واحدة فقط عند استلام البيانات)
+                updateDashboardUI();
+                // ثم نجلب الأسعار الحية فوراً
+                fetchLivePrices();
             });
 
-            // إضافة صفقة يدوية
+            // زر الإضافة اليدوية
             const manualAddBtn = document.getElementById('add-manual-btn');
             if (manualAddBtn) {
                 manualAddBtn.addEventListener('click', async () => {
@@ -482,7 +412,7 @@
                     const origText = manualAddBtn.innerText;
                     manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
                     try {
-                        const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${symbol}`);
+                        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
                         if (!res.ok) throw new Error();
                         const data = await res.json();
                         const price = parseFloat(data.price);
@@ -631,33 +561,26 @@
             profitEl.className = `text-3xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
             document.getElementById('dash-open').innerText = openTrades.length;
 
-            const summaryText = `(إجمالي: ${closedCount} | رابحة: <span class="text-brand-green font-bold">${won}</span> | خاسرة: <span class="text-brand-red font-bold">${lost}</span>)`;
-            document.getElementById('history-summary').innerHTML = summaryText;
-            document.getElementById('history-summary-mobile').innerHTML = summaryText;
+            document.getElementById('history-summary').innerHTML = `(إجمالي: ${closedCount} | رابحة: <span class="text-brand-green font-bold">${won}</span> | خاسرة: <span class="text-brand-red font-bold">${lost}</span>)`;
 
             let openHtml = '';
             
             const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
             const sortedOpenTrades = openTrades.sort((a, b) => {
-                if (sortFilter === 'profit_desc') {
-                    const pnlA = (((livePricesCache[a.symbol] || a.currentPrice || a.entryPrice) - a.entryPrice) / a.entryPrice) * 100 || 0;
-                    const pnlB = (((livePricesCache[b.symbol] || b.currentPrice || b.entryPrice) - b.entryPrice) / b.entryPrice) * 100 || 0;
-                    return pnlB - pnlA;
-                } else if (sortFilter === 'score_desc') {
-                    return (b.liveScore || 0) - (a.liveScore || 0);
-                } else if (sortFilter === 'time_desc') {
-                    return (b.openTime || 0) - (a.openTime || 0);
-                } else if (sortFilter === 'time_asc') {
-                    return (a.openTime || 0) - (b.openTime || 0);
-                }
-                return 0;
+                if (sortFilter === 'score_desc') return (b.liveScore || 0) - (a.liveScore || 0);
+                if (sortFilter === 'time_desc') return (b.openTime || 0) - (a.openTime || 0);
+                return (a.openTime || 0) - (b.openTime || 0);
             });
             
             for (let t of sortedOpenTrades) {
-                let livePrice = livePricesCache[t.symbol] || t.currentPrice || t.entryPrice;
-
+                // نأخذ السعر الحالي المخزن مؤقتاً، وسيقوم محرك الأسعار بتحديثه خلال ثوانٍ
+                const livePrice = t.currentPrice || t.entryPrice;
                 const currentPnl = ((livePrice - t.entryPrice) / t.entryPrice) * 100;
+                
+                // تحديد الألوان الابتدائية (التي سيغيرها المحرك اللحظي لاحقاً)
                 const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
+                const cardColorClass = currentPnl >= 0 ? 'border-brand-green/30' : 'border-brand-red/30';
+                
                 const trailStatus = t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`;
                 const timeAgoText = formatTimeAgo(t.openTime);
                 const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
@@ -694,7 +617,7 @@
                     </div>`;
                 
                 openHtml += `
-                    <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
+                    <div id="card-${t.symbol}" class="bg-gray-800 border ${cardColorClass} rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
                         <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">
                             ${timeAgoText}
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -706,7 +629,7 @@
                                 ${stratBadge}
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                                <span id="pnl-${t.symbol}" class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
                                 <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="إلغاء وحذف الصفقة">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                 </button>
@@ -724,7 +647,7 @@
                         </div>
                         <div class="flex justify-between items-center mb-2 text-[10px]">
                             <span class="text-gray-400">الحالي:</span>
-                            <span class="text-white font-bold font-mono">${livePrice.toPrecision(5)}</span>
+                            <span id="price-${t.symbol}" class="text-white font-bold font-mono">${livePrice.toPrecision(5)}</span>
                         </div>
                         <div class="mt-auto flex flex-col gap-1.5 pt-1 border-t border-gray-700/50">
                             <div class="text-[9px] ${health.class} rounded px-1 py-1 text-center font-bold border transition-colors duration-500 truncate" title="${health.text}">${health.text}</div>
