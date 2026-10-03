@@ -51,8 +51,7 @@
                     </svg>
                 </div>
                 <div>
-                    <!-- أضفنا رقم الإصدار هنا لنتأكد أن المتصفح لا يستخدم نسخة قديمة -->
-                    <h1 class="text-lg font-black text-white leading-tight flex items-center gap-2">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v9.0</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v10 (Bypass)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -73,6 +72,7 @@
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
 
+        <!-- مؤشر حالة السوق -->
         <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
             <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
@@ -112,6 +112,7 @@
             <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر السحابي... الأسعار تنبض وتتحدث تلقائياً.</div>
         </div>
         
+        <!-- قسم الإعدادات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
@@ -167,7 +168,6 @@
                     <input type="number" id="setting-cooldown" step="1" min="0">
                 </div>
                 <div class="col-span-full mt-2 flex justify-end">
-                    <!-- تحويل نوع الزر إلى button لمنع تحديث الصفحة الخفي -->
                     <button type="button" id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
                         حفظ الإعدادات وإرسالها للسيرفر
                     </button>
@@ -272,7 +272,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -505,21 +505,16 @@
                 });
             }
 
+            // الزر الحديدي الكاشف للأعطال
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                btn.innerText = "جاري الحفظ..."; 
+                btn.innerText = "جاري التشفير والإرسال..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
-                
-                setTimeout(() => { 
-                    btn.innerText = originalText; 
-                    btn.style.backgroundColor = ""; 
-                    btn.disabled = false; 
-                }, 3000);
                 
                 try {
                     const newSettings = {
@@ -537,24 +532,38 @@
                         }
                     };
 
+                    // إرسال البيانات
                     await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
                     
-                    btn.innerText = "تم التحديث في السيرفر ✓";
-                    btn.style.backgroundColor = "#10B981"; 
+                    // التحقق الفوري لقطع الشك باليقين
+                    const verifySnap = await getDoc(doc(db, "momentum_system_logs", "scanner_settings"));
+                    
+                    if(verifySnap.exists()){
+                        btn.innerText = "تم التأكيد والحفظ 100% ✓";
+                        btn.style.backgroundColor = "#10B981"; 
+                        alert("✅ تم حفظ إعداداتك في السيرفر بنجاح قاطع!\n\nإذا قمت الآن بعمل Refresh وعادت الإعدادات للقديم، فهذا يعني أن المتصفح (أو جيت هاب) يخدعك ويعرض لك النسخة القديمة المخزنة في ذاكرته (Cache).");
+                    }
                     
                 } catch(e) { 
                     console.error("Save Error:", e);
                     btn.innerText = "خطأ! تأكد من الاتصال"; 
                     btn.style.backgroundColor = "#EF4444"; 
+                    alert("❌ حدث خطأ يمنع الاتصال بقاعدة البيانات. تأكد من الإنترنت أو صلاحيات Firebase.");
+                } finally {
+                    setTimeout(() => { 
+                        btn.innerText = originalText; 
+                        btn.style.backgroundColor = ""; 
+                        btn.disabled = false; 
+                    }, 4000);
                 }
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v9', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v10', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v9', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v10', openTradesSort); updateDashboardUI();
             });
         });
 
@@ -687,7 +696,7 @@
                 if (displayScore !== '--') {
                     if (displayScore >= 70) health = { text: '🚀 مساحة جيدة للصعود', class: 'text-brand-green border-brand-green/30 bg-brand-green/10 shadow-[0_0_8px_rgba(16,185,129,0.1)]' };
                     else if (displayScore < 45) health = { text: '📉 تراجع الزخم', class: 'text-gray-400 border-gray-700 bg-gray-800' };
-                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️️ خطر انعكاس (تشبع)', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]' };
+                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️ خطر انعكاس (تشبع)', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]' };
                 }
 
                 const scoreHtml = `
