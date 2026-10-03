@@ -28,7 +28,6 @@
         .input-group label { display: block; font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.25rem; }
         .input-group input, .input-group select { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 0.375rem; padding: 0.375rem 0.5rem; font-size: 0.875rem; outline: none; direction: ltr; }
         .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
-        .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
         .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
@@ -195,6 +194,18 @@
             </div>
 
             <div>
+                <!-- زر الإضافة اليدوية للصفقات -->
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية للسيرفر:</span>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
+                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
                     <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
@@ -245,7 +256,6 @@
         let statsTimeFilter = '24';
         let openTradesSort = 'time_desc';
 
-        // تحميل الإعدادات من السحابة عند فتح الموقع
         const loadCloudSettings = async () => {
             try {
                 const docSnap = await getDoc(doc(db, "momentum_system_logs", "scanner_settings"));
@@ -264,13 +274,12 @@
                         document.getElementById('strat-sniper').checked = s.strats.sniper;
                     }
                 }
-            } catch(e) { console.error("Error loading settings", e); }
+            } catch(e) {}
         };
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCloudSettings();
 
-            // الاستماع لحالة السوق
             onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
                 if (docSnap.exists()) {
                     document.getElementById('db-status-badge').innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سحابي متصل`;
@@ -281,7 +290,6 @@
                 }
             });
 
-            // الاستماع للصفقات
             onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
                 const oldCount = virtualTrades.filter(t => t.status === 'open').length;
                 virtualTrades = [];
@@ -290,10 +298,46 @@
                 updateDashboardUI();
             });
 
-            // زر الحفظ السحابي
+            // تفعيل زر الإضافة اليدوية للسيرفر
+            const manualAddBtn = document.getElementById('add-manual-btn');
+            if (manualAddBtn) {
+                manualAddBtn.addEventListener('click', async () => {
+                    const inputEl = document.getElementById('manual-symbol-input');
+                    let symbol = inputEl.value.trim().toUpperCase();
+                    if (!symbol) return;
+                    if (!symbol.endsWith('USDT')) symbol += 'USDT';
+
+                    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) {
+                        alert('هذه الصفقة مفتوحة بالفعل!');
+                        return;
+                    }
+
+                    manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
+                    try {
+                        const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${symbol}`);
+                        if (!res.ok) throw new Error();
+                        const data = await res.json();
+                        const price = parseFloat(data.price);
+                        
+                        const newTrade = {
+                            symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, trailActive: false, 
+                            slLevel: price * 0.97, status: 'open', pnl: 0, openTime: Date.now(),
+                            strategy: 'Manual', entryScore: 75, liveScore: 75
+                        };
+                        
+                        await setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
+                        inputEl.value = '';
+                    } catch (err) {
+                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
+                    } finally {
+                        manualAddBtn.innerText = 'إضافة للصفقات'; manualAddBtn.disabled = false;
+                    }
+                });
+            }
+
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
-                btn.innerText = "جاري الحفظ بالسيرفر...";
+                btn.innerText = "جاري الحفظ...";
                 btn.disabled = true;
 
                 const newSettings = {
@@ -313,7 +357,7 @@
 
                 try {
                     await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings);
-                    btn.innerText = "تم التحديث في السيرفر بنجاح ✓";
+                    btn.innerText = "تم التحديث في السيرفر ✓";
                     btn.classList.replace('bg-brand-blue', 'bg-brand-green');
                 } catch(e) {
                     btn.innerText = "خطأ في الحفظ!";
@@ -381,21 +425,27 @@
                     <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md p-3 relative">
                         <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1">
                             <span class="text-white font-bold text-xs">${t.symbol}</span>
-                            <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                            <div class="flex items-center gap-2">
+                                <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                                <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white bg-red-500/10 rounded p-1" title="حذف">✕</button>
+                            </div>
                         </div>
                         <div class="text-[10px] text-gray-300">السعر: ${(t.currentPrice || 0).toPrecision(5)}</div>
-                        <div class="text-[9px] text-brand-gold mt-1">${t.trailActive ? '✨ ملاحقة نشطة' : 'جاري تتبع الهدف'}</div>
+                        <div class="text-[9px] text-brand-gold mt-1">${t.trailActive ? '✨ ملاحقة نشطة' : 'جاري التتبع'}</div>
                     </div>`;
             });
-            if(!openHtml) openHtml = '<div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-dashed border-gray-800">لا توجد صفقات مفتوحة</div>';
+            if(!openHtml) openHtml = '<div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-dashed border-gray-800">لا توجد صفقات مفتوحة حالياً</div>';
             document.getElementById('active-trades-list').innerHTML = openHtml;
         };
 
         window.cancelOpenTrade = async (docId) => {
-            if(confirm('حذف الصفقة؟')) await deleteDoc(doc(db, "momentum_trades_v1", docId));
+            if(confirm('هل تريد حذف هذه الصفقة؟')) await deleteDoc(doc(db, "momentum_trades_v1", docId));
         };
+        
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
-            for(let t of virtualTrades.filter(t => t.status !== 'open')) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
+            if(confirm('هل تريد مسح سجل الصفقات المغلقة؟')) {
+                for(let t of virtualTrades.filter(t => t.status !== 'open')) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
+            }
         });
 
         let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
@@ -408,7 +458,7 @@
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.frequency.setValueAtTime(880, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.start(); osc.stop(audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } catch(e) {}
         };
         document.getElementById('sound-toggle-btn').addEventListener('click', () => {
