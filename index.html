@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v22 (Perfect Sync)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v24 (Final Sync)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -288,8 +288,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v22') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v22') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v24') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v24') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -505,7 +505,7 @@
             }
 
             // ==========================================
-            // زر الحفظ (الصاروخ v22) - بالرابط الدقيق iq3b وبدون أي تعليق
+            // زر الحفظ النهائي v24 بالرابط الصحيح (iq3b) وتقنية عدم الانتظار
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -513,7 +513,7 @@
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                btn.innerText = "جاري الحفظ..."; 
+                btn.innerText = "جاري الإرسال..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -532,24 +532,23 @@
                     }
                 };
 
-                // 1. إرسال لفايربيس للحفظ المحلي كنسخة احتياطية
+                // الحفظ المحلي والتزامن في الخلفية
                 setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
                     .catch(e => console.log(e));
 
-                // 2. إرسال الطلب للسيرفر الصحيح (iq3b) في الخلفية متخطياً حظر فايربيس (بدون AWAIT أبداً)
+                // إرسال البيانات مباشرة للسيرفر الصحيح (iq3b) بدون توقف
                 fetch('https://momentum-backend-iq3b.onrender.com/update-settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newSettings)
-                }).catch(e => console.error("Background Push Error:", e));
+                }).catch(e => console.error("Wake & Push Error:", e));
 
-                // 3. تأكيد النجاح السريع في نصف ثانية دون انتظار رد السيرفر البطيء
+                // تحويل الزر للأخضر والانتهاء في نصف ثانية فقط
                 setTimeout(() => {
                     btn.innerText = "تم الإرسال والحفظ بنجاح ✓";
                     btn.style.backgroundColor = "#10B981"; 
                 }, 500);
 
-                // 4. إرجاع الزر لوضعه الطبيعي
                 setTimeout(() => { 
                     btn.innerText = originalText; 
                     btn.style.backgroundColor = ""; 
@@ -558,11 +557,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v22', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v24', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v22', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v24', openTradesSort); updateDashboardUI();
             });
         });
 
