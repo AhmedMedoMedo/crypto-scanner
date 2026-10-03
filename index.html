@@ -522,31 +522,54 @@
                 });
             }
 
-            // زر حفظ الإعدادات ورفعها للسيرفر
+            // زر حفظ الإعدادات ورفعها للسيرفر - التحديث الحاسم لحل مشكلة التعليق
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
-                const originalText = btn.innerText;
-                btn.innerText = "جاري الحفظ..."; btn.disabled = true;
-                const newSettings = {
-                    tf: document.getElementById('setting-tf').value,
-                    sl_perc: parseFloat(document.getElementById('setting-sl').value) / 100,
-                    min_tp: parseFloat(document.getElementById('setting-tp').value) / 100,
-                    trail_dist: parseFloat(document.getElementById('setting-trail').value) / 100,
-                    vol_mult: parseFloat(document.getElementById('setting-vol').value),
-                    cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
-                    auto_kill: document.getElementById('setting-auto-kill').checked,
-                    strats: {
-                        momentum: document.getElementById('strat-momentum').checked,
-                        breakout: document.getElementById('strat-breakout').checked,
-                        sniper: document.getElementById('strat-sniper').checked
-                    }
-                };
+                const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
+                
                 try {
-                    await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings);
+                    btn.innerText = "جاري الحفظ..."; 
+                    btn.disabled = true;
+                    
+                    // إصلاح الحماية: إضافة || 0 لمنع قيم NaN التي تسبب انهيار Firebase بصمت
+                    const newSettings = {
+                        tf: document.getElementById('setting-tf').value || '15m',
+                        sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
+                        min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
+                        trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
+                        vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
+                        cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
+                        auto_kill: document.getElementById('setting-auto-kill').checked,
+                        strats: {
+                            momentum: document.getElementById('strat-momentum').checked,
+                            breakout: document.getElementById('strat-breakout').checked,
+                            sniper: document.getElementById('strat-sniper').checked
+                        }
+                    };
+
+                    // إضافة { merge: true } لضمان نجاح التعديل دون مسح بيانات أخرى
+                    await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
+                    
                     btn.innerText = "تم التحديث في السيرفر ✓";
                     btn.classList.replace('bg-brand-blue', 'bg-brand-green');
-                } catch(e) { btn.innerText = "خطأ!"; }
-                finally { setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); btn.disabled = false; }, 2000); }
+                    
+                    setTimeout(() => { 
+                        btn.innerText = originalText; 
+                        btn.classList.replace('bg-brand-green', 'bg-brand-blue'); 
+                        btn.disabled = false; 
+                    }, 2000);
+                    
+                } catch(e) { 
+                    console.error("Save Error:", e);
+                    btn.innerText = "خطأ! حاول مجدداً"; 
+                    btn.classList.replace('bg-brand-blue', 'bg-brand-red');
+                    
+                    setTimeout(() => { 
+                        btn.innerText = originalText; 
+                        btn.classList.replace('bg-brand-red', 'bg-brand-blue'); 
+                        btn.disabled = false; 
+                    }, 2000);
+                }
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
