@@ -142,7 +142,7 @@
                     <select id="setting-tf">
                         <option value="1m">1 دقيقة (سكالبينج سريع)</option>
                         <option value="5m">5 دقائق (خطف سريع)</option>
-                        <option value="15m" selected>15 دقيقة (أساسي)</option>
+                        <option value="15m">15 دقيقة (أساسي)</option>
                         <option value="1h">1 ساعة (أهداف أبعد)</option>
                         <option value="4h">4 ساعات (استثمار)</option>
                     </select>
@@ -272,7 +272,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -416,16 +416,17 @@
             priceWs.onclose = () => { setTimeout(connectBinanceWs, 3000); };
         };
 
-        const loadCloudSettings = async () => {
-            try {
-                const docSnap = await getDoc(doc(db, "momentum_system_logs", "scanner_settings"));
+        // المزامنة الحية للإعدادات: هذه الدالة تحل مشكلة الريفريش والعودة للإعدادات القديمة نهائياً
+        const startSettingsSync = () => {
+            onSnapshot(doc(db, "momentum_system_logs", "scanner_settings"), (docSnap) => {
                 if (docSnap.exists()) {
                     const s = docSnap.data();
-                    if(s.tf) document.getElementById('setting-tf').value = s.tf;
-                    if(s.sl_perc) document.getElementById('setting-sl').value = (s.sl_perc * 100).toFixed(1);
-                    if(s.min_tp) document.getElementById('setting-tp').value = (s.min_tp * 100).toFixed(1);
-                    if(s.trail_dist) document.getElementById('setting-trail').value = (s.trail_dist * 100).toFixed(1);
-                    if(s.vol_mult) document.getElementById('setting-vol').value = s.vol_mult;
+                    
+                    if(s.tf !== undefined) document.getElementById('setting-tf').value = s.tf;
+                    if(s.sl_perc !== undefined) document.getElementById('setting-sl').value = (s.sl_perc * 100).toFixed(1);
+                    if(s.min_tp !== undefined) document.getElementById('setting-tp').value = (s.min_tp * 100).toFixed(1);
+                    if(s.trail_dist !== undefined) document.getElementById('setting-trail').value = (s.trail_dist * 100).toFixed(1);
+                    if(s.vol_mult !== undefined) document.getElementById('setting-vol').value = s.vol_mult;
                     if(s.cooldown_mins !== undefined) document.getElementById('setting-cooldown').value = s.cooldown_mins;
                     if(s.auto_kill !== undefined) document.getElementById('setting-auto-kill').checked = s.auto_kill;
                     if(s.strats) {
@@ -434,11 +435,13 @@
                         document.getElementById('strat-sniper').checked = s.strats.sniper;
                     }
                 }
-            } catch(e) {}
+            });
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadCloudSettings();
+            // تفعيل المزامنة الحية للإعدادات
+            startSettingsSync();
+            
             connectBinanceWs(); 
 
             document.getElementById('stats-time-filter').value = statsTimeFilter;
@@ -506,26 +509,22 @@
                 });
             }
 
-            // زر الحفظ - النسخة المضادة للتعليق نهائياً
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                // 1. قفل الزر وتغيير شكله فوراً
                 btn.innerText = "جاري الحفظ..."; 
                 btn.disabled = true;
-                btn.style.backgroundColor = "#4B5563"; // لون رمادي للتحميل
+                btn.style.backgroundColor = "#4B5563"; 
                 
-                // 2. مؤقت "إجباري" مستقل تماماً لفك التعليق بعد 3 ثوانٍ مهما كانت الظروف
                 setTimeout(() => { 
                     btn.innerText = originalText; 
                     btn.style.backgroundColor = ""; 
                     btn.disabled = false; 
                 }, 3000);
                 
-                // 3. محاولة إرسال البيانات للسيرفر
                 try {
                     const newSettings = {
                         tf: document.getElementById('setting-tf').value || '15m',
@@ -544,7 +543,6 @@
 
                     await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
                     
-                    // إذا نجح الاتصال، نعطيه اللون الأخضر مؤقتاً قبل أن يفكه المؤقت الإجباري
                     btn.innerText = "تم التحديث في السيرفر ✓";
                     btn.style.backgroundColor = "#10B981"; 
                     
