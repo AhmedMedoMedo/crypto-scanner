@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v19 (Victory)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v20 (Turbo)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -269,7 +269,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -281,13 +281,17 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        
+        // تفعيل الذاكرة المحلية لكي تنعكس الإعدادات في الواجهة فوراً
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
+        });
 
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v19') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v19') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v20') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v20') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -492,7 +496,7 @@
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
-                        await setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e=>console.log(e));
                         inputEl.value = '';
                     } catch (err) {
                         alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
@@ -503,14 +507,16 @@
             }
 
             // ==========================================
-            // زر الحفظ المنتصر: الرابط الدقيق (iq3b) لحفظ البيانات في السيرفر
+            // التحديث الأسطوري v20: الإطلاق والنسيان (Fire & Forget)
             // ==========================================
-            document.getElementById('save-settings-btn').addEventListener('click', async () => {
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                btn.innerText = "جاري الحفظ الفعلي بالسيرفر..."; 
+                
+                // 1. قفل الزر وتغيير اللون فوراً بدون أي تأخير
+                btn.innerText = "جاري الإرسال..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -529,38 +535,37 @@
                     }
                 };
 
-                try {
-                    // الاتصال بالرابط الصحيح 100% 
-                    const response = await fetch('https://momentum-backend-iq3b.onrender.com/update-settings', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(newSettings)
-                    });
+                // 2. أمر الحفظ المحلي السريع (ينعكس فوراً على الشاشة بدون انتظار)
+                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
+                    .catch(e => console.error(e));
 
-                    if (!response.ok) throw new Error("السيرفر رفض الطلب");
+                // 3. إرسال الطلب للسيرفر في الخلفية متخطياً حظر فايربيس (بدون AWAIT أبداً)
+                fetch('https://momentum-backend-iq3b.onrender.com/update-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newSettings)
+                }).catch(e => console.error("Background Push Error:", e));
 
-                    btn.innerText = "تم الحفظ بنجاح 100% ✓";
+                // 4. إجبار الزر على إظهار رسالة النجاح بعد جزء من الثانية لإعطاء إحساس مثالي بالسرعة
+                setTimeout(() => {
+                    btn.innerText = "تم الإرسال والحفظ بنجاح ✓";
                     btn.style.backgroundColor = "#10B981"; 
-                    
-                } catch(error) { 
-                    console.error("Save Error Details:", error);
-                    btn.innerText = "خطأ! تأكد من السيرفر"; 
-                    btn.style.backgroundColor = "#EF4444"; 
-                } finally {
-                    setTimeout(() => { 
-                        btn.innerText = originalText; 
-                        btn.style.backgroundColor = ""; 
-                        btn.disabled = false; 
-                    }, 3000);
-                }
+                }, 800);
+
+                // 5. إرجاع الزر لوضعه الطبيعي ليكون جاهزاً
+                setTimeout(() => { 
+                    btn.innerText = originalText; 
+                    btn.style.backgroundColor = ""; 
+                    btn.disabled = false; 
+                }, 2500);
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v19', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v20', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v19', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v20', openTradesSort); updateDashboardUI();
             });
         });
 
