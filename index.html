@@ -38,7 +38,6 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
-    <!-- الشريط العلوي -->
     <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -51,8 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <!-- تأكد من ظهور v11 بعد الرفع لتعرف أنك على النسخة الجديدة -->
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v11 (Direct API)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v12 (Debug Mode)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -73,7 +71,6 @@
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
 
-        <!-- مؤشر حالة السوق -->
         <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
             <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
@@ -113,11 +110,10 @@
             <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر السحابي... الأسعار تنبض وتتحدث تلقائياً.</div>
         </div>
         
-        <!-- قسم الإعدادات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (الهدف +5%-10%)</h2>
                 </div>
             </div>
@@ -275,7 +271,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // إعدادات قاعدة البيانات الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
             authDomain: "smartscanner-a5e0d.firebaseapp.com",
@@ -291,8 +286,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v11') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v11') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v12') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v12') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -508,75 +503,69 @@
             }
 
             // ==========================================
-            // التحديث الجذري الأخير لزر الحفظ (Direct REST API)
+            // زر الحفظ بوضع كشف الأعطال العميق (Debug Mode)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                btn.innerText = "جاري الحقن المباشر..."; 
+                btn.innerText = "جاري الحفظ في فايربيس..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
                 try {
-                    // تحويل الإعدادات للصيغة المباشرة المطلوبة من سيرفرات جوجل
-                    const payload = {
-                        fields: {
-                            tf: { stringValue: String(document.getElementById('setting-tf').value || '15m') },
-                            sl_perc: { doubleValue: Number((parseFloat(document.getElementById('setting-sl').value) || 0) / 100) },
-                            min_tp: { doubleValue: Number((parseFloat(document.getElementById('setting-tp').value) || 0) / 100) },
-                            trail_dist: { doubleValue: Number((parseFloat(document.getElementById('setting-trail').value) || 0) / 100) },
-                            vol_mult: { doubleValue: Number(parseFloat(document.getElementById('setting-vol').value) || 2.0) },
-                            cooldown_mins: { integerValue: String(parseInt(document.getElementById('setting-cooldown').value) || 0) },
-                            auto_kill: { booleanValue: Boolean(document.getElementById('setting-auto-kill').checked) },
-                            strats: {
-                                mapValue: {
-                                    fields: {
-                                        momentum: { booleanValue: Boolean(document.getElementById('strat-momentum').checked) },
-                                        breakout: { booleanValue: Boolean(document.getElementById('strat-breakout').checked) },
-                                        sniper: { booleanValue: Boolean(document.getElementById('strat-sniper').checked) }
-                                    }
-                                }
-                            }
+                    const newSettings = {
+                        tf: document.getElementById('setting-tf').value || '15m',
+                        sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
+                        min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
+                        trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
+                        vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
+                        cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
+                        auto_kill: document.getElementById('setting-auto-kill').checked,
+                        strats: {
+                            momentum: document.getElementById('strat-momentum').checked,
+                            breakout: document.getElementById('strat-breakout').checked,
+                            sniper: document.getElementById('strat-sniper').checked
                         }
                     };
 
-                    // الاتصال المباشر بقاعدة البيانات بدون انتظار مكتبة Firebase البطيئة
-                    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/momentum_system_logs/scanner_settings?key=${firebaseConfig.apiKey}`;
+                    // محاولة الحفظ باستخدام SDK الرسمي لفايربيس، مع وضع "عداد زمني" لاصطياد التعليق
+                    const savePromise = setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
                     
-                    const response = await fetch(url, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                    // إذا لم يستجب فايربيس خلال 5 ثوانٍ، سيتم إطلاق خطأ إجباري
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error("Timeout: فايربيس لا يستجيب أبداً، ربما هناك مشكلة في قواعد الأمان أو الجدار الناري.")), 5000);
                     });
 
-                    if (!response.ok) {
-                        throw new Error('فشل الإرسال المباشر للسيرفر');
-                    }
-
-                    btn.innerText = "تم الحفظ المباشر 100% ✓";
+                    // سباق بين الحفظ والعداد الزمني
+                    await Promise.race([savePromise, timeoutPromise]);
+                    
+                    btn.innerText = "تم الحفظ بنجاح ✓";
                     btn.style.backgroundColor = "#10B981"; 
                     
-                } catch(e) { 
-                    console.error("Direct Save Error:", e);
-                    btn.innerText = "خطأ في الاتصال!"; 
+                } catch(error) { 
+                    console.error("Save Error Details:", error);
+                    btn.innerText = "خطأ! راجع رسالة التنبيه"; 
                     btn.style.backgroundColor = "#EF4444"; 
+                    
+                    // إظهار سبب الخطأ بالتفصيل للمستخدم لمعرفة سبب الرفض
+                    alert("❌ فشل الحفظ في قاعدة البيانات!\n\nالسبب التقني من فايربيس هو:\n" + error.message);
                 } finally {
                     setTimeout(() => { 
                         btn.innerText = originalText; 
                         btn.style.backgroundColor = ""; 
                         btn.disabled = false; 
-                    }, 2500);
+                    }, 4000);
                 }
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v11', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v12', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v11', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v12', openTradesSort); updateDashboardUI();
             });
         });
 
