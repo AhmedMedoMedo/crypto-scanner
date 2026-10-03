@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v12 (Debug Mode)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v13 (Server Bypass)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -286,8 +286,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v12') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v12') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v13') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v13') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -503,14 +503,14 @@
             }
 
             // ==========================================
-            // زر الحفظ بوضع كشف الأعطال العميق (Debug Mode)
+            // التحديث الاختراقي: الاعتماد على السيرفر (Server Bypass)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                btn.innerText = "جاري الحفظ في فايربيس..."; 
+                btn.innerText = "جاري الحفظ عبر السيرفر الوسيط..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -530,27 +530,23 @@
                         }
                     };
 
-                    // محاولة الحفظ باستخدام SDK الرسمي لفايربيس، مع وضع "عداد زمني" لاصطياد التعليق
-                    const savePromise = setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
-                    
-                    // إذا لم يستجب فايربيس خلال 5 ثوانٍ، سيتم إطلاق خطأ إجباري
-                    const timeoutPromise = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error("Timeout: فايربيس لا يستجيب أبداً، ربما هناك مشكلة في قواعد الأمان أو الجدار الناري.")), 5000);
+                    // إرسال البيانات مباشرة إلى سيرفر Render الخاص بك وتخطي حظر متصفحات الهاتف
+                    const response = await fetch('https://momentum-backend-1s2b.onrender.com/update-settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newSettings)
                     });
 
-                    // سباق بين الحفظ والعداد الزمني
-                    await Promise.race([savePromise, timeoutPromise]);
-                    
-                    btn.innerText = "تم الحفظ بنجاح ✓";
+                    if(!response.ok) throw new Error("السيرفر لا يستجيب");
+
+                    btn.innerText = "تم الحفظ بنجاح 100% ✓";
                     btn.style.backgroundColor = "#10B981"; 
                     
                 } catch(error) { 
                     console.error("Save Error Details:", error);
-                    btn.innerText = "خطأ! راجع رسالة التنبيه"; 
+                    btn.innerText = "خطأ! تأكد من السيرفر"; 
                     btn.style.backgroundColor = "#EF4444"; 
-                    
-                    // إظهار سبب الخطأ بالتفصيل للمستخدم لمعرفة سبب الرفض
-                    alert("❌ فشل الحفظ في قاعدة البيانات!\n\nالسبب التقني من فايربيس هو:\n" + error.message);
+                    alert("❌ حدث خطأ في الاتصال بالسيرفر الوسيط!\nتأكد أن سيرفر Render الخاص بك يعمل.");
                 } finally {
                     setTimeout(() => { 
                         btn.innerText = originalText; 
@@ -561,11 +557,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v12', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v13', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v12', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v13', openTradesSort); updateDashboardUI();
             });
         });
 
