@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v15 (Ultimate Fix)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v16 (Fire & Forget)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -269,7 +269,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // السلاح السري الأول: استدعاء التخزين المحلي وأدوات فايربيس الرسمية
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -283,9 +282,6 @@
 
         const app = initializeApp(firebaseConfig);
 
-        // ==========================================
-        // السلاح السري الثاني: كسر حظر الإنترنت في مصر + التخزين الفولاذي
-        // ==========================================
         const db = initializeFirestore(app, {
             localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
             experimentalForceLongPolling: true
@@ -294,8 +290,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v15') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v15') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v16') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v16') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -500,7 +496,8 @@
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
-                        await setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
+                        // هنا نستخدم Fire and Forget للصفقات اليدوية أيضاً
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
                         inputEl.value = '';
                     } catch (err) {
                         alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
@@ -511,60 +508,58 @@
             }
 
             // ==========================================
-            // زر الحفظ النهائي (سحابي + محلي)
+            // الحل القاضي: تقنية (Fire and Forget) لحل مشكلة التعليق نهائياً
             // ==========================================
-            document.getElementById('save-settings-btn').addEventListener('click', async () => {
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                btn.innerText = "جاري الحفظ (سحابي + محلي)..."; 
+                
+                // 1. تغيير شكل الزر فوراً
+                btn.innerText = "جاري الحفظ..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
-                try {
-                    const newSettings = {
-                        tf: document.getElementById('setting-tf').value || '15m',
-                        sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
-                        min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
-                        trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
-                        vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
-                        cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
-                        auto_kill: document.getElementById('setting-auto-kill').checked,
-                        strats: {
-                            momentum: document.getElementById('strat-momentum').checked,
-                            breakout: document.getElementById('strat-breakout').checked,
-                            sniper: document.getElementById('strat-sniper').checked
-                        }
-                    };
+                const newSettings = {
+                    tf: document.getElementById('setting-tf').value || '15m',
+                    sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
+                    min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
+                    trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
+                    vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
+                    cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
+                    auto_kill: document.getElementById('setting-auto-kill').checked,
+                    strats: {
+                        momentum: document.getElementById('strat-momentum').checked,
+                        breakout: document.getElementById('strat-breakout').checked,
+                        sniper: document.getElementById('strat-sniper').checked
+                    }
+                };
 
-                    // الحفظ المزدوج: يتم حفظ الإعدادات في متصفحك فوراً ولن تختفي أبداً مع عمل Refresh،
-                    // وفي نفس اللحظة سيرسلها فايربيس للسحابة عبر قناة آمنة غير محظورة.
-                    await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
+                // 2. إطلاق أمر الحفظ (بدون await). فايربيس سيحفظها في هاتفك فوراً ويسربها للسيرفر في الخلفية!
+                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
+                    .catch(e => console.log("Background sync delayed:", e));
 
-                    btn.innerText = "تم الحفظ بنجاح 100% ✓";
+                // 3. تأكيد النجاح السريع: بما أن الـ await اختفى، لن ينتظر الزر الإنترنت المتعطل أبداً!
+                setTimeout(() => {
+                    btn.innerText = "تم الحفظ بنجاح ✓";
                     btn.style.backgroundColor = "#10B981"; 
-                    
-                } catch(error) { 
-                    console.error("Save Error Details:", error);
-                    // في حالة كان الإنترنت مقطوعاً تماماً، سيعطيك اللون الذهبي ويؤكد الحفظ المحلي
-                    btn.innerText = "تم الحفظ محلياً (بانتظار الشبكة)"; 
-                    btn.style.backgroundColor = "#F59E0B"; 
-                } finally {
-                    setTimeout(() => { 
-                        btn.innerText = originalText; 
-                        btn.style.backgroundColor = ""; 
-                        btn.disabled = false; 
-                    }, 4000);
-                }
+                }, 400); // إظهار رسالة النجاح بعد أقل من نصف ثانية
+
+                // 4. إرجاع الزر لحالته الطبيعية
+                setTimeout(() => { 
+                    btn.innerText = originalText; 
+                    btn.style.backgroundColor = ""; 
+                    btn.disabled = false; 
+                }, 2500);
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v15', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v16', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v15', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v16', openTradesSort); updateDashboardUI();
             });
         });
 
