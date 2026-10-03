@@ -114,7 +114,7 @@
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
             </span>
-            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر بنجاح... الواجهة الأصلية تعمل بكامل التفاصيل.</div>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر بنجاح... الواجهة الأصلية تعمل بكامل التفاصيل والتحديث اللحظي.</div>
         </div>
         
         <!-- قسم الإعدادات -->
@@ -281,8 +281,8 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -301,8 +301,9 @@
         let lastScoreChangeTime = null;
         let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v8') || '24';
         let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v8') || 'time_desc';
+        let livePricesCache = {}; 
 
-        // دوال مساعدة لتهيئة الواجهة والصوتيات (كما في الكود الأصلي)
+        // دوال المساعدة للواجهة
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
             const mins = Math.max(1, Math.floor(ms / 60000));
@@ -383,7 +384,7 @@
         };
         document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled); updateSoundUI(); if(soundEnabled) playSound('open'); });
 
-        // تحميل الإعدادات من السيرفر
+        // تحميل الإعدادات من السيرفر السحابي
         const loadCloudSettings = async () => {
             try {
                 const docSnap = await getDoc(doc(db, "momentum_system_logs", "scanner_settings"));
@@ -405,10 +406,38 @@
             } catch(e) {}
         };
 
+        // دالة جلب الأسعار المباشرة المستمرة (Polling)
+        const fetchLivePrices = async () => {
+            const openTrades = virtualTrades.filter(t => t.status === 'open');
+            if (openTrades.length === 0) return;
+
+            let needsUpdate = false;
+            await Promise.all(openTrades.map(async (t) => {
+                try {
+                    const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${t.symbol}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const newPrice = parseFloat(data.price);
+                        if (livePricesCache[t.symbol] !== newPrice) {
+                            livePricesCache[t.symbol] = newPrice;
+                            needsUpdate = true;
+                        }
+                    }
+                } catch(e) {}
+            }));
+
+            if (needsUpdate) {
+                updateDashboardUI();
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             loadCloudSettings();
             document.getElementById('stats-time-filter').value = statsTimeFilter;
             document.getElementById('open-trades-sort').value = openTradesSort;
+
+            // تشغيل التحديث اللحظي للأسعار كل 3 ثوانٍ
+            setInterval(fetchLivePrices, 3000);
 
             // الاستماع لحالة السوق من السيرفر السحابي
             onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
@@ -431,12 +460,13 @@
                 
                 const newCount = virtualTrades.filter(t => t.status === 'open').length;
                 if (newCount > oldCount) playSound('open');
-                else if (oldCount > newCount) playSound('win'); // إشعار عند إغلاق صفقة
+                else if (oldCount > newCount) playSound('win');
                 
-                updateDashboardUI();
+                // جلب الأسعار فوراً عند استلام صفقة جديدة ثم تحديث الواجهة
+                fetchLivePrices().then(() => updateDashboardUI());
             });
 
-            // زر الإضافة اليدوية للسيرفر
+            // إضافة صفقة يدوية
             const manualAddBtn = document.getElementById('add-manual-btn');
             if (manualAddBtn) {
                 manualAddBtn.addEventListener('click', async () => {
@@ -475,7 +505,7 @@
                 });
             }
 
-            // زر حفظ الإعدادات ورفعها للسيرفر
+            // حفظ الإعدادات ورفعها للسيرفر
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 const originalText = btn.innerText;
@@ -573,7 +603,7 @@
             }
         };
 
-        const updateDashboardUI = async () => {
+        const updateDashboardUI = () => {
             const openTrades = virtualTrades.filter(t => t.status === 'open');
             let allClosedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
             
@@ -610,8 +640,8 @@
             const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
             const sortedOpenTrades = openTrades.sort((a, b) => {
                 if (sortFilter === 'profit_desc') {
-                    const pnlA = ((a.currentPrice - a.entryPrice) / a.entryPrice) * 100 || 0;
-                    const pnlB = ((b.currentPrice - b.entryPrice) / b.entryPrice) * 100 || 0;
+                    const pnlA = (((livePricesCache[a.symbol] || a.currentPrice || a.entryPrice) - a.entryPrice) / a.entryPrice) * 100 || 0;
+                    const pnlB = (((livePricesCache[b.symbol] || b.currentPrice || b.entryPrice) - b.entryPrice) / b.entryPrice) * 100 || 0;
                     return pnlB - pnlA;
                 } else if (sortFilter === 'score_desc') {
                     return (b.liveScore || 0) - (a.liveScore || 0);
@@ -624,15 +654,7 @@
             });
             
             for (let t of sortedOpenTrades) {
-                // جلب السعر المباشر للعملة
-                let livePrice = t.currentPrice || t.entryPrice;
-                try {
-                    const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${t.symbol}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        livePrice = parseFloat(data.price);
-                    }
-                } catch(e) {}
+                let livePrice = livePricesCache[t.symbol] || t.currentPrice || t.entryPrice;
 
                 const currentPnl = ((livePrice - t.entryPrice) / t.entryPrice) * 100;
                 const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
@@ -644,7 +666,6 @@
                 const brk = t.liveBreakdown || t.entryBreakdown || {trend:0,volume:0,rsi:0,setup:0,btc:0,candle:0,confirm:0};
                 const displayScore = t.liveScore || t.entryScore || '--';
 
-                // محاكاة نظام الصحة المتطور الخاص بك
                 let health = { text: '⚖️ مسار مستقر', class: 'text-brand-gold border-brand-gold/30 bg-brand-gold/10' };
                 if (displayScore !== '--') {
                     if (displayScore >= 70) health = { text: '🚀 مساحة جيدة للصعود', class: 'text-brand-green border-brand-green/30 bg-brand-green/10 shadow-[0_0_8px_rgba(16,185,129,0.1)]' };
@@ -686,7 +707,7 @@
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
-                                <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="حذف من السيرفر">
+                                <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="إلغاء وحذف الصفقة">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                 </button>
                                 <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
