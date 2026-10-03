@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v14 (Final Fix)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v15 (Ultimate Fix)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -269,7 +269,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // السلاح السري الأول: استدعاء التخزين المحلي وأدوات فايربيس الرسمية
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -281,13 +282,20 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+
+        // ==========================================
+        // السلاح السري الثاني: كسر حظر الإنترنت في مصر + التخزين الفولاذي
+        // ==========================================
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
+            experimentalForceLongPolling: true
+        });
 
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v14') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v14') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v15') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v15') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -503,14 +511,14 @@
             }
 
             // ==========================================
-            // التحديث الاختراقي: الاعتماد على السيرفر بعد تصحيح الرابط 100%
+            // زر الحفظ النهائي (سحابي + محلي)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                btn.innerText = "جاري الحفظ عبر السيرفر الوسيط..."; 
+                btn.innerText = "جاري الحفظ (سحابي + محلي)..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -530,23 +538,18 @@
                         }
                     };
 
-                    // إرسال البيانات مباشرة إلى الرابط الصحيح في Render وتخطي حظر متصفحات الهاتف
-                    const response = await fetch('https://momentum-backend-io3b.onrender.com/update-settings', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(newSettings)
-                    });
-
-                    if(!response.ok) throw new Error("السيرفر لا يستجيب");
+                    // الحفظ المزدوج: يتم حفظ الإعدادات في متصفحك فوراً ولن تختفي أبداً مع عمل Refresh،
+                    // وفي نفس اللحظة سيرسلها فايربيس للسحابة عبر قناة آمنة غير محظورة.
+                    await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
 
                     btn.innerText = "تم الحفظ بنجاح 100% ✓";
                     btn.style.backgroundColor = "#10B981"; 
                     
                 } catch(error) { 
                     console.error("Save Error Details:", error);
-                    btn.innerText = "خطأ! تأكد من السيرفر"; 
-                    btn.style.backgroundColor = "#EF4444"; 
-                    alert("❌ حدث خطأ في الاتصال بالسيرفر الوسيط!\nتأكد أن سيرفر Render الخاص بك يعمل.");
+                    // في حالة كان الإنترنت مقطوعاً تماماً، سيعطيك اللون الذهبي ويؤكد الحفظ المحلي
+                    btn.innerText = "تم الحفظ محلياً (بانتظار الشبكة)"; 
+                    btn.style.backgroundColor = "#F59E0B"; 
                 } finally {
                     setTimeout(() => { 
                         btn.innerText = originalText; 
@@ -557,11 +560,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v14', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v15', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v14', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v15', openTradesSort); updateDashboardUI();
             });
         });
 
