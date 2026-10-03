@@ -28,7 +28,11 @@
         .input-group label { display: block; font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.25rem; }
         .input-group input, .input-group select { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 0.375rem; padding: 0.375rem 0.5rem; font-size: 0.875rem; outline: none; direction: ltr; }
         .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
+        .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
         .dir-ltr { direction: ltr; display: inline-block; }
+        .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-sniper { background-color: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -37,7 +41,12 @@
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="3" x2="7" y2="19"></line><rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect><line x1="17" y1="5" x2="17" y2="21"></line><rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="7" y1="3" x2="7" y2="19"></line>
+                        <rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect>
+                        <line x1="17" y1="5" x2="17" y2="21"></line>
+                        <rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect>
+                    </svg>
                 </div>
                 <div>
                     <h1 class="text-lg font-black text-white leading-tight">Momentum</h1>
@@ -50,6 +59,7 @@
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </button>
+                
                 <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
                     <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     جاري الاتصال...
@@ -60,6 +70,7 @@
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
 
+        <!-- مؤشر حالة السوق -->
         <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
             <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
@@ -71,6 +82,7 @@
                             مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
                         </h2>
                         <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري استلام بيانات السيرفر...</div>
+                        <div id="market-health-history" class="text-[10px] text-gray-400 mt-1.5 hidden bg-gray-950/80 px-2.5 py-1 rounded border border-gray-800/80 w-fit flex items-center gap-1"></div>
                     </div>
                 </div>
             </div>
@@ -78,14 +90,25 @@
                 <div class="w-full bg-gray-950 rounded-full h-1.5 relative overflow-hidden border border-gray-800">
                     <div id="market-health-bar" class="h-1.5 rounded-full transition-all duration-1000 ease-out w-0 bg-gray-500"></div>
                 </div>
+                <div id="market-score-log-container" class="mt-4 flex-col hidden border-t border-gray-800/50 pt-3"></div>
             </div>
         </div>
 
+        <!-- شريط الأنشطة الحية -->
+        <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
+            </span>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر السحابي بنجاح... الواجهة الأصلية تعمل كعارض مباشر.</div>
+        </div>
+        
+        <!-- قسم الإعدادات السحابية الكاملة -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <h2 class="text-sm font-bold text-white">إعدادات الرادار السحابية</h2>
+                    <h2 class="text-sm font-bold text-white">إعدادات الرادار والاستراتيجيات السحابية</h2>
                 </div>
             </div>
             
@@ -106,7 +129,7 @@
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div class="input-group">
-                    <label>الإطار الزمني</label>
+                    <label>الإطار الزمني الأساسي</label>
                     <select id="setting-tf">
                         <option value="1m">1 دقيقة</option>
                         <option value="5m">5 دقائق</option>
@@ -137,7 +160,7 @@
                 <div class="col-span-full flex items-center justify-between mt-2 pt-3 border-t border-gray-800">
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-4 h-4 cursor-pointer">
-                        <label for="setting-auto-kill" class="text-xs font-bold text-gray-300 cursor-pointer !mb-0">تفعيل الحماية الآلية وقت الهبوط (Auto-Kill)</label>
+                        <label for="setting-auto-kill" class="text-xs font-bold text-gray-300 cursor-pointer !mb-0">تفعيل الحماية الآلية (منع الدخول وقت الخطر)</label>
                     </div>
                     <button id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md">
                         حفظ وإرسال للسيرفر 🚀
@@ -146,29 +169,46 @@
             </div>
         </section>
 
+        <!-- لوحة الإحصائيات -->
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    إحصائيات الأداء
+                </h2>
+                <div class="input-group sm:w-48">
+                    <select id="stats-time-filter" class="!py-1.5 !text-xs !bg-gray-950 !text-brand-gold !font-bold !border-gray-700">
+                        <option value="all">كل الأوقات</option>
+                        <option value="24" selected>آخر 24 ساعة</option>
+                        <option value="168">آخر 7 أيام</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="stat-box">
-                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase">إجمالي الصفقات</div>
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">إجمالي الصفقات</div>
                     <div class="text-3xl font-black text-white" id="dash-total">0</div>
                 </div>
                 <div class="stat-box">
-                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase">معدل النجاح</div>
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح (Win Rate)</div>
                     <div class="text-3xl font-black text-brand-blue" id="dash-winrate">0.0%</div>
                 </div>
                 <div class="stat-box">
-                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase">صافي الربح</div>
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">صافي الربح</div>
                     <div class="text-3xl font-black text-gray-300 dir-ltr" id="dash-profit">0.00%</div>
                 </div>
                 <div class="stat-box border-brand-green/30 bg-brand-green/5">
-                    <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase">صفقات مفتوحة</div>
+                    <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase tracking-wider">صفقات مفتوحة</div>
                     <div class="text-3xl font-black text-brand-green" id="dash-open">0</div>
                 </div>
             </div>
 
+            <!-- إضافة صفقة يدوية -->
             <div>
                 <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                     <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية للسيرفر:</span>
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -177,14 +217,23 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-800">
-                    <h3 class="text-xs font-bold text-gray-300">الصفقات المفتوحة حالياً</h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
+                        الصفقات المفتوحة حالياً
+                    </h3>
+                    <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
+                        <option value="time_desc" selected>الأحدث أولاً</option>
+                        <option value="score_desc">القوة (Live Score)</option>
+                        <option value="profit_desc">الأكثر ربحاً</option>
+                    </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
                     <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-dashed border-gray-800">جاري مسح بيانات السيرفر...</div>
                 </div>
             </div>
 
+            <!-- سجل الصفقات المغلقة -->
             <div class="mt-8 pt-6 border-t border-gray-800">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xs font-bold text-gray-300">سجل الصفقات المغلقة</h3>
@@ -214,6 +263,10 @@
         const db = getFirestore(app);
 
         let virtualTrades = [];
+        let marketScoreLog = [];
+        let lastScoreChangeTime = null;
+        let statsTimeFilter = '24';
+        let openTradesSort = 'time_desc';
 
         const loadCloudSettings = async () => {
             try {
@@ -243,6 +296,8 @@
                 if (docSnap.exists()) {
                     document.getElementById('db-status-badge').innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سحابي متصل`;
                     const data = docSnap.data();
+                    marketScoreLog = data.log || [];
+                    if(marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
                     updateMarketHealthUI(data.score, data.status);
                 }
             });
@@ -313,21 +368,66 @@
                 } catch(e) { btn.innerText = "خطأ!"; }
                 finally { setTimeout(() => { btn.innerText = "حفظ وإرسال للسيرفر 🚀"; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); btn.disabled = false; }, 2000); }
             });
+
+            document.getElementById('stats-time-filter').addEventListener('change', (e) => {
+                statsTimeFilter = e.target.value;
+                updateDashboardUI();
+            });
+
+            document.getElementById('open-trades-sort').addEventListener('change', (e) => {
+                openTradesSort = e.target.value;
+                updateDashboardUI();
+            });
         });
 
         const updateMarketHealthUI = (score, status) => {
             const container = document.getElementById('market-health-container');
+            const glow = document.getElementById('market-health-glow');
             const circle = document.getElementById('market-health-score-circle');
             const text = document.getElementById('market-health-text');
             const bar = document.getElementById('market-health-bar');
             circle.innerText = score + '%'; bar.style.width = score + '%';
 
             if (status === 'bullish') {
-                text.innerHTML = '<span class="text-brand-green text-xs">🚀 سوق ناري وصاعد</span>';
+                container.className = 'bg-gray-900 border border-brand-green/40 rounded-xl p-4 shadow-[0_0_25px_rgba(16,185,129,0.15)] flex flex-col gap-4 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-green to-transparent opacity-80';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-green text-brand-green bg-brand-green/10';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-green';
+                text.innerHTML = '<span class="text-brand-green text-xs">🚀 خاااااااارق (سوق ناري وآمن جداً للانفجارات)</span>';
             } else if (status === 'neutral') {
-                text.innerHTML = '<span class="text-brand-gold text-xs">🟡 سوق مستقر</span>';
+                container.className = 'bg-gray-900 border border-brand-gold/40 rounded-xl p-4 shadow-[0_0_25px_rgba(245,158,11,0.1)] flex flex-col gap-4 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-60';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-gold text-brand-gold bg-brand-gold/10';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-gold';
+                text.innerHTML = '<span class="text-brand-gold text-xs">🟡 إيجابي بحذر (السوق مستقر وجيد للتداول)</span>';
             } else {
-                text.innerHTML = '<span class="text-brand-red text-xs">🔴 سوق سلبي وخطر</span>';
+                container.className = 'bg-gray-900 border border-brand-red/40 rounded-xl p-4 shadow-[0_0_25px_rgba(239,68,68,0.15)] flex flex-col gap-4 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-red to-transparent opacity-80';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-red text-brand-red bg-brand-red/10';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-red';
+                text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
+            }
+
+            const historyEl = document.getElementById('market-health-history');
+            const logContainer = document.getElementById('market-score-log-container');
+            if (lastScoreChangeTime !== null) {
+                historyEl.innerHTML = `مستقر منذ <span class="text-white font-bold ml-1">${formatTimeAgo(lastScoreChangeTime)}</span>`;
+                historyEl.classList.remove('hidden');
+
+                const logsToShow = marketScoreLog.slice(0, 5); 
+                let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5">سجل تغيرات السوق (آخر 5):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full pt-1">`;
+                logsToShow.forEach((entry, index) => {
+                    const timeStr = new Date(entry.time).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    const sColor = getScoreColorClass(entry.score);
+                    logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1 mt-1">
+                        <span class="font-black ${sColor.text} text-xs dir-ltr mt-0.5">${entry.score}%</span>
+                        <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
+                    </div>`;
+                });
+                logHtml += `</div>`;
+                logContainer.innerHTML = logHtml;
+                logContainer.classList.remove('hidden');
+                logContainer.classList.add('flex');
             }
         };
 
@@ -335,6 +435,12 @@
             const openTrades = virtualTrades.filter(t => t.status === 'open');
             let closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
             
+            if (statsTimeFilter !== 'all') {
+                const hours = parseInt(statsTimeFilter);
+                const timeLimit = Date.now() - (hours * 60 * 60 * 1000);
+                closedTrades = closedTrades.filter(t => t.closeTime >= timeLimit);
+            }
+
             let won = 0, lost = 0, totalPnl = 0;
             closedTrades.forEach(t => { if(t.status === 'won') won++; if(t.status === 'lost') lost++; totalPnl += (t.pnl || 0); });
             const closedCount = won + lost;
@@ -347,8 +453,14 @@
             profitEl.className = `text-3xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
             document.getElementById('dash-open').innerText = openTrades.length;
 
+            const sortedOpenTrades = openTrades.sort((a, b) => {
+                if (openTradesSort === 'score_desc') return (b.liveScore || 0) - (a.liveScore || 0);
+                if (openTradesSort === 'time_desc') return (b.openTime || 0) - (a.openTime || 0);
+                return (a.openTime || 0) - (b.openTime || 0);
+            });
+
             let openHtml = '';
-            for (let t of openTrades) {
+            for (let t of sortedOpenTrades) {
                 let livePrice = t.currentPrice || t.entryPrice;
                 try {
                     const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${t.symbol}`);
@@ -360,22 +472,49 @@
 
                 const currentPnl = ((livePrice - t.entryPrice) / t.entryPrice) * 100;
                 const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
+                const sColor = getScoreColorClass(t.liveScore || t.entryScore || 0);
                 
                 openHtml += `
-                    <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md p-3 relative">
-                        <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1">
+                    <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
+                        <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold">
+                            ${formatTimeAgo(t.openTime)}
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5">
                             <span class="text-white font-bold text-xs">${t.symbol}</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
                                 <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
                                 <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white bg-red-500/10 rounded p-1" title="حذف">✕</button>
                             </div>
                         </div>
-                        <div class="text-[10px] text-gray-300">السعر الحالي: ${livePrice.toPrecision(5)}</div>
-                        <div class="text-[9px] text-brand-gold mt-1">تحديث مباشر من باينانس ✓</div>
+
+                        <div class="mb-2 mt-1 px-1 border-t border-gray-700/50 pt-2">
+                            <div class="flex justify-between items-center mb-1"><span class="text-[9px] font-bold text-gray-400">Live Score</span><span class="text-xs font-black ${sColor.text}">${t.liveScore || 50}%</span></div>
+                            <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5"><div class="h-1 rounded-full ${sColor.bg}" style="width: ${t.liveScore || 50}%"></div></div>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-1 text-[10px] mt-2"><span class="text-gray-400">الدخول:</span><span class="text-gray-300 font-mono">${(t.entryPrice || 0).toPrecision(5)}</span></div>
+                        <div class="flex justify-between items-center mb-2 text-[10px]"><span class="text-gray-400">الحالي:</span><span class="text-white font-bold font-mono">${livePrice.toPrecision(5)}</span></div>
+                        <div class="mt-auto pt-1 border-t border-gray-700/50 text-center">
+                            <span class="text-[9px] text-brand-gold">تحديث مباشر من باينانس ✓</span>
+                        </div>
                     </div>`;
             }
             if(!openHtml) openHtml = '<div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-dashed border-gray-800">لا توجد صفقات مفتوحة حالياً</div>';
             document.getElementById('active-trades-list').innerHTML = openHtml;
+
+            let closedHtml = '';
+            closedTrades.sort((a, b) => b.closeTime - a.closeTime).slice(0, 50).forEach(t => {
+                const isWin = t.status === 'won';
+                const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
+                closedHtml += `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg border bg-gray-950/50 mb-2 gap-2">
+                        <span class="font-bold text-white text-xs">${t.symbol}</span>
+                        <span class="dir-ltr font-black text-xs ${pColor}">${(t.pnl || 0) > 0 ? '+' : ''}${(t.pnl || 0).toFixed(2)}%</span>
+                    </div>`;
+            });
+            if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-dashed border-gray-800">لم يتم إغلاق أي صفقة</div>';
+            document.getElementById('closed-trades-list').innerHTML = closedHtml;
         };
 
         window.cancelOpenTrade = async (docId) => {
@@ -386,6 +525,26 @@
             if(confirm('هل تريد مسح سجل الصفقات المغلقة؟')) {
                 for(let t of virtualTrades.filter(t => t.status !== 'open')) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
             }
+        });
+
+        const formatTimeAgo = (ms) => {
+            const mins = Math.floor((Date.now() - ms) / 60000);
+            if (mins < 1) return 'منذ لحظات';
+            if (mins < 60) return `منذ ${mins} دقيقة`;
+            return `منذ ${Math.floor(mins / 60)} ساعة`;
+        };
+
+        const getScoreColorClass = (score) => {
+            if (score >= 85) return { text: 'text-brand-green', bg: 'bg-brand-green' };
+            if (score >= 70) return { text: 'text-brand-blue', bg: 'bg-brand-blue' };
+            if (score >= 55) return { text: 'text-brand-gold', bg: 'bg-brand-gold' };
+            return { text: 'text-brand-red', bg: 'bg-brand-red' };
+        };
+
+        let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
+        let audioCtx = null;
+        document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+            soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled);
         });
     </script>
 </body>
