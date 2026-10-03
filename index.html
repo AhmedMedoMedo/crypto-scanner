@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v24 (Final Sync)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v25 (URL Bypasser)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -113,7 +113,7 @@
         <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                 <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (الهدف +5%-10%)</h2>
                 </div>
             </div>
@@ -269,7 +269,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -281,15 +281,15 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
-        });
+        
+        // تم إلغاء الكاش تماماً لنقرأ الحقيقة فقط من السيرفر
+        const db = getFirestore(app);
 
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v24') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v24') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v25') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v25') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -466,46 +466,8 @@
                 updateDashboardUI();
             });
 
-            const manualAddBtn = document.getElementById('add-manual-btn');
-            if (manualAddBtn) {
-                manualAddBtn.addEventListener('click', async () => {
-                    const inputEl = document.getElementById('manual-symbol-input');
-                    let symbol = inputEl.value.trim().toUpperCase();
-                    if (!symbol) return;
-                    if (!symbol.endsWith('USDT')) symbol += 'USDT';
-
-                    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) {
-                        alert('هذه الصفقة مفتوحة بالفعل!'); return;
-                    }
-
-                    const origText = manualAddBtn.innerText;
-                    manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
-                    try {
-                        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-                        if (!res.ok) throw new Error();
-                        const data = await res.json();
-                        const price = parseFloat(data.price);
-                        
-                        const newTrade = {
-                            symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, trailActive: false, 
-                            slLevel: price * 0.97, status: 'open', pnl: 0, openTime: Date.now(),
-                            strategy: 'Manual', entryScore: 75, liveScore: 75,
-                            entryBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5},
-                            liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
-                        };
-                        
-                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
-                        inputEl.value = '';
-                    } catch (err) {
-                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
-                    } finally {
-                        manualAddBtn.innerText = origText; manualAddBtn.disabled = false;
-                    }
-                });
-            }
-
             // ==========================================
-            // زر الحفظ النهائي v24 بالرابط الصحيح (iq3b) وتقنية عدم الانتظار
+            // تقنية اختراق الحظر عن طريق رابط GET (الضربة القاضية)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -513,55 +475,50 @@
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                btn.innerText = "جاري الإرسال..."; 
+                btn.innerText = "جاري الإرسال عبر الرابط..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
-                const newSettings = {
-                    tf: document.getElementById('setting-tf').value || '15m',
-                    sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
-                    min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
-                    trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
-                    vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
-                    cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
-                    auto_kill: document.getElementById('setting-auto-kill').checked,
-                    strats: {
-                        momentum: document.getElementById('strat-momentum').checked,
-                        breakout: document.getElementById('strat-breakout').checked,
-                        sniper: document.getElementById('strat-sniper').checked
-                    }
-                };
+                const tf = document.getElementById('setting-tf').value || '15m';
+                const sl = (parseFloat(document.getElementById('setting-sl').value) || 0) / 100;
+                const tp = (parseFloat(document.getElementById('setting-tp').value) || 0) / 100;
+                const trail = (parseFloat(document.getElementById('setting-trail').value) || 0) / 100;
+                const vol = parseFloat(document.getElementById('setting-vol').value) || 2.0;
+                const cd = parseInt(document.getElementById('setting-cooldown').value) || 0;
+                const kill = document.getElementById('setting-auto-kill').checked;
+                const mom = document.getElementById('strat-momentum').checked;
+                const brk = document.getElementById('strat-breakout').checked;
+                const snp = document.getElementById('strat-sniper').checked;
 
-                // الحفظ المحلي والتزامن في الخلفية
-                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
-                    .catch(e => console.log(e));
+                // تجميع الإعدادات في رابط عادي (مستحيل أن يتم حظره) وإرساله للسيرفر
+                const bypassUrl = `https://momentum-backend-iq3b.onrender.com/update-settings?tf=${tf}&sl=${sl}&tp=${tp}&trail=${trail}&vol=${vol}&cd=${cd}&kill=${kill}&mom=${mom}&brk=${brk}&snp=${snp}`;
 
-                // إرسال البيانات مباشرة للسيرفر الصحيح (iq3b) بدون توقف
-                fetch('https://momentum-backend-iq3b.onrender.com/update-settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newSettings)
-                }).catch(e => console.error("Wake & Push Error:", e));
-
-                // تحويل الزر للأخضر والانتهاء في نصف ثانية فقط
-                setTimeout(() => {
-                    btn.innerText = "تم الإرسال والحفظ بنجاح ✓";
-                    btn.style.backgroundColor = "#10B981"; 
-                }, 500);
-
-                setTimeout(() => { 
-                    btn.innerText = originalText; 
-                    btn.style.backgroundColor = ""; 
-                    btn.disabled = false; 
-                }, 2500);
+                fetch(bypassUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error("السيرفر نائم أو لا يستجيب");
+                        btn.innerText = "تم الحفظ بالسيرفر بنجاح ✓";
+                        btn.style.backgroundColor = "#10B981"; 
+                    })
+                    .catch(error => {
+                        console.error("GET Bypasser Error:", error);
+                        btn.innerText = "جاري إيقاظ السيرفر، جرب مجدداً!"; 
+                        btn.style.backgroundColor = "#F59E0B"; 
+                    })
+                    .finally(() => {
+                        setTimeout(() => { 
+                            btn.innerText = originalText; 
+                            btn.style.backgroundColor = ""; 
+                            btn.disabled = false; 
+                        }, 3000);
+                    });
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v24', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v25', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v24', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v25', openTradesSort); updateDashboardUI();
             });
         });
 
