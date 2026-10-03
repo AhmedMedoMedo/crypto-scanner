@@ -3,101 +3,654 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رادار الزخم - الشاشة المباشرة</title>
+    <title> Momentum | Scanner </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' },
+                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
-        .header { text-align: center; margin-bottom: 20px; padding: 15px; background: #1e1e1e; border-radius: 10px; border: 1px solid #333; }
-        .market-health { font-size: 1.2em; font-weight: bold; padding: 10px; border-radius: 5px; display: inline-block; margin-top: 10px; }
-        .status-bullish { background-color: rgba(0, 200, 83, 0.2); color: #00e676; border: 1px solid #00e676; }
-        .status-bearish { background-color: rgba(213, 0, 0, 0.2); color: #ff1744; border: 1px solid #ff1744; }
-        .status-neutral { background-color: rgba(255, 171, 0, 0.2); color: #ffd600; border: 1px solid #ffd600; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .card { background: #1e1e1e; padding: 15px; border-radius: 10px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .card h2 { margin: 0 0 10px 0; color: #00e676; display: flex; justify-content: space-between; }
-        .card p { margin: 5px 0; color: #ccc; font-size: 0.95em; }
-        .badge { background: #333; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; color: #fff; }
-        .pnl-positive { color: #00e676; font-weight: bold; }
-        .pnl-negative { color: #ff1744; font-weight: bold; }
+        body { background-color: #0b0f19; color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .stat-box { background: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; padding: 1rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .input-group label { display: block; font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.25rem; }
+        .input-group input, .input-group select { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 0.375rem; padding: 0.375rem 0.5rem; font-size: 0.875rem; outline: none; direction: ltr; }
+        .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
+        .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
+        .dir-ltr { direction: ltr; display: inline-block; }
+        
+        .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-sniper { background-color: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
     </style>
 </head>
-<body>
+<body class="antialiased min-h-screen flex flex-col">
 
-    <div class="header">
-        <h1>🚀 رادار الصفقات المباشر</h1>
-        <div id="marketStatusEl" class="market-health status-neutral">حالة السوق: جاري الاتصال بالسيرفر...</div>
-    </div>
+    <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="7" y1="3" x2="7" y2="19"></line>
+                        <rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect>
+                        <line x1="17" y1="5" x2="17" y2="21"></line>
+                        <rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum</h1>
+                    <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
+                    <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                    <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </button>
+                
+                <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    جاري الاتصال...
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <div id="tradesContainer" class="grid">
-        <!-- سيتم إضافة الصفقات هنا برمجياً -->
-    </div>
+    <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
+
+        <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
+            <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
+                <div class="flex items-center gap-3">
+                    <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">
+                        --%
+                    </div>
+                    <div class="flex flex-col">
+                        <h2 class="text-xs font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
+                        </h2>
+                        <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري استلام بيانات السيرفر...</div>
+                        <div id="market-health-history" class="text-[10px] text-gray-400 mt-1.5 hidden bg-gray-950/80 px-2.5 py-1 rounded border border-gray-800/80 w-fit flex items-center gap-1"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-950 px-3 py-2 rounded-lg border border-gray-800 shrink-0">
+                    <label for="setting-auto-kill" class="text-[10px] font-bold text-gray-300 cursor-pointer flex items-center gap-2">
+                        <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-3.5 h-3.5 cursor-pointer">
+                        تفعيل الحماية الآلية (إعدادات الواجهة)
+                    </label>
+                </div>
+            </div>
+            <div class="z-10 w-full">
+                <div class="w-full bg-gray-950 rounded-full h-1.5 relative overflow-hidden border border-gray-800">
+                    <div id="market-health-bar" class="h-1.5 rounded-full transition-all duration-1000 ease-out w-0 bg-gray-500"></div>
+                </div>
+                <div id="market-score-log-container" class="mt-4 flex-col hidden border-t border-gray-800/50 pt-3"></div>
+            </div>
+        </div>
+
+        <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
+            </span>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر بنجاح... الشاشة تعمل كعارض مباشر للبيانات.</div>
+        </div>
+        
+        <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <h2 class="text-sm font-bold text-white">إعدادات الرادار المحلية (تعديلات السيرفر تتم من ملف server.js)</h2>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-800">
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
+                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الاختراق (Breakout) 🟢</label>
+                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">القناص (Sniper) 🟣</label>
+                    <input type="checkbox" id="strat-sniper" class="accent-purple-500 w-4 h-4">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="input-group">
+                    <label>الإطار الزمني الأساسي</label>
+                    <select id="setting-tf">
+                        <option value="15m" selected>15 دقيقة (أساسي)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>وقف الخسارة الأولي (%)</label>
+                    <input type="number" id="setting-sl" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>هدف تفعيل الملاحقة (%)</label>
+                    <input type="number" id="setting-tp" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>مسافة الملاحقة (%)</label>
+                    <input type="number" id="setting-trail" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>مضاعف السيولة (Volume)</label>
+                    <input type="number" id="setting-vol" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>فترة التبريد (دقائق)</label>
+                    <input type="number" id="setting-cooldown" step="1" min="0">
+                </div>
+                <div class="col-span-full mt-2 flex justify-end">
+                    <button id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
+                        حفظ تفضيلات الشاشة
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    إحصائيات الأداء (مباشر من السيرفر)
+                </h2>
+                <div class="input-group sm:w-48">
+                    <select id="stats-time-filter" class="!py-1.5 !text-xs !bg-gray-950 !text-brand-gold !font-bold !border-gray-700">
+                        <option value="all">كل الأوقات</option>
+                        <option value="24" selected>آخر 24 ساعة</option>
+                        <option value="168">آخر 7 أيام</option>
+                        <option value="720">آخر 30 يوم</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-box">
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">إجمالي الصفقات</div>
+                    <div class="text-3xl font-black text-white" id="dash-total">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح (Win Rate)</div>
+                    <div class="text-3xl font-black text-brand-blue" id="dash-winrate">0.0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">صافي الربح</div>
+                    <div class="text-3xl font-black text-gray-300 dir-ltr" id="dash-profit">0.00%</div>
+                </div>
+                <div class="stat-box border-brand-green/30 bg-brand-green/5">
+                    <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase tracking-wider">صفقات مفتوحة</div>
+                    <div class="text-3xl font-black text-brand-green" id="dash-open">0</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية للسيرفر:</span>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
+                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
+                        الصفقات المفتوحة حالياً
+                    </h3>
+                    <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
+                        <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
+                        <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
+                        <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
+                        <option value="profit_desc">ترتيب حسب: الأكثر ربحاً</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
+                    <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">جاري مسح بيانات السيرفر...</div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        سجل الصفقات المغلقة
+                        <span id="history-summary" class="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block">
+                            (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
+                        </span>
+                    </h3>
+                    <button id="clear-history-btn" class="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        مسح السجل
+                    </button>
+                </div>
+                
+                <div id="history-summary-mobile" class="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden">
+                    (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
+                </div>
+
+                <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="closed-trades-list">
+                    <div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة بعد</div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // إعدادات فايربيس الخاصة بك
         const firebaseConfig = {
-          apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
-          authDomain: "smartscanner-a5e0d.firebaseapp.com",
-          projectId: "smartscanner-a5e0d",
-          storageBucket: "smartscanner-a5e0d.firebasestorage.app",
-          messagingSenderId: "976223541282",
-          appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
+            apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
+            authDomain: "smartscanner-a5e0d.firebaseapp.com",
+            projectId: "smartscanner-a5e0d",
+            storageBucket: "smartscanner-a5e0d.firebasestorage.app",
+            messagingSenderId: "976223541282",
+            appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
         };
 
-        // تهيئة الاتصال بفايربيس
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const marketStatusEl = document.getElementById('marketStatusEl');
-        const tradesContainer = document.getElementById('tradesContainer');
+        let virtualTrades = [];
+        let marketScoreLog = [];
+        let lastScoreChangeTime = null;
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v8') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v8') || 'time_desc';
+        let isFirebaseConnected = false;
 
-        // 1. الاستماع لحالة السوق من السيرفر
-        onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                marketStatusEl.className = `market-health status-${data.status}`;
-                marketStatusEl.innerHTML = `حالة السوق: ${data.status.toUpperCase()} (${data.score}%)`;
+        const defaultSettings = { sl_perc: 0.03, min_tp: 0.05, trail_dist: 0.015, vol_mult: 2.0, cooldown_mins: 15, auto_kill: true, strats: { momentum: true, breakout: true, sniper: true } };
+        let SETTINGS = { ...defaultSettings };
+        try { const saved = localStorage.getItem('momentumSettingsV8_final'); if (saved) SETTINGS = { ...defaultSettings, ...JSON.parse(saved) }; } catch (e) {}
+
+        const loadSettingsToUI = () => {
+            document.getElementById('setting-sl').value = (SETTINGS.sl_perc * 100).toFixed(1);
+            document.getElementById('setting-tp').value = (SETTINGS.min_tp * 100).toFixed(1);
+            document.getElementById('setting-trail').value = (SETTINGS.trail_dist * 100).toFixed(1);
+            document.getElementById('setting-vol').value = SETTINGS.vol_mult.toFixed(1);
+            document.getElementById('setting-cooldown').value = SETTINGS.cooldown_mins;
+            document.getElementById('setting-auto-kill').checked = SETTINGS.auto_kill;
+            if(document.getElementById('strat-momentum')) document.getElementById('strat-momentum').checked = SETTINGS.strats.momentum;
+            if(document.getElementById('strat-breakout')) document.getElementById('strat-breakout').checked = SETTINGS.strats.breakout;
+            if(document.getElementById('strat-sniper')) document.getElementById('strat-sniper').checked = SETTINGS.strats.sniper;
+            document.getElementById('stats-time-filter').value = statsTimeFilter;
+            document.getElementById('open-trades-sort').value = openTradesSort;
+        };
+
+        const setDbStatus = (status) => {
+            const badge = document.getElementById('db-status-badge');
+            if (status === 'connected') {
+                badge.innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سجل سحابي متصل`;
+                badge.className = 'text-[10px] bg-brand-green/20 border border-brand-green/30 text-brand-green px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
+                isFirebaseConnected = true;
+            } else {
+                badge.innerHTML = `<span class="w-2 h-2 bg-brand-red rounded-full"></span> خطأ في الاتصال`;
+                badge.className = 'text-[10px] bg-brand-red/20 border border-brand-red/30 text-brand-red px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
             }
-        });
+        };
 
-        // 2. الاستماع للصفقات النشطة والمغلقة من السيرفر
-        onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
-            tradesContainer.innerHTML = ''; 
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettingsToUI();
             
-            if (snapshot.empty) {
-                tradesContainer.innerHTML = '<p style="text-align:center; width:100%; color:#888;">لا توجد صفقات حالياً. السيرفر يراقب السوق في الخلفية...</p>';
-                return;
+            // الاستماع لحالة السوق من السيرفر
+            onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
+                if (docSnap.exists()) {
+                    setDbStatus('connected');
+                    const data = docSnap.data();
+                    marketScoreLog = data.log || [];
+                    if(marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
+                    updateMarketHealthUI(data.score, data.status);
+                }
+            }, (err) => setDbStatus('error'));
+
+            // الاستماع للصفقات من السيرفر
+            onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
+                const oldCount = virtualTrades.filter(t => t.status === 'open').length;
+                virtualTrades = [];
+                snapshot.forEach(docSnap => virtualTrades.push({ docId: docSnap.id, ...docSnap.data() }));
+                const newCount = virtualTrades.filter(t => t.status === 'open').length;
+                
+                if (newCount > oldCount) playSound('open');
+                else if (oldCount > newCount) playSound('win'); // اختصار للصوت عند الإغلاق
+                
+                updateDashboardUI();
+            }, (err) => setDbStatus('error'));
+
+            // زر الإضافة اليدوية السحابية
+            const manualAddBtn = document.getElementById('add-manual-btn');
+            if (manualAddBtn) {
+                manualAddBtn.addEventListener('click', async () => {
+                    const inputEl = document.getElementById('manual-symbol-input');
+                    let symbol = inputEl.value.trim().toUpperCase();
+                    if (!symbol) return;
+                    if (!symbol.endsWith('USDT')) symbol += 'USDT';
+
+                    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) {
+                        alert('هذه الصفقة مفتوحة بالفعل في السيرفر!');
+                        return;
+                    }
+
+                    manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
+                    try {
+                        const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbol=${symbol}`);
+                        if (!res.ok) throw new Error();
+                        const data = await res.json();
+                        const price = parseFloat(data.price);
+                        
+                        const newTrade = {
+                            symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, trailActive: false, 
+                            slLevel: price * (1 - SETTINGS.sl_perc), status: 'open', pnl: 0, openTime: Date.now(),
+                            strategy: 'Manual', entryScore: 50, liveScore: 50
+                        };
+                        
+                        await setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
+                        inputEl.value = '';
+                    } catch (err) {
+                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
+                    } finally {
+                        manualAddBtn.innerText = 'إضافة للصفقات'; manualAddBtn.disabled = false;
+                    }
+                });
+            }
+        });
+
+        const updateMarketHealthUI = (score, status) => {
+            const container = document.getElementById('market-health-container');
+            const glow = document.getElementById('market-health-glow');
+            const circle = document.getElementById('market-health-score-circle');
+            const text = document.getElementById('market-health-text');
+            const bar = document.getElementById('market-health-bar');
+
+            circle.innerText = score + '%'; bar.style.width = score + '%';
+
+            if (status === 'bullish') {
+                container.className = 'bg-gray-900 border border-brand-green/40 rounded-xl p-4 shadow-[0_0_25px_rgba(16,185,129,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-green to-transparent opacity-80';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-green text-brand-green bg-brand-green/10 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-green shadow-[0_0_10px_#10B981]';
+                text.innerHTML = '<span class="text-brand-green text-xs">🚀 خاااااااارق (سوق ناري وآمن جداً للانفجارات)</span>';
+            } else if (status === 'neutral') {
+                container.className = 'bg-gray-900 border border-brand-gold/40 rounded-xl p-4 shadow-[0_0_25px_rgba(245,158,11,0.1)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-60';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-gold text-brand-gold bg-brand-gold/10 shadow-[0_0_15px_rgba(245,158,11,0.2)]';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-gold shadow-[0_0_10px_#F59E0B]';
+                text.innerHTML = '<span class="text-brand-gold text-xs">🟡 إيجابي بحذر (السوق مستقر وجيد للتداول)</span>';
+            } else {
+                container.className = 'bg-gray-900 border border-brand-red/40 rounded-xl p-4 shadow-[0_0_25px_rgba(239,68,68,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-red to-transparent opacity-80';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-red text-brand-red bg-brand-red/10 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-red shadow-[0_0_10px_#EF4444]';
+                text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
             }
 
-            snapshot.forEach((docSnap) => {
-                const trade = docSnap.data();
-                
-                let pnlValue = trade.pnl || 0;
-                if(trade.status === 'open' && trade.currentPrice) {
-                    pnlValue = ((trade.currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
-                }
-                
-                const pnlClass = pnlValue >= 0 ? 'pnl-positive' : 'pnl-negative';
-                const statusColor = trade.status === 'open' ? '#ffd600' : (pnlValue > 0 ? '#00e676' : '#ff1744');
+            const historyEl = document.getElementById('market-health-history');
+            const logContainer = document.getElementById('market-score-log-container');
+            
+            if (lastScoreChangeTime) {
+                historyEl.innerHTML = `تحديث السيرفر <span class="text-white font-bold ml-1">${formatTimeAgo(lastScoreChangeTime)}</span>`;
+                historyEl.classList.remove('hidden');
 
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <h2>
-                        ${trade.symbol} 
-                        <span style="color: ${statusColor}; font-size: 0.7em;">● ${trade.status.toUpperCase()}</span>
-                    </h2>
-                    <p>الاستراتيجية: <span class="badge">${trade.strategy}</span></p>
-                    <p>سعر الدخول: ${trade.entryPrice}</p>
-                    <p>السعر الحالي: ${trade.currentPrice || trade.entryPrice}</p>
-                    <p>الربح / الخسارة: <span class="${pnlClass}">${pnlValue.toFixed(2)}%</span></p>
-                    <p>تقييم الدخول: ${trade.entryScore || 0}/100</p>
-                `;
-                tradesContainer.appendChild(card);
+                const logsToShow = marketScoreLog.slice(0, 5); 
+                let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> سجل السيرفر:</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full pt-1">`;
+                
+                logsToShow.forEach((entry, index) => {
+                    const timeStr = new Date(entry.time).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    const sColor = getScoreColorClass(entry.score);
+                    const isCurrent = index === 0 ? '<span class="absolute -top-1.5 -right-1.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand-blue"></span></span>' : '';
+                    const labelText = index === 0 ? 'الحالي' : `#${index + 1}`;
+                    const labelClass = index === 0 ? 'bg-brand-blue text-white border-brand-blue' : 'bg-gray-800 text-gray-400 border-gray-700';
+
+                    logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1 mt-1">
+                        ${isCurrent}
+                        <div class="absolute -top-2.5 right-2 ${labelClass} text-[8px] px-1.5 rounded border font-bold z-10 shadow-sm">${labelText}</div>
+                        <span class="font-black ${sColor.text} text-xs dir-ltr mt-0.5">${entry.score}%</span>
+                        <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
+                    </div>`;
+                });
+                logHtml += `</div>`;
+                logContainer.innerHTML = logHtml;
+                logContainer.classList.remove('hidden');
+                logContainer.classList.add('flex');
+            }
+        };
+
+        const updateDashboardUI = () => {
+            const openTrades = virtualTrades.filter(t => t.status === 'open');
+            let allClosedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+            
+            let filteredClosedTrades = allClosedTrades;
+            if (statsTimeFilter !== 'all') {
+                const hours = parseInt(statsTimeFilter);
+                const timeLimit = Date.now() - (hours * 60 * 60 * 1000);
+                filteredClosedTrades = allClosedTrades.filter(t => t.closeTime >= timeLimit);
+            }
+
+            let won = 0, lost = 0, totalPnl = 0;
+            filteredClosedTrades.forEach(trade => { if(trade.status === 'won') won++; if(trade.status === 'lost') lost++; totalPnl += (trade.pnl || 0); });
+            const closedCount = won + lost;
+            const winRate = closedCount > 0 ? (won / closedCount) * 100 : 0;
+
+            document.getElementById('dash-total').innerText = closedCount;
+            document.getElementById('dash-winrate').innerText = winRate.toFixed(1) + '%';
+            const profitEl = document.getElementById('dash-profit');
+            profitEl.innerText = (totalPnl > 0 ? '+' : '') + totalPnl.toFixed(2) + '%';
+            profitEl.className = `text-3xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
+            document.getElementById('dash-open').innerText = openTrades.length;
+
+            const summaryText = `(إجمالي: ${closedCount} | رابحة: <span class="text-brand-green font-bold">${won}</span> | خاسرة: <span class="text-brand-red font-bold">${lost}</span>)`;
+            document.getElementById('history-summary').innerHTML = summaryText;
+            document.getElementById('history-summary-mobile').innerHTML = summaryText;
+
+            let openHtml = '';
+            const sortedOpenTrades = openTrades.sort((a, b) => {
+                if (openTradesSort === 'profit_desc') return (((b.currentPrice - b.entryPrice) / b.entryPrice) * 100 || 0) - (((a.currentPrice - a.entryPrice) / a.entryPrice) * 100 || 0);
+                if (openTradesSort === 'score_desc') return (b.liveScore || 0) - (a.liveScore || 0);
+                if (openTradesSort === 'time_desc') return (b.openTime || 0) - (a.openTime || 0);
+                return (a.openTime || 0) - (b.openTime || 0);
             });
+            
+            sortedOpenTrades.forEach(t => {
+                const currentPnl = ((t.currentPrice - t.entryPrice) / t.entryPrice) * 100;
+                const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
+                const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
+                const sColor = getScoreColorClass(t.liveScore || t.entryScore || 0);
+                const brk = t.liveBreakdown || t.entryBreakdown || {trend:0,volume:0,rsi:0,setup:0,btc:0,candle:0,confirm:0};
+                const displayScore = t.liveScore || t.entryScore || '--';
+
+                openHtml += `
+                    <div class="bg-gray-800 border ${pColor}/30 rounded-lg shadow-md flex flex-col hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
+                        <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold">
+                            ${formatTimeAgo(t.openTime)}
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5">
+                            <div class="flex items-center gap-1"><span class="text-white font-bold text-xs">${t.symbol}</span>${stratBadge}</div>
+                            <div class="flex items-center gap-1">
+                                <span class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                                <button onclick="window.cancelOpenTrade('${t.docId}', '${t.symbol}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="حذف من السيرفر">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2 mt-1 px-1 border-t border-gray-700/50 pt-2">
+                            <div class="flex justify-between items-center mb-1"><span class="text-[9px] font-bold text-gray-400">Live Score</span><span class="text-xs font-black ${sColor.text}">${displayScore}%</span></div>
+                            <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5"><div class="h-1 rounded-full ${sColor.bg} transition-all duration-500" style="width: ${displayScore}%"></div></div>
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800">Tr:${brk.trend}/20</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800">Vo:${brk.volume}/20</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800">RS:${brk.rsi}/15</span>
+                                <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800">St:${brk.setup}/15</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-1 text-[10px] mt-2"><span class="text-gray-400">الدخول:</span><span class="text-gray-300 font-mono">${(t.entryPrice || 0).toPrecision(5)}</span></div>
+                        <div class="flex justify-between items-center mb-2 text-[10px]"><span class="text-gray-400">الحالي:</span><span class="text-white font-bold font-mono">${(t.currentPrice || 0).toPrecision(5)}</span></div>
+                        <div class="mt-auto flex flex-col gap-1.5 pt-1 border-t border-gray-700/50">
+                            <div class="text-[10px] text-brand-gold bg-gray-950 rounded px-1 py-1.5 text-center font-bold border border-gray-700">${t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`}</div>
+                        </div>
+                    </div>`;
+            });
+            if(!openHtml) openHtml = '<div class="col-span-full text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لا توجد صفقات مفتوحة حالياً في السيرفر...</div>';
+            document.getElementById('active-trades-list').innerHTML = openHtml;
+
+            let closedHtml = '';
+            filteredClosedTrades.sort((a, b) => b.closeTime - a.closeTime).slice(0, 50).forEach(t => {
+                const isWin = t.status === 'won';
+                const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
+                const bgColor = isWin ? 'bg-brand-green/5 border-brand-green/20' : 'bg-brand-red/5 border-brand-red/20';
+                const durationStr = formatDuration(t.closeTime - t.openTime);
+                const timeStr = new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+                closedHtml += `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2 gap-2">
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <div class="flex items-center gap-1 flex-wrap"><span class="font-bold text-white text-xs">${t.symbol}</span>${getStrategyBadge(t.strategy)}</div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] text-gray-500 font-mono">${timeStr}</span>
+                                <span class="text-[8px] text-gray-400 bg-gray-950 border border-gray-800 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-inner">استغرقت: ${durationStr}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 shrink-0">
+                            <span class="dir-ltr font-black text-xs ${pColor}">${(t.pnl || 0) > 0 ? '+' : ''}${(t.pnl || 0).toFixed(2)}%</span>
+                        </div>
+                    </div>`;
+            });
+            if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة</div>';
+            document.getElementById('closed-trades-list').innerHTML = closedHtml;
+        };
+
+        // دوال مساعدة للواجهة والصوت
+        window.cancelOpenTrade = async (docId, symbol) => {
+            if (!confirm(`هل أنت متأكد من حذف صفقة ${symbol} من السيرفر؟`)) return;
+            try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) {}
+        };
+
+        document.getElementById('clear-history-btn').addEventListener('click', async () => {
+            const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+            if (closedTrades.length === 0 || !confirm(`تأكيد مسح ${closedTrades.length} صفقة مغلقة من السيرفر؟`)) return;
+            const btn = document.getElementById('clear-history-btn'); btn.innerHTML = `جاري الحذف...`;
+            try { for (let t of closedTrades) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); } } catch(e) {} finally { btn.innerHTML = `مسح السجل`; }
         });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            SETTINGS.sl_perc = parseFloat(document.getElementById('setting-sl').value) / 100;
+            SETTINGS.min_tp = parseFloat(document.getElementById('setting-tp').value) / 100;
+            SETTINGS.trail_dist = parseFloat(document.getElementById('setting-trail').value) / 100;
+            SETTINGS.vol_mult = parseFloat(document.getElementById('setting-vol').value);
+            SETTINGS.cooldown_mins = parseInt(document.getElementById('setting-cooldown').value) || 0;
+            SETTINGS.auto_kill = document.getElementById('setting-auto-kill').checked;
+            SETTINGS.strats = {
+                momentum: document.getElementById('strat-momentum') ? document.getElementById('strat-momentum').checked : true,
+                breakout: document.getElementById('strat-breakout') ? document.getElementById('strat-breakout').checked : true,
+                sniper: document.getElementById('strat-sniper') ? document.getElementById('strat-sniper').checked : true
+            };
+            localStorage.setItem('momentumSettingsV8_final', JSON.stringify(SETTINGS));
+            const btn = document.getElementById('save-settings-btn'); const originalText = btn.innerText;
+            btn.innerText = "تم حفظ التفضيلات محلياً ✓"; btn.classList.replace('bg-brand-blue', 'bg-brand-green');
+            setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-brand-green', 'bg-brand-blue'); }, 1500);
+        });
+
+        document.getElementById('stats-time-filter').addEventListener('change', (e) => { statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v8', statsTimeFilter); updateDashboardUI(); });
+        document.getElementById('open-trades-sort').addEventListener('change', (e) => { openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v8', openTradesSort); updateDashboardUI(); });
+
+        const formatDuration = (ms) => {
+            if (!ms || isNaN(ms) || ms < 0) return '0د';
+            const mins = Math.max(1, Math.floor(ms / 60000));
+            if (mins < 60) return `${mins}د`;
+            return `${Math.floor(mins / 60)}س و ${mins % 60}د`;
+        };
+
+        const formatTimeAgo = (openTimeMs) => {
+            if (!openTimeMs) return '';
+            const mins = Math.floor((Date.now() - openTimeMs) / 60000);
+            if (mins < 1) return 'منذ لحظات';
+            if (mins < 60) return `منذ ${mins} دقيقة`;
+            const hours = Math.floor(mins / 60);
+            return hours < 24 ? `منذ ${hours} ساعة` : `منذ ${Math.floor(hours / 24)} يوم`;
+        };
+
+        const getStrategyBadge = (stratName) => {
+            if(stratName === 'Sniper') return '<span class="badge-sniper text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Sniper</span>';
+            if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
+            if(stratName === 'Manual') return '<span class="bg-gray-800 text-gray-300 border border-gray-600 text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Manual</span>';
+            return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
+        };
+
+        const getScoreColorClass = (score) => {
+            if (score >= 85) return { text: 'text-brand-green', bg: 'bg-brand-green' };
+            if (score >= 70) return { text: 'text-brand-blue', bg: 'bg-brand-blue' };
+            if (score >= 55) return { text: 'text-brand-gold', bg: 'bg-brand-gold' };
+            return { text: 'text-brand-red', bg: 'bg-brand-red' };
+        };
+
+        let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
+        let audioCtx = null;
+
+        const updateSoundUI = () => {
+            const btn = document.getElementById('sound-toggle-btn');
+            if (soundEnabled) {
+                document.getElementById('sound-icon-off').classList.add('hidden');
+                document.getElementById('sound-icon-on').classList.remove('hidden');
+                btn.classList.add('bg-gray-800', 'border-brand-gold'); btn.classList.remove('border-gray-700');
+            } else {
+                document.getElementById('sound-icon-off').classList.remove('hidden');
+                document.getElementById('sound-icon-on').classList.add('hidden');
+                btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
+            }
+        };
+        updateSoundUI();
+        document.body.addEventListener('click', () => { if (soundEnabled && !audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } }, { once: true });
+
+        const playSound = (type) => {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                
+                if (type === 'open') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); 
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
+                    const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(1046.50, now + 0.15); 
+                    gain2.gain.setValueAtTime(0.1, now + 0.15); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc2.start(now + 0.15); osc2.stop(now + 0.3);
+                } else if (type === 'win') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554.37, now + 0.1); osc.frequency.setValueAtTime(659.25, now + 0.2); 
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+                    osc.start(now); osc.stop(now + 0.6);
+                }
+            } catch(e) {}
+        };
+        document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled); updateSoundUI(); if(soundEnabled) playSound('open'); });
     </script>
 </body>
 </html>
-
