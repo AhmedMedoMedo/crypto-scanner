@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v20 (Turbo)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v22 (Perfect Sync)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -281,8 +281,6 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        
-        // تفعيل الذاكرة المحلية لكي تنعكس الإعدادات في الواجهة فوراً
         const db = initializeFirestore(app, {
             localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
         });
@@ -290,8 +288,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v20') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v20') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v22') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v22') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -496,7 +494,7 @@
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
-                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e=>console.log(e));
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
                         inputEl.value = '';
                     } catch (err) {
                         alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
@@ -507,7 +505,7 @@
             }
 
             // ==========================================
-            // التحديث الأسطوري v20: الإطلاق والنسيان (Fire & Forget)
+            // زر الحفظ (الصاروخ v22) - بالرابط الدقيق iq3b وبدون أي تعليق
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -515,8 +513,7 @@
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                // 1. قفل الزر وتغيير اللون فوراً بدون أي تأخير
-                btn.innerText = "جاري الإرسال..."; 
+                btn.innerText = "جاري الحفظ..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -535,24 +532,24 @@
                     }
                 };
 
-                // 2. أمر الحفظ المحلي السريع (ينعكس فوراً على الشاشة بدون انتظار)
+                // 1. إرسال لفايربيس للحفظ المحلي كنسخة احتياطية
                 setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
-                    .catch(e => console.error(e));
+                    .catch(e => console.log(e));
 
-                // 3. إرسال الطلب للسيرفر في الخلفية متخطياً حظر فايربيس (بدون AWAIT أبداً)
+                // 2. إرسال الطلب للسيرفر الصحيح (iq3b) في الخلفية متخطياً حظر فايربيس (بدون AWAIT أبداً)
                 fetch('https://momentum-backend-iq3b.onrender.com/update-settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newSettings)
                 }).catch(e => console.error("Background Push Error:", e));
 
-                // 4. إجبار الزر على إظهار رسالة النجاح بعد جزء من الثانية لإعطاء إحساس مثالي بالسرعة
+                // 3. تأكيد النجاح السريع في نصف ثانية دون انتظار رد السيرفر البطيء
                 setTimeout(() => {
                     btn.innerText = "تم الإرسال والحفظ بنجاح ✓";
                     btn.style.backgroundColor = "#10B981"; 
-                }, 800);
+                }, 500);
 
-                // 5. إرجاع الزر لوضعه الطبيعي ليكون جاهزاً
+                // 4. إرجاع الزر لوضعه الطبيعي
                 setTimeout(() => { 
                     btn.innerText = originalText; 
                     btn.style.backgroundColor = ""; 
@@ -561,11 +558,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v20', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v22', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v20', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v22', openTradesSort); updateDashboardUI();
             });
         });
 
