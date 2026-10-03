@@ -506,18 +506,27 @@
                 });
             }
 
-            // زر الحفظ بتعديلات الحماية القوية ضد التعليق
+            // زر الحفظ - النسخة المضادة للتعليق نهائياً
             document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
+                // 1. قفل الزر وتغيير شكله فوراً
+                btn.innerText = "جاري الحفظ..."; 
+                btn.disabled = true;
+                btn.style.backgroundColor = "#4B5563"; // لون رمادي للتحميل
+                
+                // 2. مؤقت "إجباري" مستقل تماماً لفك التعليق بعد 3 ثوانٍ مهما كانت الظروف
+                setTimeout(() => { 
+                    btn.innerText = originalText; 
+                    btn.style.backgroundColor = ""; 
+                    btn.disabled = false; 
+                }, 3000);
+                
+                // 3. محاولة إرسال البيانات للسيرفر
                 try {
-                    btn.innerText = "جاري الحفظ..."; 
-                    btn.disabled = true;
-                    btn.style.backgroundColor = "#4B5563"; // لون رمادي للتحميل
-                    
                     const newSettings = {
                         tf: document.getElementById('setting-tf').value || '15m',
                         sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
@@ -535,21 +544,14 @@
 
                     await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
                     
+                    // إذا نجح الاتصال، نعطيه اللون الأخضر مؤقتاً قبل أن يفكه المؤقت الإجباري
                     btn.innerText = "تم التحديث في السيرفر ✓";
-                    btn.style.backgroundColor = "#10B981"; // لون أخضر للنجاح
+                    btn.style.backgroundColor = "#10B981"; 
                     
                 } catch(e) { 
                     console.error("Save Error:", e);
-                    btn.innerText = "خطأ! حاول مجدداً"; 
-                    btn.style.backgroundColor = "#EF4444"; // لون أحمر للخطأ
-                    
-                } finally {
-                    // أمر العودة للحالة الطبيعية سينفذ دائماً بعد 2.5 ثانية
-                    setTimeout(() => { 
-                        btn.innerText = originalText; 
-                        btn.style.backgroundColor = ""; // يعود للونه الأزرق الأساسي
-                        btn.disabled = false; 
-                    }, 2500);
+                    btn.innerText = "خطأ! تأكد من الاتصال"; 
+                    btn.style.backgroundColor = "#EF4444"; 
                 }
             });
 
