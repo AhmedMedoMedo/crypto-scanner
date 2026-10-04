@@ -282,12 +282,7 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        
-        // 🛠️ حل مشكلة تزامن الإعدادات: إزالة الكاش المحلي تماماً لإجبار كل المتصفحات على قراءة الداتا الحية من السيرفر فقط. 
-        // والإبقاء على LongPolling لتخطي الحظر في مصر.
-        const db = initializeFirestore(app, {
-            experimentalForceLongPolling: true 
-        });
+        const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 
         let virtualTrades = [];
         let marketScoreLog = [];
@@ -436,6 +431,12 @@
                         document.getElementById('strat-sniper').checked = s.strats.sniper;
                     }
                 }
+            }, (error) => {
+                if(error.code === 'resource-exhausted') {
+                    console.error("باقة الفايربيز للقراءة انتهت اليوم.");
+                    document.getElementById('db-status-badge').innerHTML = `⚠️ الباقة المجانية انتهت`;
+                    document.getElementById('db-status-badge').className = 'text-[10px] bg-brand-red/20 border border-brand-red/30 text-brand-red px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm';
+                }
             });
         };
 
@@ -456,7 +457,7 @@
                     if(marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
                     updateMarketHealthUI(data.score, data.status);
                 }
-            });
+            }, (error) => {});
 
             onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
                 const oldCount = virtualTrades.filter(t => t.status === 'open').length;
@@ -468,7 +469,7 @@
                 else if (oldCount > newCount) playSound('win'); 
                 
                 updateDashboardUI();
-            });
+            }, (error) => {});
 
             const manualAddBtn = document.getElementById('add-manual-btn');
             if (manualAddBtn) {
@@ -498,10 +499,10 @@
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
-                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
+                        await setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
                         inputEl.value = '';
                     } catch (err) {
-                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
+                        alert('حدث خطأ. تأكد من الرمز أو قد تكون الباقة المجانية لفايربيز قد انتهت.');
                     } finally {
                         manualAddBtn.innerText = origText; manualAddBtn.disabled = false;
                     }
@@ -533,22 +534,23 @@
                     }
                 };
 
+                // التعديل: إظهار خطأ الباقة للمستخدم بدلاً من النجاح الوهمي
                 setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
                     .then(() => {
                         btn.innerText = "تم الحفظ بنجاح 100% ✓";
                         btn.style.backgroundColor = "#10B981"; 
+                        setTimeout(() => { btn.innerText = originalText; btn.style.backgroundColor = ""; btn.disabled = false; }, 2500);
                     })
                     .catch(e => {
                         console.error(e);
-                        btn.innerText = "خطأ في الحفظ";
+                        if(e.code === 'resource-exhausted') {
+                            btn.innerText = "⚠️ خطأ: الباقة المجانية انتهت اليوم";
+                        } else {
+                            btn.innerText = "خطأ في الاتصال بالسيرفر";
+                        }
                         btn.style.backgroundColor = "#EF4444";
+                        setTimeout(() => { btn.innerText = originalText; btn.style.backgroundColor = ""; btn.disabled = false; }, 4000);
                     });
-
-                setTimeout(() => { 
-                    btn.innerText = originalText; 
-                    btn.style.backgroundColor = ""; 
-                    btn.disabled = false; 
-                }, 2500);
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
@@ -689,7 +691,7 @@
                 if (displayScore !== '--') {
                     if (displayScore >= 70) health = { text: '🚀 مساحة جيدة للصعود', class: 'text-brand-green border-brand-green/30 bg-brand-green/10 shadow-[0_0_8px_rgba(16,185,129,0.1)]' };
                     else if (displayScore < 45) health = { text: '📉 تراجع الزخم', class: 'text-gray-400 border-gray-700 bg-gray-800' };
-                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️ خطر انعكاس (تشبع)', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]' };
+                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️️ خطر انعكاس (تشبع)', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]' };
                 }
 
                 const scoreHtml = `
@@ -795,7 +797,9 @@
 
         window.cancelOpenTrade = async (docId) => {
             if (!confirm(`هل أنت متأكد من إلغاء وحذف هذه الصفقة؟`)) return;
-            try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) {}
+            try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) {
+                alert('لا يمكن الحذف حالياً، ربما الباقة انتهت.');
+            }
         };
 
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
@@ -806,7 +810,9 @@
             try {
                 const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
                 for (let t of closedTrades) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
-            } catch(e) {} finally { btn.innerHTML = originalHTML; }
+            } catch(e) {
+                alert('لا يمكن الحذف حالياً، الباقة المجانية ممتلئة.');
+            } finally { btn.innerHTML = originalHTML; }
         });
     </script>
 </body>
