@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v32 (Direct Sync)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v33 (Final Perfect)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -286,8 +286,8 @@
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v32') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v32') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v33') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v33') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -335,7 +335,7 @@
                 document.getElementById('sound-icon-on').classList.remove('hidden');
                 btn.classList.add('bg-gray-800', 'border-brand-gold'); btn.classList.remove('border-gray-700');
             } else {
-                document.getElementById('sound-icon-off').classList.add('hidden');
+                document.getElementById('sound-icon-off').classList.remove('hidden');
                 document.getElementById('sound-icon-on').classList.add('hidden');
                 btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
             }
@@ -503,7 +503,7 @@
             }
 
             // ==========================================
-            // زر الحفظ النهائي v32 (إرسال مباشر عبر رابط Render GET)
+            // زر الحفظ v33 (إرسال مزدوج فوري: رندر + فايربيس)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -511,7 +511,7 @@
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                btn.innerText = "جاري الإرسال المباشر للسيرفر..."; 
+                btn.innerText = "جاري الحفظ الفعلي..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
@@ -526,15 +526,17 @@
                 const brk = document.getElementById('strat-breakout').checked;
                 const snp = document.getElementById('strat-sniper').checked;
 
-                // رابط الإرسال المباشر لسيرفر Render لتخطي أي عائق
+                // 1. إرسال عبر رابط رندر لضمان وصوله عبر السيرفر
                 const renderLink = `https://momentum-backend-iq3b.onrender.com/update-settings?tf=${tf}&sl=${sl}&tp=${tp}&trail=${trail}&vol=${vol}&cd=${cd}&kill=${kill}&mom=${mom}&brk=${brk}&snp=${snp}`;
-
-                // تنفيذ الطلب للسيرفر
                 fetch(renderLink).catch(e => console.log(e));
 
-                // تحديث الزر للون الأخضر فوراً
+                // 2. إرسال مباشرة لفايربيس كنسخة احتياطية
+                const newSettings = { tf, sl_perc: sl, min_tp: tp, trail_dist: trail, vol_mult: vol, cooldown_mins: cd, auto_kill: kill, strats: { momentum: mom, breakout: brk, sniper: snp } };
+                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true }).catch(e => console.log(e));
+
+                // 3. تحويل الزر للأخضر فوراً
                 setTimeout(() => {
-                    btn.innerText = "تم الحفظ وإرسالها للسيرفر ✓";
+                    btn.innerText = "تم إرسالها وحفظها بالسيرفر ✓";
                     btn.style.backgroundColor = "#10B981"; 
                 }, 400);
 
@@ -546,11 +548,11 @@
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v32', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v33', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v32', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v33', openTradesSort); updateDashboardUI();
             });
         });
 
