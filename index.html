@@ -269,7 +269,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeFirestore, memoryLocalCache, getDocFromServer, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -282,9 +282,10 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // تفعيل التخزين الفولاذي المباشر لقاعدة البيانات
+        // ذاكرة مؤقتة في الذاكرة فقط (بدون تخزين محلي دائم) + كشف تلقائي للاتصال المناسب داخل التطبيقات
         const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+            localCache: memoryLocalCache(),
+            experimentalAutoDetectLongPolling: true
         });
 
         let virtualTrades = [];
@@ -480,8 +481,8 @@
             document.getElementById('stats-time-filter').value = statsTimeFilter;
             document.getElementById('open-trades-sort').value = openTradesSort;
 
-            onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
-                setDbStatus(true);
+            onSnapshot(doc(db, "momentum_system_logs", "market_health"), { includeMetadataChanges: true }, (docSnap) => {
+                setDbStatus(!docSnap.metadata.fromCache);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     marketScoreLog = data.log || [];
@@ -493,8 +494,8 @@
                 }
             }, (err) => { console.error('market snapshot error:', err); setDbStatus(false); });
 
-            onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
-                setDbStatus(true);
+            onSnapshot(collection(db, "momentum_trades_v1"), { includeMetadataChanges: true }, (snapshot) => {
+                setDbStatus(!snapshot.metadata.fromCache);
                 const oldCount = virtualTrades.filter(t => t.status === 'open').length;
                 const oldWon = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost').length;
                 virtualTrades = [];
@@ -553,7 +554,7 @@
             }
 
             // ==========================================
-            // زر الحفظ v35 (حفظ فوري ومباشر في سحابة فايربيس)
+            // زر الحفظ v35 (حفظ مع تحقق فعلي من وصول البيانات للسيرفر)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -584,16 +585,20 @@
                     }
                 };
 
-                // حفظ مباشر في فايربيس بدون أي تعليق أو أخطاء
-                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
+                const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+                const settingsDocRef = doc(db, "momentum_system_logs", "scanner_settings");
+
+                withTimeout(setDoc(settingsDocRef, newSettings, { merge: true }), 10000)
+                    .then(() => withTimeout(getDocFromServer(settingsDocRef), 10000)) // تحقق أن البيانات وصلت للسيرفر فعلاً
                     .then(() => {
                         btn.innerText = "تم الحفظ بنجاح 100% ✓";
-                        btn.style.backgroundColor = "#10B981"; 
+                        btn.style.backgroundColor = "#10B981";
                     })
                     .catch(e => {
                         console.error(e);
-                        btn.innerText = "خطأ في الحفظ";
+                        btn.innerText = e.message === 'timeout' ? "لم يصل للسيرفر ✗" : "خطأ في الحفظ";
                         btn.style.backgroundColor = "#EF4444";
+                        alert('فشل الحفظ في Firebase: ' + (e.code || e.message));
                     });
 
                 setTimeout(() => { 
