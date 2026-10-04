@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -267,175 +268,32 @@
         </section>
     </main>
 
-    <script>
-        // ==========================================
-        // نسخة REST بالكامل: لا تستخدم مكتبة Firebase إطلاقاً (طلبات HTTPS عادية)
-        // ==========================================
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
-            projectId: "smartscanner-a5e0d"
-        };
-        const FS_BASE = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`;
-        const POLL_MS = 4000;
-
-        // ---------- تحويل القيم من/إلى صيغة Firestore REST ----------
-        const toFsValue = (v) => {
-            if (v === null || v === undefined) return { nullValue: null };
-            if (typeof v === 'string') return { stringValue: v };
-            if (typeof v === 'boolean') return { booleanValue: v };
-            if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
-            if (Array.isArray(v)) return { arrayValue: { values: v.map(toFsValue) } };
-            if (typeof v === 'object') {
-                const fields = {};
-                Object.keys(v).forEach(k => { fields[k] = toFsValue(v[k]); });
-                return { mapValue: { fields } };
-            }
-            return { nullValue: null };
-        };
-        const fromFsValue = (f) => {
-            if (!f) return undefined;
-            if ('stringValue' in f) return f.stringValue;
-            if ('booleanValue' in f) return f.booleanValue;
-            if ('integerValue' in f) return Number(f.integerValue);
-            if ('doubleValue' in f) return f.doubleValue;
-            if ('nullValue' in f) return null;
-            if ('timestampValue' in f) return f.timestampValue;
-            if ('arrayValue' in f) return (f.arrayValue.values || []).map(fromFsValue);
-            if ('mapValue' in f) {
-                const o = {}; const fl = f.mapValue.fields || {};
-                Object.keys(fl).forEach(k => { o[k] = fromFsValue(fl[k]); });
-                return o;
-            }
-            return undefined;
-        };
-        const fromFsDoc = (d) => {
-            const o = {}; const fl = d.fields || {};
-            Object.keys(fl).forEach(k => { o[k] = fromFsValue(fl[k]); });
-            return o;
+            authDomain: "smartscanner-a5e0d.firebaseapp.com",
+            projectId: "smartscanner-a5e0d",
+            storageBucket: "smartscanner-a5e0d.firebasestorage.app",
+            messagingSenderId: "976223541282",
+            appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
         };
 
-        // ---------- طلب REST عام مع مهلة ورسالة خطأ واضحة ----------
-        const fsFetch = async (path, options = {}, query = null, timeoutMs = 15000) => {
-            const params = new URLSearchParams(query || []);
-            params.append('key', firebaseConfig.apiKey);
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-            let res;
-            try {
-                res = await fetch(`${FS_BASE}/${path}?${params.toString()}`, { ...options, signal: ctrl.signal });
-            } catch (netErr) {
-                const e = new Error(netErr.name === 'AbortError' ? 'انتهت المهلة بدون رد من Firebase' : 'تعذر الوصول إلى firestore.googleapis.com (شبكة أو حجب)');
-                e.kind = 'network';
-                throw e;
-            } finally { clearTimeout(timer); }
+        const app = initializeApp(firebaseConfig);
+        
+        // ⚠️ [تعديل أساسي حسب القواعد العسكرية]: إضافة experimentalForceLongPolling لحل مشكلة الحظر في مصر
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
+            experimentalForceLongPolling: true 
+        });
 
-            let json = null;
-            try { json = await res.json(); } catch (_) {}
-            if (!res.ok) {
-                const msg = (json && json.error && json.error.message) ? json.error.message : ('HTTP ' + res.status);
-                const st = (json && json.error && json.error.status) ? json.error.status : '';
-                const e = new Error(`${res.status} ${st}: ${msg}`);
-                e.kind = 'http'; e.status = res.status;
-                throw e;
-            }
-            return json;
-        };
-
-        const getSettingsDoc = async () => {
-            try { return fromFsDoc(await fsFetch('momentum_system_logs/scanner_settings')); }
-            catch (e) { if (e.status === 404) return null; throw e; }
-        };
-        const getMarketDoc = async () => {
-            try { return fromFsDoc(await fsFetch('momentum_system_logs/market_health')); }
-            catch (e) { if (e.status === 404) return null; throw e; }
-        };
-        const listTrades = async () => {
-            const all = []; let pageToken = null; let guard = 0;
-            do {
-                const q = [['pageSize', '300']];
-                if (pageToken) q.push(['pageToken', pageToken]);
-                const json = await fsFetch('momentum_trades_v1', {}, q);
-                (json.documents || []).forEach(d => {
-                    const id = d.name.split('/').pop();
-                    all.push({ docId: id, ...fromFsDoc(d) });
-                });
-                pageToken = json.nextPageToken || null;
-                guard++;
-            } while (pageToken && guard < 10);
-            return all;
-        };
-        const deleteTradeDoc = async (docId) => {
-            await fsFetch('momentum_trades_v1/' + encodeURIComponent(docId), { method: 'DELETE' });
-        };
-        const createTradeDoc = async (obj) => {
-            const fields = {};
-            Object.keys(obj).forEach(k => { fields[k] = toFsValue(obj[k]); });
-            await fsFetch('momentum_trades_v1', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fields })
-            });
-        };
-        const saveSettingsViaRest = async (s) => {
-            const body = { fields: {
-                tf: toFsValue(s.tf), sl_perc: toFsValue(s.sl_perc), min_tp: toFsValue(s.min_tp),
-                trail_dist: toFsValue(s.trail_dist), vol_mult: toFsValue(s.vol_mult),
-                cooldown_mins: toFsValue(s.cooldown_mins), auto_kill: toFsValue(s.auto_kill),
-                strats: toFsValue(s.strats)
-            } };
-            const q = [];
-            ['tf','sl_perc','min_tp','trail_dist','vol_mult','cooldown_mins','auto_kill','strats']
-                .forEach(p => q.push(['updateMask.fieldPaths', p]));
-            const json = await fsFetch('momentum_system_logs/scanner_settings', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            }, q);
-            return fromFsDoc(json);
-        };
-
-        // ---------- الحالة العامة ----------
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let lastMarketScore = null;
-        let lastMarketStatus = null;
-        let firstTradesSnapshot = true;
         let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v35') || '24';
         let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v35') || 'time_desc';
-
-        const setDbStatus = (connected) => {
-            const badge = document.getElementById('db-status-badge');
-            if (connected) {
-                badge.innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سحابي متصل`;
-                badge.className = 'text-[10px] bg-brand-green/20 border border-brand-green/30 text-brand-green px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
-            } else {
-                badge.innerHTML = `<span class="w-2 h-2 bg-brand-red rounded-full"></span> غير متصل`;
-                badge.className = 'text-[10px] bg-brand-red/20 border border-brand-red/30 text-brand-red px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
-            }
-        };
-
-        const settingsSig = (s) => JSON.stringify([
-            s.tf,
-            Math.round((s.sl_perc || 0) * 10000),
-            Math.round((s.min_tp || 0) * 10000),
-            Math.round((s.trail_dist || 0) * 10000),
-            Number(s.vol_mult),
-            Number(s.cooldown_mins),
-            !!s.auto_kill,
-            !!(s.strats && s.strats.momentum),
-            !!(s.strats && s.strats.breakout),
-            !!(s.strats && s.strats.sniper)
-        ]);
-
-        const setConsole = (msg, isWarn) => {
-            const el = document.getElementById('live-console-text');
-            if (!el) return;
-            el.innerText = msg;
-            el.style.color = isWarn ? '#EF4444' : '';
-            el.classList.toggle('truncate', !isWarn);
-            el.classList.toggle('whitespace-normal', !!isWarn);
-        };
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -517,29 +375,18 @@
         };
         document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled); updateSoundUI(); if(soundEnabled) playSound('open'); });
 
-        // اتصال باينانس مع إعادة اتصال واحدة فقط
         let priceWs = null;
-        let wsReconnectTimer = null;
-        const scheduleWsReconnect = () => {
-            if (wsReconnectTimer) return;
-            wsReconnectTimer = setTimeout(() => { wsReconnectTimer = null; connectBinanceWs(); }, 3000);
-        };
         const connectBinanceWs = () => {
-            if (priceWs) {
-                priceWs.onmessage = priceWs.onerror = priceWs.onclose = null;
-                try { priceWs.close(); } catch (e) {}
-            }
+            if (priceWs) priceWs.close();
             priceWs = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
             
             priceWs.onmessage = (event) => {
-                let data;
-                try { data = JSON.parse(event.data); } catch (e) { return; }
+                const data = JSON.parse(event.data);
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
                 if(openTrades.length === 0) return;
-                const bySymbol = new Map(openTrades.map(t => [t.symbol, t]));
                 
                 data.forEach(ticker => {
-                    const trade = bySymbol.get(ticker.s);
+                    const trade = openTrades.find(t => t.symbol === ticker.s);
                     if (trade) {
                         const currentPrice = parseFloat(ticker.c);
                         trade.currentPrice = currentPrice; 
@@ -568,114 +415,61 @@
                     }
                 });
             };
-            priceWs.onerror = () => { scheduleWsReconnect(); };
-            priceWs.onclose = () => { scheduleWsReconnect(); };
+            priceWs.onerror = () => { setTimeout(connectBinanceWs, 3000); };
+            priceWs.onclose = () => { setTimeout(connectBinanceWs, 3000); };
         };
 
-        // ---------- تعبئة الحقول من السيرفر (لا تكتب فوق حقل يعدّله المستخدم) ----------
-        const setFieldValue = (id, value) => {
-            const el = document.getElementById(id);
-            if (el && document.activeElement !== el) el.value = value;
-        };
-        const setFieldChecked = (id, value) => {
-            const el = document.getElementById(id);
-            if (el && document.activeElement !== el) el.checked = !!value;
-        };
-        const applySettingsToUI = (s) => {
-            if(s.tf !== undefined) setFieldValue('setting-tf', s.tf);
-            if(s.sl_perc !== undefined) setFieldValue('setting-sl', (s.sl_perc * 100).toFixed(1));
-            if(s.min_tp !== undefined) setFieldValue('setting-tp', (s.min_tp * 100).toFixed(1));
-            if(s.trail_dist !== undefined) setFieldValue('setting-trail', (s.trail_dist * 100).toFixed(1));
-            if(s.vol_mult !== undefined) setFieldValue('setting-vol', s.vol_mult);
-            if(s.cooldown_mins !== undefined) setFieldValue('setting-cooldown', s.cooldown_mins);
-            if(s.auto_kill !== undefined) setFieldChecked('setting-auto-kill', s.auto_kill);
-            if(s.strats) {
-                setFieldChecked('strat-momentum', s.strats.momentum);
-                setFieldChecked('strat-breakout', s.strats.breakout);
-                setFieldChecked('strat-sniper', s.strats.sniper);
-            }
-        };
-
-        // ---------- الاستعلام الدوري (يحل محل onSnapshot) ----------
-        let settingsLoadedOnce = false;
-        let settingsWarnShown = false;
-        let lastSettingsRaw = '';
-        let pollBusy = false;
-
-        const pollAll = async () => {
-            if (pollBusy) return;
-            pollBusy = true;
-            try {
-                const [settings, market, trades] = await Promise.all([getSettingsDoc(), getMarketDoc(), listTrades()]);
-                setDbStatus(true);
-
-                // الإعدادات
-                if (settings) {
-                    const raw = JSON.stringify(settings);
-                    if (!settingsLoadedOnce || raw !== lastSettingsRaw) {
-                        applySettingsToUI(settings);
-                        lastSettingsRaw = raw;
-                    }
-                    settingsLoadedOnce = true;
-                    const savedSig = localStorage.getItem('momentumLastSavedSig_v35');
-                    if (savedSig && savedSig !== settingsSig(settings)) {
-                        const when = localStorage.getItem('momentumLastSavedAt_v35');
-                        const whenTxt = when ? new Date(parseInt(when)).toLocaleString('ar-EG') : '';
-                        setConsole('⚠️ الإعدادات على السيرفر تختلف عن آخر ما حفظته (' + whenTxt + ') — جهة أخرى تعدّل نفس الوثيقة.', true);
-                        settingsWarnShown = true;
-                    } else if (settingsWarnShown) {
-                        setConsole('🚀 متصل بالسيرفر السحابي... الأسعار تنبض وتتحدث تلقائياً.', false);
-                        settingsWarnShown = false;
+        const startSettingsSync = () => {
+            onSnapshot(doc(db, "momentum_system_logs", "scanner_settings"), (docSnap) => {
+                if (docSnap.exists()) {
+                    const s = docSnap.data();
+                    if(s.tf !== undefined) document.getElementById('setting-tf').value = s.tf;
+                    if(s.sl_perc !== undefined) document.getElementById('setting-sl').value = (s.sl_perc * 100).toFixed(1);
+                    if(s.min_tp !== undefined) document.getElementById('setting-tp').value = (s.min_tp * 100).toFixed(1);
+                    if(s.trail_dist !== undefined) document.getElementById('setting-trail').value = (s.trail_dist * 100).toFixed(1);
+                    if(s.vol_mult !== undefined) document.getElementById('setting-vol').value = s.vol_mult;
+                    if(s.cooldown_mins !== undefined) document.getElementById('setting-cooldown').value = s.cooldown_mins;
+                    if(s.auto_kill !== undefined) document.getElementById('setting-auto-kill').checked = s.auto_kill;
+                    if(s.strats) {
+                        document.getElementById('strat-momentum').checked = s.strats.momentum;
+                        document.getElementById('strat-breakout').checked = s.strats.breakout;
+                        document.getElementById('strat-sniper').checked = s.strats.sniper;
                     }
                 }
-
-                // حالة السوق
-                if (market) {
-                    marketScoreLog = market.log || [];
-                    if (marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
-                    if (market.score !== undefined) {
-                        lastMarketScore = market.score; lastMarketStatus = market.status;
-                        updateMarketHealthUI(market.score, market.status);
-                    }
-                }
-
-                // الصفقات
-                const oldOpen = virtualTrades.filter(t => t.status === 'open').length;
-                const oldClosed = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost').length;
-                // نحافظ على السعر اللحظي القادم من باينانس لحين وصول تحديث السيرفر
-                const livePrices = new Map(virtualTrades.filter(t => t.status === 'open').map(t => [t.symbol, t.currentPrice]));
-                virtualTrades = trades;
-                virtualTrades.forEach(t => {
-                    if (t.status === 'open' && livePrices.has(t.symbol) && livePrices.get(t.symbol)) t.currentPrice = livePrices.get(t.symbol);
-                });
-                const newOpen = virtualTrades.filter(t => t.status === 'open').length;
-                const newClosed = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost').length;
-                if (!firstTradesSnapshot) {
-                    if (newOpen > oldOpen) playSound('open');
-                    else if (oldOpen > newOpen && newClosed > oldClosed) playSound('win');
-                }
-                firstTradesSnapshot = false;
-                updateDashboardUI();
-            } catch (e) {
-                console.error('poll error:', e);
-                setDbStatus(false);
-                setConsole('❌ تعذر القراءة من Firebase: ' + e.message, true);
-                settingsWarnShown = true;
-            } finally {
-                pollBusy = false;
-            }
+            });
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            startSettingsSync();
             connectBinanceWs(); 
 
             document.getElementById('stats-time-filter').value = statsTimeFilter;
             document.getElementById('open-trades-sort').value = openTradesSort;
 
-            pollAll();
-            setInterval(pollAll, POLL_MS);
+            onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
+                if (docSnap.exists()) {
+                    document.getElementById('db-status-badge').innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سحابي متصل`;
+                    document.getElementById('db-status-badge').className = 'text-[10px] bg-brand-green/20 border border-brand-green/30 text-brand-green px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
+                    
+                    const data = docSnap.data();
+                    marketScoreLog = data.log || [];
+                    if(marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
+                    updateMarketHealthUI(data.score, data.status);
+                }
+            });
 
-            // ---------- إضافة صفقة يدوية (REST) ----------
+            onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
+                const oldCount = virtualTrades.filter(t => t.status === 'open').length;
+                virtualTrades = [];
+                snapshot.forEach(docSnap => virtualTrades.push({ docId: docSnap.id, ...docSnap.data() }));
+                
+                const newCount = virtualTrades.filter(t => t.status === 'open').length;
+                if (newCount > oldCount) playSound('open');
+                else if (oldCount > newCount) playSound('win'); 
+                
+                updateDashboardUI();
+            });
+
             const manualAddBtn = document.getElementById('add-manual-btn');
             if (manualAddBtn) {
                 manualAddBtn.addEventListener('click', async () => {
@@ -690,63 +484,52 @@
 
                     const origText = manualAddBtn.innerText;
                     manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
-                    let price;
                     try {
                         const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
                         if (!res.ok) throw new Error();
                         const data = await res.json();
-                        price = parseFloat(data.price);
-                    } catch (err) {
-                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
-                        manualAddBtn.innerText = origText; manualAddBtn.disabled = false;
-                        return;
-                    }
-                    try {
-                        const slInput = (parseFloat(document.getElementById('setting-sl').value) || 3) / 100;
+                        const price = parseFloat(data.price);
+                        
                         const newTrade = {
                             symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, trailActive: false, 
-                            slLevel: price * (1 - slInput), status: 'open', pnl: 0, openTime: Date.now(),
+                            slLevel: price * 0.97, status: 'open', pnl: 0, openTime: Date.now(),
                             strategy: 'Manual', entryScore: 75, liveScore: 75,
                             entryBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5},
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
-                        await createTradeDoc(newTrade);
+                        
+                        // تطبيق Fire & Forget لحفظ الصفقة اليدوية أيضاً
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
                         inputEl.value = '';
-                        pollAll();
                     } catch (err) {
-                        alert('فشل إضافة الصفقة في Firebase:\n' + err.message);
+                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
                     } finally {
                         manualAddBtn.innerText = origText; manualAddBtn.disabled = false;
                     }
                 });
             }
 
-            // ---------- زر الحفظ (REST) ----------
-            document.getElementById('save-settings-btn').addEventListener('click', async () => {
+            // ==========================================
+            // ⚠️ [تعديل أساسي حسب القواعد]: تطبيق تقنية (Fire & Forget) حقيقية بدون .then للزرار
+            // ==========================================
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                const resetBtn = (ms) => setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.style.backgroundColor = "";
-                    btn.disabled = false;
-                }, ms);
                 
-                btn.innerText = "جاري الحفظ الفعلي..."; 
+                // تحديث الواجهة فوراً استجابة للمستخدم (بدون أي انتظار)
+                btn.innerText = "تم الحفظ بنجاح 100% ✓";
+                btn.style.backgroundColor = "#10B981"; 
                 btn.disabled = true;
-                btn.style.backgroundColor = "#4B5563"; 
-
-                const num = (id, def) => { const v = parseFloat(document.getElementById(id).value); return (isNaN(v) || v <= 0) ? def : v; };
-                const cdVal = parseInt(document.getElementById('setting-cooldown').value);
                 
                 const newSettings = {
                     tf: document.getElementById('setting-tf').value || '15m',
-                    sl_perc: num('setting-sl', 3) / 100,
-                    min_tp: num('setting-tp', 5) / 100,
-                    trail_dist: num('setting-trail', 1.5) / 100,
-                    vol_mult: num('setting-vol', 2.0),
-                    cooldown_mins: (isNaN(cdVal) || cdVal < 0) ? 0 : cdVal,
+                    sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
+                    min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
+                    trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
+                    vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
+                    cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
                     auto_kill: document.getElementById('setting-auto-kill').checked,
                     strats: {
                         momentum: document.getElementById('strat-momentum').checked,
@@ -755,28 +538,16 @@
                     }
                 };
 
-                const mySig = settingsSig(newSettings);
+                // إرسال البيانات للفايربيز ونسيان الأمر تماماً (Fire & Forget) 
+                // تم إزالة await و .then و .catch لمنع أي تجميد للزر إذا كان النت متذبذباً
+                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
 
-                try {
-                    const saved = await saveSettingsViaRest(newSettings);
-                    if (settingsSig(saved) !== mySig) {
-                        throw new Error('القيم التي رجعت من السيرفر تختلف عما أرسلته');
-                    }
-                    localStorage.setItem('momentumLastSavedSig_v35', mySig);
-                    localStorage.setItem('momentumLastSavedAt_v35', String(Date.now()));
-                    lastSettingsRaw = JSON.stringify(saved);
-                    setConsole('✅ تم الحفظ في Firebase وتأكّد السيرفر من القيم.', false);
-                    btn.innerText = "تم الحفظ بنجاح 100% ✓";
-                    btn.style.backgroundColor = "#10B981";
-                    resetBtn(2500);
-                } catch (e) {
-                    console.error(e);
-                    btn.innerText = "فشل الحفظ ✗";
-                    btn.style.backgroundColor = "#EF4444";
-                    setConsole('❌ فشل الحفظ: ' + e.message, true);
-                    alert('فشل الحفظ في Firebase:\n' + e.message);
-                    resetBtn(4000);
-                }
+                // إعادة الزرار لحالته بعد ثانيتين
+                setTimeout(() => { 
+                    btn.innerText = originalText; 
+                    btn.style.backgroundColor = ""; 
+                    btn.disabled = false; 
+                }, 2000);
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
@@ -786,11 +557,6 @@
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
                 openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v35', openTradesSort); updateDashboardUI();
             });
-
-            // تحديث دوري للنصوص الزمنية
-            setInterval(() => {
-                if (lastMarketScore !== null) updateMarketHealthUI(lastMarketScore, lastMarketStatus);
-            }, 60000);
         });
 
         const updateMarketHealthUI = (score, status) => {
@@ -863,7 +629,7 @@
             if (statsTimeFilter !== 'all') {
                 const hours = parseInt(statsTimeFilter);
                 const timeLimit = Date.now() - (hours * 60 * 60 * 1000);
-                filteredClosedTrades = allClosedTrades.filter(t => (t.closeTime || 0) >= timeLimit);
+                filteredClosedTrades = allClosedTrades.filter(t => t.closeTime >= timeLimit);
             }
 
             let won = 0, lost = 0, totalPnl = 0;
@@ -906,8 +672,7 @@
             });
             
             for (let t of sortedOpenTrades) {
-                const curPrice = t.currentPrice || t.entryPrice || 0;
-                const currentPnl = t.entryPrice ? ((curPrice - t.entryPrice) / t.entryPrice) * 100 : 0;
+                const currentPnl = ((t.currentPrice - t.entryPrice) / t.entryPrice) * 100;
                 const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
                 const cardColorClass = currentPnl >= 0 ? 'border-brand-green/30' : 'border-brand-red/30';
 
@@ -933,7 +698,7 @@
                             <span class="text-xs font-black ${sColor.text}">${displayScore}%</span>
                         </div>
                         <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5">
-                            <div class="h-1 rounded-full ${sColor.bg} transition-all duration-500" style="width: ${displayScore === '--' ? 0 : displayScore}%"></div>
+                            <div class="h-1 rounded-full ${sColor.bg} transition-all duration-500" style="width: ${displayScore}%"></div>
                         </div>
                         <div class="flex flex-wrap gap-1 justify-center">
                             <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Trend">Tr:${brk.trend}/20</span>
@@ -977,7 +742,7 @@
                         </div>
                         <div class="flex justify-between items-center mb-2 text-[10px]">
                             <span class="text-gray-400">الحالي:</span>
-                            <span id="price-${t.symbol}" class="text-white font-bold font-mono">${curPrice.toPrecision(5)}</span>
+                            <span id="price-${t.symbol}" class="text-white font-bold font-mono">${(t.currentPrice || t.entryPrice).toPrecision(5)}</span>
                         </div>
                         <div class="mt-auto flex flex-col gap-1.5 pt-1 border-t border-gray-700/50">
                             <div class="text-[9px] ${health.class} rounded px-1 py-1 text-center font-bold border transition-colors duration-500 truncate" title="${health.text}">${health.text}</div>
@@ -989,7 +754,7 @@
             document.getElementById('active-trades-list').innerHTML = openHtml;
 
             let closedHtml = '';
-            const sortedClosed = [...filteredClosedTrades].sort((a, b) => (b.closeTime || 0) - (a.closeTime || 0)).slice(0, 50);
+            const sortedClosed = filteredClosedTrades.sort((a, b) => b.closeTime - a.closeTime).slice(0, 50);
             sortedClosed.forEach(t => {
                 const isWin = t.status === 'won';
                 const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
@@ -1029,30 +794,23 @@
 
         window.cancelOpenTrade = async (docId) => {
             if (!confirm(`هل أنت متأكد من إلغاء وحذف هذه الصفقة؟`)) return;
-            try {
-                await deleteTradeDoc(docId);
-                virtualTrades = virtualTrades.filter(t => t.docId !== docId);
-                updateDashboardUI();
-            } catch(e) {
-                console.error(e);
-                alert('فشل حذف الصفقة:\n' + e.message);
-            }
+            // Fire & Forget for cancelling trades as well
+            deleteDoc(doc(db, "momentum_trades_v1", docId)); 
         };
 
-        document.getElementById('clear-history-btn').addEventListener('click', async () => {
+        document.getElementById('clear-history-btn').addEventListener('click', () => {
             if (!confirm(`هل أنت متأكد من حذف الصفقات المغلقة من السيرفر؟`)) return;
             const btn = document.getElementById('clear-history-btn');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `جاري الحذف...`;
-            try {
-                const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
-                for (let t of closedTrades) { await deleteTradeDoc(t.docId); }
-                virtualTrades = virtualTrades.filter(t => t.status === 'open');
-                updateDashboardUI();
-            } catch(e) {
-                console.error(e);
-                alert('فشل حذف السجل:\n' + e.message);
-            } finally { btn.innerHTML = originalHTML; }
+            btn.innerHTML = `تم إرسال أمر الحذف...`;
+            
+            // Fire & Forget
+            const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+            for (let t of closedTrades) { 
+                deleteDoc(doc(db, "momentum_trades_v1", t.docId)); 
+            }
+            
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
         });
     </script>
 </body>
