@@ -308,6 +308,29 @@
             }
         };
 
+        // بصمة للإعدادات لمقارنة ما حفظته مع ما هو موجود فعلاً على السيرفر
+        const settingsSig = (s) => JSON.stringify([
+            s.tf,
+            Math.round((s.sl_perc || 0) * 10000),
+            Math.round((s.min_tp || 0) * 10000),
+            Math.round((s.trail_dist || 0) * 10000),
+            Number(s.vol_mult),
+            Number(s.cooldown_mins),
+            !!s.auto_kill,
+            !!(s.strats && s.strats.momentum),
+            !!(s.strats && s.strats.breakout),
+            !!(s.strats && s.strats.sniper)
+        ]);
+
+        const setConsole = (msg, isWarn) => {
+            const el = document.getElementById('live-console-text');
+            if (!el) return;
+            el.innerText = msg;
+            el.style.color = isWarn ? '#EF4444' : '';
+            el.classList.toggle('truncate', !isWarn);
+            el.classList.toggle('whitespace-normal', !!isWarn);
+        };
+
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
             const mins = Math.max(1, Math.floor(ms / 60000));
@@ -453,9 +476,9 @@
             if (el && document.activeElement !== el) el.checked = !!value;
         };
 
-        // استماع فوري وحقيقي للإعدادات من السحابة لملء الحقول وتثبيتها للأبد
+        // استماع فوري وحقيقي للإعدادات من السحابة + كشف أي جهة أخرى تغيّر الإعدادات
         const startSettingsSync = () => {
-            onSnapshot(doc(db, "momentum_system_logs", "scanner_settings"), (docSnap) => {
+            onSnapshot(doc(db, "momentum_system_logs", "scanner_settings"), { includeMetadataChanges: true }, (docSnap) => {
                 if (docSnap.exists()) {
                     const s = docSnap.data();
                     if(s.tf !== undefined) setFieldValue('setting-tf', s.tf);
@@ -470,8 +493,18 @@
                         setFieldChecked('strat-breakout', s.strats.breakout);
                         setFieldChecked('strat-sniper', s.strats.sniper);
                     }
+
+                    // مقارنة ما على السيرفر بآخر ما تم حفظه من هذا الجهاز
+                    if (!docSnap.metadata.fromCache && !docSnap.metadata.hasPendingWrites) {
+                        const saved = localStorage.getItem('momentumLastSavedSig_v35');
+                        if (saved && saved !== settingsSig(s)) {
+                            const when = localStorage.getItem('momentumLastSavedAt_v35');
+                            const whenTxt = when ? new Date(parseInt(when)).toLocaleString('ar-EG') : '';
+                            setConsole('⚠️ الإعدادات على السيرفر تختلف عن آخر ما حفظته (' + whenTxt + ') — جهة أخرى تعدّل نفس الوثيقة (نسخة قديمة من السيرفر أو من الصفحة).', true);
+                        }
+                    }
                 }
-            }, (err) => { console.error('settings snapshot error:', err); });
+            }, (err) => { console.error('settings snapshot error:', err); setConsole('خطأ في قراءة الإعدادات: ' + (err.code || err.message), true); });
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -554,7 +587,7 @@
             }
 
             // ==========================================
-            // زر الحفظ v35 (حفظ مع تحقق فعلي من وصول البيانات للسيرفر)
+            // زر الحفظ v35 (حفظ مع تحقق فعلي + كشف أي تغيير فوري من جهة أخرى)
             // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
@@ -587,18 +620,31 @@
 
                 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
                 const settingsDocRef = doc(db, "momentum_system_logs", "scanner_settings");
+                const mySig = settingsSig(newSettings);
 
                 withTimeout(setDoc(settingsDocRef, newSettings, { merge: true }), 10000)
                     .then(() => withTimeout(getDocFromServer(settingsDocRef), 10000)) // تحقق أن البيانات وصلت للسيرفر فعلاً
-                    .then(() => {
+                    .then((serverSnap) => {
+                        if (settingsSig(serverSnap.data() || {}) !== mySig) {
+                            const e = new Error('overwritten');
+                            throw e;
+                        }
+                        localStorage.setItem('momentumLastSavedSig_v35', mySig);
+                        localStorage.setItem('momentumLastSavedAt_v35', String(Date.now()));
+                        setConsole('✅ تم حفظ الإعدادات والتأكد من وجودها على السيرفر.', false);
                         btn.innerText = "تم الحفظ بنجاح 100% ✓";
                         btn.style.backgroundColor = "#10B981";
                     })
                     .catch(e => {
                         console.error(e);
-                        btn.innerText = e.message === 'timeout' ? "لم يصل للسيرفر ✗" : "خطأ في الحفظ";
+                        if (e.message === 'overwritten') {
+                            btn.innerText = "تم تغييرها فوراً ✗";
+                            alert('تم الحفظ لكن القيم على السيرفر تغيّرت مباشرة بعد الكتابة. هذا يعني أن جهة أخرى تكتب على نفس الوثيقة (نسخة قديمة من السيرفر أو الصفحة).');
+                        } else {
+                            btn.innerText = e.message === 'timeout' ? "لم يصل للسيرفر ✗" : "خطأ في الحفظ";
+                            alert('فشل الحفظ في Firebase: ' + (e.code || e.message));
+                        }
                         btn.style.backgroundColor = "#EF4444";
-                        alert('فشل الحفظ في Firebase: ' + (e.code || e.message));
                     });
 
                 setTimeout(() => { 
