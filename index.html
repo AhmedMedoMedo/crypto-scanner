@@ -1,382 +1,872 @@
-const http = require('http');
-const url = require('url');
-const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-const db = admin.firestore();
-db.settings({ ignoreUndefinedProperties: true });
-
-const tradesRef = db.collection('momentum_trades_v1');
-const systemRef = db.collection('momentum_system_logs').doc('market_health');
-const settingsRef = db.collection('momentum_system_logs').doc('scanner_settings');
-
-process.on('unhandledRejection', (err) => console.error('unhandledRejection:', err));
-process.on('uncaughtException', (err) => console.error('uncaughtException:', err));
-
-// إنشاء السيرفر واستقبال الإعدادات عبر مسار التحديث المباشر
-http.createServer(async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    const parsedUrl = url.parse(req.url, true);
-
-    if (parsedUrl.pathname === '/update-settings') {
-        const q = parsedUrl.query;
-        try {
-            const cd = parseInt(q.cd);
-            const newSettings = {
-                tf: q.tf || '15m',
-                sl_perc: parseFloat(q.sl) || 0.03,
-                min_tp: parseFloat(q.tp) || 0.05,
-                trail_dist: parseFloat(q.trail) || 0.015,
-                vol_mult: parseFloat(q.vol) || 2.0,
-                cooldown_mins: isNaN(cd) ? 15 : cd,
-                auto_kill: q.kill === 'true',
-                strats: {
-                    momentum: q.mom === 'true',
-                    breakout: q.brk === 'true',
-                    sniper: q.snp === 'true'
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Momentum | Scanner </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' },
+                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B' }
+                    }
                 }
-            };
-
-            await settingsRef.set(newSettings, { merge: true });
-            res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
-            res.end('SUCCESS');
-            console.log("🔥 👑 [نجاح تام]: تم استقبال الإعدادات وحفظها في قاعدة البيانات:", newSettings);
-        } catch (err) {
-            res.writeHead(500, {'Content-Type': 'text/plain'});
-            res.end('ERROR: ' + err.message);
+            }
         }
-        return;
-    }
+    </script>
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .stat-box { background: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; padding: 1rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .input-group label { display: block; font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.25rem; }
+        .input-group input, .input-group select { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 0.375rem; padding: 0.375rem 0.5rem; font-size: 0.875rem; outline: none; direction: ltr; }
+        .input-group input:focus, .input-group select:focus { border-color: #3B82F6; }
+        .input-group input[type="checkbox"] { width: auto; display: inline-block; margin-left: 0.5rem; }
+        .dir-ltr { direction: ltr; display: inline-block; }
+        
+        .badge-momentum { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-sniper { background-color: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
 
-    res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
-    res.end('Momentum Scanner is ALIVE and RUNNING! 🚀\n');
-}).listen(process.env.PORT || 10000);
+    <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-blue to-purple-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="7" y1="3" x2="7" y2="19"></line>
+                        <rect x="4" y="7" width="6" height="8" rx="1" fill="currentColor" stroke="none"></rect>
+                        <line x1="17" y1="5" x2="17" y2="21"></line>
+                        <rect x="14" y="9" width="6" height="6" rx="1" fill="transparent"></rect>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v35 (True Sync)</span></h1>
+                    <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
+                    <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                    <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </button>
+                
+                <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    جاري الاتصال...
+                </div>
+            </div>
+        </div>
+    </header>
 
-let virtualTrades = [];
-let currentMarketScore = null;
-let globalMarketStatus = 'neutral';
-let isCheckingMarket = false;
-let isScanning = false;
-let isMonitoring = false;
-let marketScoreLog = [];
+    <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
 
-const exitCooldowns = {};
-const pendingEntries = new Set();
-const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 'EURUSDT', 'XAUTUSDT', 'PAXGUSDT', 'BUSDUSDT', 'AEURUSDT', 'USDSUSDT'];
+        <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
+            <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
+                <div class="flex items-center gap-3">
+                    <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">
+                        --%
+                    </div>
+                    <div class="flex flex-col">
+                        <h2 class="text-xs font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
+                        </h2>
+                        <div id="market-health-text" class="text-[11px] font-bold text-gray-500 mt-1">جاري استلام البيانات من السيرفر...</div>
+                        <div id="market-health-history" class="text-[10px] text-gray-400 mt-1.5 hidden bg-gray-950/80 px-2.5 py-1 rounded border border-gray-800/80 w-fit flex items-center gap-1"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-950 px-3 py-2 rounded-lg border border-gray-800 shrink-0">
+                    <label for="setting-auto-kill" class="text-[10px] font-bold text-gray-300 cursor-pointer flex items-center gap-2">
+                        <input type="checkbox" id="setting-auto-kill" class="accent-brand-red w-3.5 h-3.5 cursor-pointer">
+                        تفعيل الحماية الآلية (منع الدخول وقت الخطر)
+                    </label>
+                </div>
+            </div>
+            <div class="z-10 w-full">
+                <div class="w-full bg-gray-950 rounded-full h-1.5 relative overflow-hidden border border-gray-800">
+                    <div id="market-health-bar" class="h-1.5 rounded-full transition-all duration-1000 ease-out w-0 bg-gray-500"></div>
+                </div>
+                <div id="market-score-log-container" class="mt-4 flex-col hidden border-t border-gray-800/50 pt-3"></div>
+            </div>
+        </div>
 
-let SETTINGS = {
-    tf: '15m', sl_perc: 0.03, min_tp: 0.05, trail_dist: 0.015, vol_mult: 2.0, cooldown_mins: 15, auto_kill: true,
-    strats: { momentum: true, breakout: true, sniper: true }
-};
+        <div class="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
+            </span>
+            <div id="live-console-text" class="text-[11px] font-mono text-gray-400 truncate">🚀 متصل بالسيرفر السحابي... الأسعار تنبض وتتحدث تلقائياً.</div>
+        </div>
+        
+        <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (الهدف +5%-10%)</h2>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-800">
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الزخم (Momentum) 🔵</label>
+                    <input type="checkbox" id="strat-momentum" class="accent-brand-blue w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">الاختراق (Breakout) 🟢</label>
+                    <input type="checkbox" id="strat-breakout" class="accent-brand-green w-4 h-4">
+                </div>
+                <div class="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
+                    <label class="!mb-0 cursor-pointer flex-1 text-white font-bold">القناص (Sniper) 🟣</label>
+                    <input type="checkbox" id="strat-sniper" class="accent-purple-500 w-4 h-4">
+                </div>
+            </div>
 
-const fetchSettings = async () => {
-    try {
-        const docSnap = await settingsRef.get();
-        if (docSnap.exists) {
-            const d = docSnap.data();
-            SETTINGS = { ...SETTINGS, ...d, strats: { ...SETTINGS.strats, ...(d.strats || {}) } };
-        }
-    } catch (e) { console.error('fetchSettings error:', e.message); }
-};
-setInterval(fetchSettings, 30000);
-fetchSettings();
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="input-group">
+                    <label>الإطار الزمني الأساسي</label>
+                    <select id="setting-tf">
+                        <option value="1m">1 دقيقة (سكالبينج سريع)</option>
+                        <option value="5m">5 دقائق (خطف سريع)</option>
+                        <option value="15m" selected>15 دقيقة (أساسي)</option>
+                        <option value="1h">1 ساعة (أهداف أبعد)</option>
+                        <option value="4h">4 ساعات (استثمار)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>وقف الخسارة الأولي (%)</label>
+                    <input type="number" id="setting-sl" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>هدف تفعيل الملاحقة (%)</label>
+                    <input type="number" id="setting-tp" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>مسافة الملاحقة (%)</label>
+                    <input type="number" id="setting-trail" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>مضاعف السيولة (Volume)</label>
+                    <input type="number" id="setting-vol" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>فترة التبريد (دقائق)</label>
+                    <input type="number" id="setting-cooldown" step="1" min="0">
+                </div>
+                <div class="col-span-full mt-2 flex justify-end">
+                    <button type="button" id="save-settings-btn" class="bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
+                        حفظ الإعدادات وإرسالها للسيرفر
+                    </button>
+                </div>
+            </div>
+        </section>
 
-tradesRef.onSnapshot(snapshot => {
-    virtualTrades = [];
-    snapshot.forEach(doc => {
-        const t = { docId: doc.id, ...doc.data() };
-        virtualTrades.push(t);
-        // استرجاع فترة التبريد بعد إعادة تشغيل السيرفر
-        if ((t.status === 'won' || t.status === 'lost') && t.closeTime) {
-            if (!exitCooldowns[t.symbol] || exitCooldowns[t.symbol] < t.closeTime) exitCooldowns[t.symbol] = t.closeTime;
-        }
-    });
-}, err => { console.error('trades snapshot error:', err.message); });
+        <!-- لوحة الإحصائيات -->
+        <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    إحصائيات الأداء
+                </h2>
+                <div class="input-group sm:w-48">
+                    <select id="stats-time-filter" class="!py-1.5 !text-xs !bg-gray-950 !text-brand-gold !font-bold !border-gray-700">
+                        <option value="all">كل الأوقات</option>
+                        <option value="1">آخر ساعة</option>
+                        <option value="4">آخر 4 ساعات</option>
+                        <option value="6">آخر 6 ساعات</option>
+                        <option value="12">آخر 12 ساعة</option>
+                        <option value="24" selected>آخر 24 ساعة</option>
+                        <option value="168">آخر 7 أيام</option>
+                        <option value="720">آخر 30 يوم</option>
+                    </select>
+                </div>
+            </div>
 
-systemRef.get().then(doc => {
-    if (doc.exists) {
-        let data = doc.data();
-        marketScoreLog = data.log || [];
-        if (marketScoreLog.length > 0) currentMarketScore = marketScoreLog[0].score;
-        if (data.status) globalMarketStatus = data.status;
-    }
-}).catch(e => {});
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-box">
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">إجمالي الصفقات</div>
+                    <div class="text-3xl font-black text-white" id="dash-total">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح (Win Rate)</div>
+                    <div class="text-3xl font-black text-brand-blue" id="dash-winrate">0.0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">صافي الربح</div>
+                    <div class="text-3xl font-black text-gray-300 dir-ltr" id="dash-profit">0.00%</div>
+                </div>
+                <div class="stat-box border-brand-green/30 bg-brand-green/5">
+                    <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase tracking-wider">صفقات مفتوحة</div>
+                    <div class="text-3xl font-black text-brand-green" id="dash-open">0</div>
+                </div>
+            </div>
 
-const cleanOldTrades = async () => {
-    try {
-        const timeLimit = Date.now() - (24 * 60 * 60 * 1000);
-        const snapshot = await tradesRef.where('status', 'in', ['won', 'lost']).get();
-        const batch = db.batch();
-        let deleted = 0;
-        snapshot.forEach(doc => { if ((doc.data().closeTime || 0) < timeLimit) { batch.delete(doc.ref); deleted++; } });
-        if (deleted > 0) await batch.commit();
-    } catch (err) {}
-};
-setInterval(cleanOldTrades, 60 * 60 * 1000);
+            <div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية للسيرفر:</span>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
+                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
+                    </div>
+                </div>
 
-const calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
-const calcSMA = (data, period) => { if(data.length < period) return null; let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += data[i]; return sum / period; };
-const calcRSI = (data, period = 14) => { if(data.length <= period) return null; let gains = 0, losses = 0; for (let i = 1; i <= period; i++) { let diff = data[i] - data[i - 1]; if (diff >= 0) gains += diff; else losses -= diff; } let avgGain = gains / period; let avgLoss = losses / period; for (let i = period + 1; i < data.length; i++) { let diff = data[i] - data[i - 1]; avgGain = ((avgGain * (period - 1)) + (diff >= 0 ? diff : 0)) / period; avgLoss = ((avgLoss * (period - 1)) + (diff < 0 ? -diff : 0)) / period; } if (avgLoss === 0) return 100; return 100 - (100 / (1 + (avgGain / avgLoss))); };
-const calcBollingerBands = (data, period = 20, multiplier = 2) => { if(data.length < period) return null; const sma = calcSMA(data, period); let sum = 0; for(let i = data.length - period; i < data.length; i++) { sum += Math.pow(data[i] - sma, 2); } const stdDev = Math.sqrt(sum / period); return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma }; };
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
+                        الصفقات المفتوحة حالياً
+                    </h3>
+                    <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
+                        <option value="time_desc" selected>ترتيب حسب: الأحدث أولاً</option>
+                        <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
+                        <option value="score_desc">ترتيب حسب: القوة (Live Score)</option>
+                        <option value="profit_desc">ترتيب حسب: الأكثر ربحاً</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
+                    <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">جاري مسح السوق بحثاً عن فرص...</div>
+                </div>
+            </div>
 
-const calculateTradeStrength = (isLive, strategy, price, open, high, low, vol, volAvg, rsi, ema9, ema21, bbUpper, btcScore, entryPrice = null) => {
-    let b = { trend: 0, volume: 0, rsi: 0, setup: 0, btc: 0, candle: 0, confirm: 0 };
-    if (ema9 > ema21) { let trendStrength = ((ema9 - ema21) / ema21) * 100; b.trend = price > ema9 ? 15 + Math.min(5, trendStrength * 5) : 10; } else { b.trend = 0; }
-    let volRatio = volAvg > 0 ? (vol / volAvg) : 1; b.volume = Math.min(20, volRatio * 10);
-    if (rsi >= 55 && rsi <= 72) b.rsi = 15; else if (rsi > 72 && rsi <= 80) b.rsi = 12; else if (rsi >= 50 && rsi < 55) b.rsi = 10; else if (rsi > 80) b.rsi = 5; else b.rsi = 2;
-    if (strategy === 'Breakout') { b.setup = price > bbUpper ? 15 : (price > bbUpper * 0.99 ? 10 : 5); } else { let pDist = Math.abs((price - ema9) / ema9) * 100; b.setup = pDist < 1 ? 15 : (pDist < 2 ? 10 : 5); }
-    b.btc = Math.min(15, (btcScore / 100) * 15);
-    let body = Math.abs(price - open); let range = high - low; let bodyRatio = range > 0 ? body / range : 0; b.candle = price >= open ? Math.min(10, bodyRatio * 15) : 2;
-    if (isLive && entryPrice) { let pnl = ((price - entryPrice) / entryPrice) * 100; b.confirm = pnl > 0.5 ? 5 : (pnl > 0 ? 3 : 0); } else { let upperWick = high - Math.max(price, open); let wickRatio = range > 0 ? upperWick / range : 0; b.confirm = wickRatio < 0.2 ? 5 : (wickRatio < 0.4 ? 3 : 1); }
-    for(let k in b) b[k] = Math.max(0, Math.round(b[k]));
-    b.trend = Math.min(20, b.trend); b.volume = Math.min(20, b.volume); b.rsi = Math.min(15, b.rsi); b.setup = Math.min(15, b.setup); b.btc = Math.min(15, b.btc); b.candle = Math.min(10, b.candle); b.confirm = Math.min(5, b.confirm);
-    let score = b.trend + b.volume + b.rsi + b.setup + b.btc + b.candle + b.confirm;
-    return { score, breakdown: b };
-};
+            <div class="mt-8 pt-6 border-t border-gray-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        سجل الصفقات المغلقة
+                        <span id="history-summary" class="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block">
+                            (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
+                        </span>
+                    </h3>
+                    <button id="clear-history-btn" class="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        مسح السجل
+                    </button>
+                </div>
+                
+                <div id="history-summary-mobile" class="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden">
+                    (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
+                </div>
 
-// ==========================================
-// فتح صفقة جديدة (كانت مفقودة)
-// ==========================================
-const enterNewTrade = async (symbol, price, strategy, strength) => {
-    if (!price || price <= 0) return;
-    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open') || pendingEntries.has(symbol)) return;
+                <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="closed-trades-list">
+                    <div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة بعد</div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    const lastExit = exitCooldowns[symbol];
-    const cdMs = (Number(SETTINGS.cooldown_mins) || 0) * 60000;
-    if (lastExit && Date.now() - lastExit < cdMs) return;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    pendingEntries.add(symbol);
-    try {
-        const slPerc = SETTINGS.sl_perc > 0 ? SETTINGS.sl_perc : 0.03;
-        const trade = {
-            symbol: symbol,
-            entryPrice: price,
-            currentPrice: price,
-            maxPrice: price,
-            trailActive: false,
-            slLevel: price * (1 - slPerc),
-            status: 'open',
-            pnl: 0,
-            openTime: Date.now(),
-            strategy: strategy,
-            entryScore: strength.score,
-            liveScore: strength.score,
-            entryBreakdown: strength.breakdown,
-            liveBreakdown: strength.breakdown
+        const firebaseConfig = {
+            apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
+            authDomain: "smartscanner-a5e0d.firebaseapp.com",
+            projectId: "smartscanner-a5e0d",
+            storageBucket: "smartscanner-a5e0d.firebasestorage.app",
+            messagingSenderId: "976223541282",
+            appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
         };
-        const ref = await tradesRef.add(trade);
-        virtualTrades.push({ docId: ref.id, ...trade });
-        console.log(`✅ صفقة جديدة: ${symbol} | ${strategy} | قوة ${strength.score}%`);
-    } catch (e) {
-        console.error('enterNewTrade error:', e.message);
-    } finally {
-        pendingEntries.delete(symbol);
-    }
-};
 
-// ==========================================
-// متابعة الصفقات المفتوحة: وقف الخسارة + الملاحقة + الإغلاق (كانت مفقودة)
-// ==========================================
-const monitorTrades = async () => {
-    if (isMonitoring) return;
-    isMonitoring = true;
-    try {
-        const openTrades = virtualTrades.filter(t => t.status === 'open');
-        if (openTrades.length === 0) return;
+        const app = initializeApp(firebaseConfig);
+        
+        // تفعيل التخزين الفولاذي المباشر لقاعدة البيانات
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+        });
 
-        const res = await fetch('https://data-api.binance.vision/api/v3/ticker/price');
-        if (!res.ok) return;
-        const list = await res.json();
-        const prices = new Map(list.map(p => [p.symbol, parseFloat(p.price)]));
+        let virtualTrades = [];
+        let marketScoreLog = [];
+        let lastScoreChangeTime = null;
+        let lastMarketScore = null;
+        let lastMarketStatus = null;
+        let firstTradesSnapshot = true;
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v35') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v35') || 'time_desc';
 
-        const slPerc = SETTINGS.sl_perc > 0 ? SETTINGS.sl_perc : 0.03;
-        const minTp = SETTINGS.min_tp > 0 ? SETTINGS.min_tp : 0.05;
-        const trailDist = SETTINGS.trail_dist > 0 ? SETTINGS.trail_dist : 0.015;
+        const setDbStatus = (connected) => {
+            const badge = document.getElementById('db-status-badge');
+            if (connected) {
+                badge.innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سحابي متصل`;
+                badge.className = 'text-[10px] bg-brand-green/20 border border-brand-green/30 text-brand-green px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
+            } else {
+                badge.innerHTML = `<span class="w-2 h-2 bg-brand-red rounded-full"></span> غير متصل`;
+                badge.className = 'text-[10px] bg-brand-red/20 border border-brand-red/30 text-brand-red px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
+            }
+        };
 
-        for (const t of openTrades) {
-            const price = prices.get(t.symbol);
-            if (!price || !t.entryPrice) continue;
+        const formatDuration = (ms) => {
+            if (!ms || isNaN(ms) || ms < 0) return '0د';
+            const mins = Math.max(1, Math.floor(ms / 60000));
+            if (mins < 60) return `${mins}د`;
+            const hours = Math.floor(mins / 60);
+            const remainingMins = mins % 60;
+            return `${hours}س و ${remainingMins}د`;
+        };
 
-            const maxPrice = Math.max(t.maxPrice || t.entryPrice, price);
-            let trailActive = !!t.trailActive;
-            let slLevel = t.slLevel || t.entryPrice * (1 - slPerc);
+        const formatTimeAgo = (openTimeMs) => {
+            if (!openTimeMs) return '';
+            const now = Date.now();
+            const diffMs = now - openTimeMs;
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) return 'منذ لحظات';
+            if (mins < 60) return `منذ ${mins} دقيقة`;
+            const hours = Math.floor(mins / 60);
+            const remainingMins = mins % 60;
+            if (hours < 24) return remainingMins === 0 ? `منذ ${hours} ساعة` : `منذ ${hours}س و ${remainingMins}د`;
+            const days = Math.floor(hours / 24);
+            return `منذ ${days} يوم`;
+        };
 
-            const maxPnlFrac = (maxPrice - t.entryPrice) / t.entryPrice;
-            if (!trailActive && maxPnlFrac >= minTp) trailActive = true;
-            if (trailActive) slLevel = Math.max(slLevel, maxPrice * (1 - trailDist));
+        const getStrategyBadge = (stratName) => {
+            if(stratName === 'Sniper') return '<span class="badge-sniper text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Sniper</span>';
+            if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
+            if(stratName === 'Manual') return '<span class="bg-gray-800 text-gray-300 border border-gray-600 text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Manual</span>';
+            return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
+        };
 
-            const pnl = ((price - t.entryPrice) / t.entryPrice) * 100;
+        const getScoreColorClass = (score) => {
+            if (score >= 85) return { text: 'text-brand-green', bg: 'bg-brand-green' };
+            if (score >= 70) return { text: 'text-brand-blue', bg: 'bg-brand-blue' };
+            if (score >= 55) return { text: 'text-brand-gold', bg: 'bg-brand-gold' };
+            return { text: 'text-brand-red', bg: 'bg-brand-red' };
+        };
 
+        let soundEnabled = localStorage.getItem('momentumSoundEnabled') === 'true';
+        let audioCtx = null;
+        const updateSoundUI = () => {
+            const btn = document.getElementById('sound-toggle-btn');
+            if (soundEnabled) {
+                document.getElementById('sound-icon-off').classList.add('hidden');
+                document.getElementById('sound-icon-on').classList.remove('hidden');
+                btn.classList.add('bg-gray-800', 'border-brand-gold'); btn.classList.remove('border-gray-700');
+            } else {
+                document.getElementById('sound-icon-off').classList.remove('hidden');
+                document.getElementById('sound-icon-on').classList.add('hidden');
+                btn.classList.remove('bg-gray-800', 'border-brand-gold'); btn.classList.add('border-gray-700');
+            }
+        };
+        updateSoundUI();
+        document.body.addEventListener('click', () => { if (soundEnabled && !audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } }, { once: true });
+        
+        const playSound = (type) => {
+            if (!soundEnabled) return;
             try {
-                if (price <= slLevel) {
-                    const updates = {
-                        status: pnl > 0 ? 'won' : 'lost',
-                        pnl: pnl,
-                        currentPrice: price,
-                        maxPrice: maxPrice,
-                        slLevel: slLevel,
-                        trailActive: trailActive,
-                        closeTime: Date.now()
-                    };
-                    t.status = updates.status; // منع الإغلاق المزدوج محلياً
-                    exitCooldowns[t.symbol] = updates.closeTime;
-                    await tradesRef.doc(t.docId).update(updates);
-                    console.log(`🔒 إغلاق ${t.symbol}: ${updates.status} ${pnl.toFixed(2)}%`);
-                } else {
-                    const changed = price !== t.currentPrice || maxPrice !== t.maxPrice || slLevel !== t.slLevel || trailActive !== t.trailActive;
-                    if (changed) {
-                        const updates = { currentPrice: price, maxPrice: maxPrice, slLevel: slLevel, trailActive: trailActive, pnl: pnl };
-                        Object.assign(t, updates);
-                        await tradesRef.doc(t.docId).update(updates);
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                if (type === 'open') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); 
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
+                    const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(1046.50, now + 0.15); 
+                    gain2.gain.setValueAtTime(0.1, now + 0.15); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc2.start(now + 0.15); osc2.stop(now + 0.3);
+                } else if (type === 'win') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554.37, now + 0.1); osc.frequency.setValueAtTime(659.25, now + 0.2); 
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+                    osc.start(now); osc.stop(now + 0.6);
+                }
+            } catch(e) {}
+        };
+        document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled); updateSoundUI(); if(soundEnabled) playSound('open'); });
+
+        // اتصال باينانس مع إعادة اتصال واحدة فقط (بدون تكرار الاتصالات)
+        let priceWs = null;
+        let wsReconnectTimer = null;
+        const scheduleWsReconnect = () => {
+            if (wsReconnectTimer) return;
+            wsReconnectTimer = setTimeout(() => { wsReconnectTimer = null; connectBinanceWs(); }, 3000);
+        };
+        const connectBinanceWs = () => {
+            if (priceWs) {
+                priceWs.onmessage = priceWs.onerror = priceWs.onclose = null;
+                try { priceWs.close(); } catch (e) {}
+            }
+            priceWs = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+            
+            priceWs.onmessage = (event) => {
+                let data;
+                try { data = JSON.parse(event.data); } catch (e) { return; }
+                const openTrades = virtualTrades.filter(t => t.status === 'open');
+                if(openTrades.length === 0) return;
+                const bySymbol = new Map(openTrades.map(t => [t.symbol, t]));
+                
+                data.forEach(ticker => {
+                    const trade = bySymbol.get(ticker.s);
+                    if (trade) {
+                        const currentPrice = parseFloat(ticker.c);
+                        trade.currentPrice = currentPrice; 
+                        
+                        const pnl = ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
+                        
+                        const priceEl = document.getElementById(`price-${trade.symbol}`);
+                        const pnlEl = document.getElementById(`pnl-${trade.symbol}`);
+                        const cardEl = document.getElementById(`card-${trade.symbol}`);
+                        
+                        if (priceEl) priceEl.innerText = currentPrice.toPrecision(5);
+                        if (pnlEl && cardEl) {
+                            pnlEl.innerText = (pnl > 0 ? '+' : '') + pnl.toFixed(2) + '%';
+                            const isWin = pnl >= 0;
+                            
+                            pnlEl.className = `dir-ltr font-black text-[11px] ${isWin ? 'text-brand-green' : 'text-brand-red'}`;
+                            
+                            if (isWin) {
+                                cardEl.classList.remove('border-brand-red/30', 'text-brand-red', 'border-brand-red');
+                                cardEl.classList.add('border-brand-green/30');
+                            } else {
+                                cardEl.classList.remove('border-brand-green/30', 'text-brand-green', 'border-brand-green');
+                                cardEl.classList.add('border-brand-red/30');
+                            }
+                        }
+                    }
+                });
+            };
+            priceWs.onerror = () => { scheduleWsReconnect(); };
+            priceWs.onclose = () => { scheduleWsReconnect(); };
+        };
+
+        // تعبئة الحقول من السحابة (بدون الكتابة فوق الحقل الذي يعدّله المستخدم حالياً)
+        const setFieldValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el && document.activeElement !== el) el.value = value;
+        };
+        const setFieldChecked = (id, value) => {
+            const el = document.getElementById(id);
+            if (el && document.activeElement !== el) el.checked = !!value;
+        };
+
+        // استماع فوري وحقيقي للإعدادات من السحابة لملء الحقول وتثبيتها للأبد
+        const startSettingsSync = () => {
+            onSnapshot(doc(db, "momentum_system_logs", "scanner_settings"), (docSnap) => {
+                if (docSnap.exists()) {
+                    const s = docSnap.data();
+                    if(s.tf !== undefined) setFieldValue('setting-tf', s.tf);
+                    if(s.sl_perc !== undefined) setFieldValue('setting-sl', (s.sl_perc * 100).toFixed(1));
+                    if(s.min_tp !== undefined) setFieldValue('setting-tp', (s.min_tp * 100).toFixed(1));
+                    if(s.trail_dist !== undefined) setFieldValue('setting-trail', (s.trail_dist * 100).toFixed(1));
+                    if(s.vol_mult !== undefined) setFieldValue('setting-vol', s.vol_mult);
+                    if(s.cooldown_mins !== undefined) setFieldValue('setting-cooldown', s.cooldown_mins);
+                    if(s.auto_kill !== undefined) setFieldChecked('setting-auto-kill', s.auto_kill);
+                    if(s.strats) {
+                        setFieldChecked('strat-momentum', s.strats.momentum);
+                        setFieldChecked('strat-breakout', s.strats.breakout);
+                        setFieldChecked('strat-sniper', s.strats.sniper);
                     }
                 }
-            } catch (e) { console.error('trade update error:', e.message); }
-        }
-    } catch (e) {
-        console.error('monitorTrades error:', e.message);
-    } finally {
-        isMonitoring = false;
-    }
-};
-setInterval(monitorTrades, 5000);
+            }, (err) => { console.error('settings snapshot error:', err); });
+        };
 
-// ==========================================
-// تحديث Live Score للصفقات المفتوحة (كان مفقوداً)
-// ==========================================
-const updateLiveScores = async () => {
-    const openTrades = virtualTrades.filter(t => t.status === 'open');
-    for (const t of openTrades) {
-        try {
-            const klineRes = await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${t.symbol}&interval=${SETTINGS.tf}&limit=60`);
-            if (!klineRes.ok) continue;
-            const klines = await klineRes.json();
-            if (klines.length < 30) continue;
+        document.addEventListener('DOMContentLoaded', () => {
+            startSettingsSync();
+            connectBinanceWs(); 
 
-            const closes = klines.map(k => parseFloat(k[4])); const opens = klines.map(k => parseFloat(k[1]));
-            const highs = klines.map(k => parseFloat(k[2])); const lows = klines.map(k => parseFloat(k[3])); const volumes = klines.map(k => parseFloat(k[5]));
-            const last = closes.length - 1;
-            const closedCloses = closes.slice(0, -1); const closedVolumes = volumes.slice(0, -1);
+            document.getElementById('stats-time-filter').value = statsTimeFilter;
+            document.getElementById('open-trades-sort').value = openTradesSort;
 
-            const ema9 = calcEMA(closedCloses, 9); const ema21 = calcEMA(closedCloses, 21);
-            const volAvg20 = calcSMA(closedVolumes, 20); const rsi = calcRSI(closedCloses, 14); const bb = calcBollingerBands(closedCloses, 20, 2);
-            if (!ema9 || !ema21 || !volAvg20 || !rsi || !bb) continue;
+            onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
+                setDbStatus(true);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    marketScoreLog = data.log || [];
+                    if(marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
+                    if (data.score !== undefined) {
+                        lastMarketScore = data.score; lastMarketStatus = data.status;
+                        updateMarketHealthUI(data.score, data.status);
+                    }
+                }
+            }, (err) => { console.error('market snapshot error:', err); setDbStatus(false); });
 
-            const strength = calculateTradeStrength(true, t.strategy || 'Momentum', closes[last], opens[last], highs[last], lows[last], volumes[last], volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50, t.entryPrice);
-            if (strength.score !== t.liveScore) {
-                t.liveScore = strength.score; t.liveBreakdown = strength.breakdown;
-                await tradesRef.doc(t.docId).update({ liveScore: strength.score, liveBreakdown: strength.breakdown });
+            onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
+                setDbStatus(true);
+                const oldCount = virtualTrades.filter(t => t.status === 'open').length;
+                const oldWon = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost').length;
+                virtualTrades = [];
+                snapshot.forEach(docSnap => virtualTrades.push({ docId: docSnap.id, ...docSnap.data() }));
+                
+                const newCount = virtualTrades.filter(t => t.status === 'open').length;
+                const newClosed = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost').length;
+                // لا نشغّل أي صوت عند أول تحميل للصفحة
+                if (!firstTradesSnapshot) {
+                    if (newCount > oldCount) playSound('open');
+                    else if (oldCount > newCount && newClosed > oldWon) playSound('win'); // صوت فقط عند إغلاق صفقة فعلية (وليس عند الحذف اليدوي)
+                }
+                firstTradesSnapshot = false;
+                
+                updateDashboardUI();
+            }, (err) => { console.error('trades snapshot error:', err); setDbStatus(false); });
+
+            const manualAddBtn = document.getElementById('add-manual-btn');
+            if (manualAddBtn) {
+                manualAddBtn.addEventListener('click', async () => {
+                    const inputEl = document.getElementById('manual-symbol-input');
+                    let symbol = inputEl.value.trim().toUpperCase();
+                    if (!symbol) return;
+                    if (!symbol.endsWith('USDT')) symbol += 'USDT';
+
+                    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) {
+                        alert('هذه الصفقة مفتوحة بالفعل!'); return;
+                    }
+
+                    const origText = manualAddBtn.innerText;
+                    manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
+                    try {
+                        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+                        if (!res.ok) throw new Error();
+                        const data = await res.json();
+                        const price = parseFloat(data.price);
+                        
+                        const slInput = (parseFloat(document.getElementById('setting-sl').value) || 3) / 100;
+
+                        const newTrade = {
+                            symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, trailActive: false, 
+                            slLevel: price * (1 - slInput), status: 'open', pnl: 0, openTime: Date.now(),
+                            strategy: 'Manual', entryScore: 75, liveScore: 75,
+                            entryBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5},
+                            liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
+                        };
+                        
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
+                        inputEl.value = '';
+                    } catch (err) {
+                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
+                    } finally {
+                        manualAddBtn.innerText = origText; manualAddBtn.disabled = false;
+                    }
+                });
             }
-            await new Promise(r => setTimeout(r, 150));
-        } catch (e) {}
-    }
-};
 
-const analyzeMarketHealth = async () => {
-    if (isCheckingMarket) return;
-    isCheckingMarket = true;
-    try {
-        const [res15m, res4h] = await Promise.all([
-            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=100'),
-            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=300') // كان 100 فقط → EMA200 كانت null
-        ]);
-        if(!res15m.ok || !res4h.ok) return;
-        const klines15m = await res15m.json(); const klines4h = await res4h.json();
-        const closes15m = klines15m.map(k => parseFloat(k[4])); const volumes15m = klines15m.map(k => parseFloat(k[5])); const opens15m = klines15m.map(k => parseFloat(k[1]));
-        const closes4h = klines4h.map(k => parseFloat(k[4]));
-        const btcCurrentPrice = closes15m[closes15m.length - 1];
+            // ==========================================
+            // زر الحفظ v35 (حفظ فوري ومباشر في سحابة فايربيس)
+            // ==========================================
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
+                const btn = document.getElementById('save-settings-btn');
+                if (btn.disabled) return;
+                
+                const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
+                
+                btn.innerText = "جاري الحفظ الفعلي..."; 
+                btn.disabled = true;
+                btn.style.backgroundColor = "#4B5563"; 
 
-        const ema50_4h = calcEMA(closes4h, 50); const ema200_4h = calcEMA(closes4h, 200);
-        const ema20_15m = calcEMA(closes15m, 20); const ema50_15m = calcEMA(closes15m, 50); const rsi_15m = calcRSI(closes15m, 14); const volSMA_15m = calcSMA(volumes15m, 20);
-        const currentVol = volumes15m[volumes15m.length - 1]; const prevVol = volumes15m[volumes15m.length - 2];
-
-        let score = 0;
-        if (ema200_4h && ema50_15m) {
-            let macroScore = 0; if (btcCurrentPrice > ema200_4h) macroScore += 15; else if (btcCurrentPrice > ema200_4h * 0.98) macroScore += 5; if (ema50_4h > ema200_4h) macroScore += 10; score += macroScore;
-            let momentumScore = 0; let priceDist20 = (btcCurrentPrice - ema20_15m) / ema20_15m * 100; if (priceDist20 > 0.5) momentumScore += 15; else if (priceDist20 > 0) momentumScore += 10; else if (priceDist20 > -0.5) momentumScore += 5; if (btcCurrentPrice > ema50_15m) momentumScore += 10; if (ema20_15m > ema50_15m) momentumScore += 10; score += momentumScore;
-            let rsiScore = 0; if (rsi_15m >= 50 && rsi_15m <= 65) rsiScore = 25; else if (rsi_15m > 65 && rsi_15m <= 75) rsiScore = 15; else if (rsi_15m > 75) rsiScore = 5; else if (rsi_15m >= 40 && rsi_15m < 50) rsiScore = 10; else rsiScore = 0; score += rsiScore;
-            if (volSMA_15m) { let volRatio = Math.max(currentVol, prevVol) / volSMA_15m; if (volRatio > 1.5) score += 15; else if (volRatio > 1.0) score += 10; else if (volRatio > 0.7) score += 5; }
-            let flashDumpPenalty = 0; for(let i = 1; i <= 3; i++) { if (opens15m.length - i >= 0) { let kOpen = opens15m[opens15m.length - i]; let kClose = closes15m[closes15m.length - i]; let dropPercent = ((kOpen - kClose) / kOpen) * 100; if (dropPercent > 1.0) { flashDumpPenalty = 40; break; } } }
-            score -= flashDumpPenalty; if (score < 0) score = 0; if (score > 100) score = 100;
-        } else { score = 50; }
-
-        score = Math.round(score);
-
-        if (score >= 75) globalMarketStatus = 'bullish'; else if (score >= 55) globalMarketStatus = 'neutral'; else globalMarketStatus = 'bearish';
-
-        if (currentMarketScore !== score) {
-            marketScoreLog.unshift({ score: score, time: Date.now() });
-            if (marketScoreLog.length > 6) marketScoreLog = marketScoreLog.slice(0, 6);
-            currentMarketScore = score;
-            await systemRef.set({ score: score, status: globalMarketStatus, log: marketScoreLog, lastUpdate: Date.now() });
-        }
-    } catch (e) { console.error('analyzeMarketHealth error:', e.message); }
-    finally { isCheckingMarket = false; }
-};
-
-const scanMarket = async () => {
-    if (isScanning) return;
-    isScanning = true;
-    try {
-        await fetchSettings();
-        await analyzeMarketHealth();
-
-        // الحماية الآلية: منع فتح صفقات جديدة وقت الخطر
-        const entriesBlocked = SETTINGS.auto_kill && globalMarketStatus === 'bearish';
-
-        if (!entriesBlocked) {
-            const tickRes = await fetch('https://data-api.binance.vision/api/v3/ticker/24hr');
-            if (!tickRes.ok) return;
-            const tickers = await tickRes.json();
-
-            const topCoins = tickers.filter(t => t.symbol.endsWith('USDT') && parseFloat(t.lastPrice) > 0.001 && !BLACKLIST.includes(t.symbol)).sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume)).slice(0, 40);
-
-            for (let coin of topCoins) {
-                try {
-                    // كان limit=40 فكان EMA50 دائماً null ولا تُفتح أي صفقة
-                    const klineRes = await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${coin.symbol}&interval=${SETTINGS.tf}&limit=120`);
-                    if(!klineRes.ok) continue;
-                    const klines = await klineRes.json();
-
-                    const closes = klines.map(k => parseFloat(k[4])); const opens = klines.map(k => parseFloat(k[1])); const highs = klines.map(k => parseFloat(k[2])); const lows = klines.map(k => parseFloat(k[3])); const volumes = klines.map(k => parseFloat(k[5]));
-                    const currentPrice = closes[closes.length - 1]; const currentOpen = opens[opens.length - 1]; const currentHigh = highs[highs.length - 1]; const currentLow = lows[lows.length - 1]; const currentVol = volumes[volumes.length - 1];
-                    const closedCloses = closes.slice(0, -1); const closedOpens = opens.slice(0, -1); const closedHighs = highs.slice(0, -1); const closedVolumes = volumes.slice(0, -1);
-                    const closedPrice = closedCloses[closedCloses.length - 1]; const closedOpen = closedOpens[closedOpens.length - 1]; const closedVol = closedVolumes[closedVolumes.length - 1]; const prevClosedHigh = closedHighs[closedHighs.length - 2];
-
-                    const ema9 = calcEMA(closedCloses, 9); const ema21 = calcEMA(closedCloses, 21); const ema50 = calcEMA(closedCloses, 50); const volAvg20 = calcSMA(closedVolumes, 20); const rsi = calcRSI(closedCloses, 14); const bb = calcBollingerBands(closedCloses, 20, 2);
-                    if(!ema9 || !ema21 || !ema50 || !volAvg20 || !rsi || !bb) continue;
-
-                    const isVolumeSpike = closedVol > (volAvg20 * SETTINGS.vol_mult);
-                    const isGreenCandle = closedPrice > closedOpen;
-                    const closePosition = (closedHighs[closedHighs.length - 1] - lows[lows.length - 2]) > 0 ? (closedPrice - lows[lows.length - 2]) / (closedHighs[closedHighs.length - 1] - lows[lows.length - 2]) : 0;
-                    const isStrongClose = closePosition > 0.75;
-
-                    if (SETTINGS.strats.sniper && isVolumeSpike && isGreenCandle && closedPrice > ema50 && closedPrice > ema9 && ema9 > ema21 && rsi > 52 && rsi < 68 && isStrongClose) {
-                        await enterNewTrade(coin.symbol, currentPrice, 'Sniper', calculateTradeStrength(false, 'Sniper', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50));
+                // قيم افتراضية آمنة عند ترك الحقل فارغاً (بدلاً من حفظ 0)
+                const num = (id, def) => { const v = parseFloat(document.getElementById(id).value); return (isNaN(v) || v <= 0) ? def : v; };
+                const cdVal = parseInt(document.getElementById('setting-cooldown').value);
+                
+                const newSettings = {
+                    tf: document.getElementById('setting-tf').value || '15m',
+                    sl_perc: num('setting-sl', 3) / 100,
+                    min_tp: num('setting-tp', 5) / 100,
+                    trail_dist: num('setting-trail', 1.5) / 100,
+                    vol_mult: num('setting-vol', 2.0),
+                    cooldown_mins: (isNaN(cdVal) || cdVal < 0) ? 0 : cdVal,
+                    auto_kill: document.getElementById('setting-auto-kill').checked,
+                    strats: {
+                        momentum: document.getElementById('strat-momentum').checked,
+                        breakout: document.getElementById('strat-breakout').checked,
+                        sniper: document.getElementById('strat-sniper').checked
                     }
-                    else if (SETTINGS.strats.momentum && isVolumeSpike && isGreenCandle && closedPrice > ema9 && ema9 > ema21 && rsi > 55 && rsi < 75) {
-                        await enterNewTrade(coin.symbol, currentPrice, 'Momentum', calculateTradeStrength(false, 'Momentum', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50));
-                    }
-                    else if (SETTINGS.strats.breakout && isVolumeSpike && isGreenCandle && closedPrice > prevClosedHigh && closedPrice > bb.upper && rsi > 60) {
-                        await enterNewTrade(coin.symbol, currentPrice, 'Breakout', calculateTradeStrength(false, 'Breakout', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50));
-                    }
+                };
 
-                    await new Promise(r => setTimeout(r, 200));
-                } catch(e) {}
+                // حفظ مباشر في فايربيس بدون أي تعليق أو أخطاء
+                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
+                    .then(() => {
+                        btn.innerText = "تم الحفظ بنجاح 100% ✓";
+                        btn.style.backgroundColor = "#10B981"; 
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        btn.innerText = "خطأ في الحفظ";
+                        btn.style.backgroundColor = "#EF4444";
+                    });
+
+                setTimeout(() => { 
+                    btn.innerText = originalText; 
+                    btn.style.backgroundColor = ""; 
+                    btn.disabled = false; 
+                }, 2500);
+            });
+
+            document.getElementById('stats-time-filter').addEventListener('change', (e) => {
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v35', statsTimeFilter); updateDashboardUI();
+            });
+
+            document.getElementById('open-trades-sort').addEventListener('change', (e) => {
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v35', openTradesSort); updateDashboardUI();
+            });
+
+            // تحديث دوري للنصوص الزمنية (منذ X دقيقة) والفلتر الزمني
+            setInterval(() => {
+                updateDashboardUI();
+                if (lastMarketScore !== null) updateMarketHealthUI(lastMarketScore, lastMarketStatus);
+            }, 60000);
+        });
+
+        const updateMarketHealthUI = (score, status) => {
+            const container = document.getElementById('market-health-container');
+            const glow = document.getElementById('market-health-glow');
+            const circle = document.getElementById('market-health-score-circle');
+            const text = document.getElementById('market-health-text');
+            const bar = document.getElementById('market-health-bar');
+
+            circle.innerText = score + '%'; bar.style.width = score + '%';
+
+            if (score >= 75) {
+                container.className = 'bg-gray-900 border border-brand-green/40 rounded-xl p-4 shadow-[0_0_25px_rgba(16,185,129,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-green to-transparent opacity-80';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-green text-brand-green bg-brand-green/10 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-green shadow-[0_0_10px_#10B981]';
+                text.innerHTML = '<span class="text-brand-green text-xs">🚀 خاااااااارق (سوق ناري وآمن جداً للانفجارات)</span>';
+            } else if (score >= 55) {
+                container.className = 'bg-gray-900 border border-brand-gold/40 rounded-xl p-4 shadow-[0_0_25px_rgba(245,158,11,0.1)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-60';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-gold text-brand-gold bg-brand-gold/10 shadow-[0_0_15px_rgba(245,158,11,0.2)]';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-gold shadow-[0_0_10px_#F59E0B]';
+                text.innerHTML = '<span class="text-brand-gold text-xs">🟡 إيجابي بحذر (السوق مستقر وجيد للتداول)</span>';
+            } else {
+                container.className = 'bg-gray-900 border border-brand-red/40 rounded-xl p-4 shadow-[0_0_25px_rgba(239,68,68,0.15)] flex flex-col gap-4 transition-all duration-700 relative overflow-hidden';
+                glow.className = 'absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-red to-transparent opacity-80';
+                circle.className = 'w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-brand-red text-brand-red bg-brand-red/10 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+                bar.className = 'h-1.5 rounded-full transition-all duration-1000 ease-out bg-brand-red shadow-[0_0_10px_#EF4444]';
+                text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
             }
-        }
 
-        await updateLiveScores();
-    } catch (err) {
-        console.error('scanMarket error:', err.message);
-    } finally {
-        isScanning = false;
-    }
-};
+            const historyEl = document.getElementById('market-health-history');
+            const logContainer = document.getElementById('market-score-log-container');
+            if (lastScoreChangeTime !== null) {
+                const timeAgo = formatTimeAgo(lastScoreChangeTime);
+                historyEl.innerHTML = `مستقر على هذه النسبة <span class="text-white font-bold ml-1">${timeAgo}</span>`;
+                historyEl.classList.remove('hidden');
 
-console.log("🚀 Server Engine Running Safely...");
-setInterval(scanMarket, 30000);
-scanMarket();
+                const logsToShow = marketScoreLog.slice(0, 5); 
+                let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> سجل تغيرات السوق (آخر 5):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full pt-1">`;
+                
+                if (logsToShow.length > 0) {
+                    logsToShow.forEach((entry, index) => {
+                        const timeStr = new Date(entry.time).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', month: 'numeric', day: 'numeric' });
+                        const sColor = getScoreColorClass(entry.score);
+                        const isCurrent = index === 0 ? '<span class="absolute -top-1.5 -right-1.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand-blue"></span></span>' : '';
+                        const labelText = index === 0 ? 'الحالي' : `#${index + 1}`;
+                        const labelClass = index === 0 ? 'bg-brand-blue text-white border-brand-blue' : 'bg-gray-800 text-gray-400 border-gray-700';
+
+                        logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1 mt-1">
+                            ${isCurrent}
+                            <div class="absolute -top-2.5 right-2 ${labelClass} text-[8px] px-1.5 rounded border font-bold z-10 shadow-sm">${labelText}</div>
+                            <span class="font-black ${sColor.text} text-xs dir-ltr mt-0.5">${entry.score}%</span>
+                            <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
+                        </div>`;
+                    });
+                }
+                logHtml += `</div>`;
+                logContainer.innerHTML = logHtml;
+                logContainer.classList.remove('hidden');
+                logContainer.classList.add('flex');
+            }
+        };
+
+        const updateDashboardUI = () => {
+            const openTrades = virtualTrades.filter(t => t.status === 'open');
+            let allClosedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+            
+            let filteredClosedTrades = allClosedTrades;
+            if (statsTimeFilter !== 'all') {
+                const hours = parseInt(statsTimeFilter);
+                const timeLimit = Date.now() - (hours * 60 * 60 * 1000);
+                filteredClosedTrades = allClosedTrades.filter(t => (t.closeTime || 0) >= timeLimit);
+            }
+
+            let won = 0, lost = 0, totalPnl = 0;
+            filteredClosedTrades.forEach(trade => {
+                if(trade.status === 'won') won++;
+                if(trade.status === 'lost') lost++;
+                totalPnl += (trade.pnl || 0);
+            });
+
+            const closedCount = won + lost;
+            const winRate = closedCount > 0 ? (won / closedCount) * 100 : 0;
+
+            document.getElementById('dash-total').innerText = closedCount;
+            document.getElementById('dash-winrate').innerText = winRate.toFixed(1) + '%';
+            const profitEl = document.getElementById('dash-profit');
+            profitEl.innerText = (totalPnl > 0 ? '+' : '') + totalPnl.toFixed(2) + '%';
+            profitEl.className = `text-3xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
+            document.getElementById('dash-open').innerText = openTrades.length;
+
+            const summaryText = `(إجمالي: ${closedCount} | رابحة: <span class="text-brand-green font-bold">${won}</span> | خاسرة: <span class="text-brand-red font-bold">${lost}</span>)`;
+            document.getElementById('history-summary').innerHTML = summaryText;
+            document.getElementById('history-summary-mobile').innerHTML = summaryText;
+
+            let openHtml = '';
+            
+            const sortFilter = document.getElementById('open-trades-sort').value || 'time_desc';
+            const sortedOpenTrades = openTrades.sort((a, b) => {
+                if (sortFilter === 'profit_desc') {
+                    const pnlA = ((a.currentPrice - a.entryPrice) / a.entryPrice) * 100 || 0;
+                    const pnlB = ((b.currentPrice - b.entryPrice) / b.entryPrice) * 100 || 0;
+                    return pnlB - pnlA;
+                } else if (sortFilter === 'score_desc') {
+                    return (b.liveScore || 0) - (a.liveScore || 0);
+                } else if (sortFilter === 'time_desc') {
+                    return (b.openTime || 0) - (a.openTime || 0);
+                } else if (sortFilter === 'time_asc') {
+                    return (a.openTime || 0) - (b.openTime || 0);
+                }
+                return 0;
+            });
+            
+            for (let t of sortedOpenTrades) {
+                const curPrice = t.currentPrice || t.entryPrice || 0;
+                const currentPnl = t.entryPrice ? ((curPrice - t.entryPrice) / t.entryPrice) * 100 : 0;
+                const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
+                const cardColorClass = currentPnl >= 0 ? 'border-brand-green/30' : 'border-brand-red/30';
+
+                const trailStatus = t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`;
+                const timeAgoText = formatTimeAgo(t.openTime);
+                const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
+                
+                const sColor = getScoreColorClass(t.liveScore || t.entryScore || 50);
+                const brk = t.liveBreakdown || t.entryBreakdown || {trend:0,volume:0,rsi:0,setup:0,btc:0,candle:0,confirm:0};
+                const displayScore = t.liveScore || t.entryScore || '--';
+
+                let health = { text: '⚖️ مسار مستقر', class: 'text-brand-gold border-brand-gold/30 bg-brand-gold/10' };
+                if (displayScore !== '--') {
+                    if (displayScore >= 70) health = { text: '🚀 مساحة جيدة للصعود', class: 'text-brand-green border-brand-green/30 bg-brand-green/10 shadow-[0_0_8px_rgba(16,185,129,0.1)]' };
+                    else if (displayScore < 45) health = { text: '📉 تراجع الزخم', class: 'text-gray-400 border-gray-700 bg-gray-800' };
+                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️ خطر انعكاس (تشبع)', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]' };
+                }
+
+                const scoreHtml = `
+                    <div class="mb-2 mt-1 px-1 border-t border-gray-700/50 pt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[9px] font-bold text-gray-400">Live Score</span>
+                            <span class="text-xs font-black ${sColor.text}">${displayScore}%</span>
+                        </div>
+                        <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5">
+                            <div class="h-1 rounded-full ${sColor.bg} transition-all duration-500" style="width: ${displayScore === '--' ? 0 : displayScore}%"></div>
+                        </div>
+                        <div class="flex flex-wrap gap-1 justify-center">
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Trend">Tr:${brk.trend}/20</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Volume">Vo:${brk.volume}/20</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="RSI">RS:${brk.rsi}/15</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Setup">St:${brk.setup}/15</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="BTC Health">BT:${brk.btc}/15</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Candle">Cn:${brk.candle}/10</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Confirmation">Cf:${brk.confirm}/5</span>
+                        </div>
+                    </div>`;
+                
+                openHtml += `
+                    <div id="card-${t.symbol}" class="bg-gray-800 border ${cardColorClass} rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
+                        <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">
+                            ${timeAgoText}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5 gap-2">
+                            <div class="flex items-center gap-1 min-w-0 overflow-hidden">
+                                <span class="text-white font-bold text-xs flex-wrap" title="${t.symbol}">${t.symbol}</span>
+                                ${stratBadge}
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <span id="pnl-${t.symbol}" class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
+                                <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="إلغاء وحذف الصفقة">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                                <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        ${scoreHtml}
+
+                        <div class="flex justify-between items-center mb-1 text-[10px] mt-2">
+                            <span class="text-gray-400">الدخول:</span>
+                            <span class="text-gray-300 font-mono">${(t.entryPrice || 0).toPrecision(5)}</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2 text-[10px]">
+                            <span class="text-gray-400">الحالي:</span>
+                            <span id="price-${t.symbol}" class="text-white font-bold font-mono">${curPrice.toPrecision(5)}</span>
+                        </div>
+                        <div class="mt-auto flex flex-col gap-1.5 pt-1 border-t border-gray-700/50">
+                            <div class="text-[9px] ${health.class} rounded px-1 py-1 text-center font-bold border transition-colors duration-500 truncate" title="${health.text}">${health.text}</div>
+                            <div class="text-[10px] text-brand-gold bg-gray-950 rounded px-1 py-1.5 text-center font-bold border border-gray-700">${trailStatus}</div>
+                        </div>
+                    </div>`;
+            }
+            if(!openHtml) openHtml = '<div class="col-span-full text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لا توجد صفقات مفتوحة حالياً... بانتظار الفرص</div>';
+            document.getElementById('active-trades-list').innerHTML = openHtml;
+
+            let closedHtml = '';
+            const sortedClosed = [...filteredClosedTrades].sort((a, b) => (b.closeTime || 0) - (a.closeTime || 0)).slice(0, 50);
+            sortedClosed.forEach(t => {
+                const isWin = t.status === 'won';
+                const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
+                const bgColor = isWin ? 'bg-brand-green/5 border-brand-green/20' : 'bg-brand-red/5 border-brand-red/20';
+                const icon = isWin ? '✓' : '✗';
+                const durationStr = (t.openTime && t.closeTime && t.closeTime > t.openTime) ? formatDuration(t.closeTime - t.openTime) : 'غير محدد';
+                const timeStr = t.closeTime ? new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
+                
+                const entryScoreBadge = t.entryScore ? `<span class="text-[8px] bg-gray-900 border border-gray-700 px-1 rounded text-gray-400" title="Entry Strength Score">القوة: ${t.entryScore}%</span>` : '';
+
+                closedHtml += `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2 gap-2">
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <div class="flex items-center gap-1 flex-wrap">
+                                <span class="font-bold text-white text-xs" title="${t.symbol}">${t.symbol}</span>
+                                ${stratBadge}
+                                ${entryScoreBadge}
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] text-gray-500 font-mono">${timeStr}</span>
+                                <span class="text-[8px] text-gray-400 bg-gray-950 border border-gray-800 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-inner whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    استغرقت: ${durationStr}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 shrink-0 w-auto">
+                            <span class="dir-ltr font-black text-xs ${pColor}">${(t.pnl || 0) > 0 ? '+' : ''}${(t.pnl || 0).toFixed(2)}%</span>
+                            <span class="${pColor} font-bold text-sm bg-gray-950 w-5 h-5 flex items-center justify-center rounded border ${pColor.replace('text', 'border')}/50 shadow-sm">${icon}</span>
+                        </div>
+                    </div>`;
+            });
+            if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة في هذه الفترة</div>';
+            document.getElementById('closed-trades-list').innerHTML = closedHtml;
+        };
+
+        window.cancelOpenTrade = async (docId) => {
+            if (!confirm(`هل أنت متأكد من إلغاء وحذف هذه الصفقة؟`)) return;
+            try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) { console.error(e); }
+        };
+
+        document.getElementById('clear-history-btn').addEventListener('click', async () => {
+            if (!confirm(`هل أنت متأكد من حذف الصفقات المغلقة من السيرفر؟`)) return;
+            const btn = document.getElementById('clear-history-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `جاري الحذف...`;
+            try {
+                const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+                for (let t of closedTrades) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
+            } catch(e) { console.error(e); } finally { btn.innerHTML = originalHTML; }
+        });
+    </script>
+</body>
+</html>
