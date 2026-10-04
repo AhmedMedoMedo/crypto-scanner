@@ -270,7 +270,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -283,9 +283,9 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // ⚠️ [تعديل أساسي حسب القواعد العسكرية]: إضافة experimentalForceLongPolling لحل مشكلة الحظر في مصر
+        // 🛠️ حل مشكلة تزامن الإعدادات: إزالة الكاش المحلي تماماً لإجبار كل المتصفحات على قراءة الداتا الحية من السيرفر فقط. 
+        // والإبقاء على LongPolling لتخطي الحظر.
         const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
             experimentalForceLongPolling: true 
         });
 
@@ -498,8 +498,7 @@
                             liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
-                        // تطبيق Fire & Forget لحفظ الصفقة اليدوية أيضاً
-                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade);
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
                         inputEl.value = '';
                     } catch (err) {
                         alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
@@ -509,19 +508,15 @@
                 });
             }
 
-            // ==========================================
-            // ⚠️ [تعديل أساسي حسب القواعد]: تطبيق تقنية (Fire & Forget) حقيقية بدون .then للزرار
-            // ==========================================
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                // تحديث الواجهة فوراً استجابة للمستخدم (بدون أي انتظار)
-                btn.innerText = "تم الحفظ بنجاح 100% ✓";
-                btn.style.backgroundColor = "#10B981"; 
+                btn.innerText = "جاري الحفظ الفعلي..."; 
                 btn.disabled = true;
+                btn.style.backgroundColor = "#4B5563"; 
                 
                 const newSettings = {
                     tf: document.getElementById('setting-tf').value || '15m',
@@ -538,16 +533,22 @@
                     }
                 };
 
-                // إرسال البيانات للفايربيز ونسيان الأمر تماماً (Fire & Forget) 
-                // تم إزالة await و .then و .catch لمنع أي تجميد للزر إذا كان النت متذبذباً
-                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
+                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
+                    .then(() => {
+                        btn.innerText = "تم الحفظ بنجاح 100% ✓";
+                        btn.style.backgroundColor = "#10B981"; 
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        btn.innerText = "خطأ في الحفظ";
+                        btn.style.backgroundColor = "#EF4444";
+                    });
 
-                // إعادة الزرار لحالته بعد ثانيتين
                 setTimeout(() => { 
                     btn.innerText = originalText; 
                     btn.style.backgroundColor = ""; 
                     btn.disabled = false; 
-                }, 2000);
+                }, 2500);
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
@@ -794,23 +795,18 @@
 
         window.cancelOpenTrade = async (docId) => {
             if (!confirm(`هل أنت متأكد من إلغاء وحذف هذه الصفقة؟`)) return;
-            // Fire & Forget for cancelling trades as well
-            deleteDoc(doc(db, "momentum_trades_v1", docId)); 
+            try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) {}
         };
 
-        document.getElementById('clear-history-btn').addEventListener('click', () => {
+        document.getElementById('clear-history-btn').addEventListener('click', async () => {
             if (!confirm(`هل أنت متأكد من حذف الصفقات المغلقة من السيرفر؟`)) return;
             const btn = document.getElementById('clear-history-btn');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `تم إرسال أمر الحذف...`;
-            
-            // Fire & Forget
-            const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
-            for (let t of closedTrades) { 
-                deleteDoc(doc(db, "momentum_trades_v1", t.docId)); 
-            }
-            
-            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+            btn.innerHTML = `جاري الحذف...`;
+            try {
+                const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+                for (let t of closedTrades) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
+            } catch(e) {} finally { btn.innerHTML = originalHTML; }
         });
     </script>
 </body>
