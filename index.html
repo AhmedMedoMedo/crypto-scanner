@@ -50,7 +50,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v33 (Final Perfect)</span></h1>
+                    <h1 class="text-lg font-black text-white leading-tight">Momentum <span class="text-[10px] text-brand-gold bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">v34 (Direct Firebase)</span></h1>
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
@@ -269,7 +269,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -281,13 +281,18 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        
+        // تفعيل الاتصال المباشر الفولاذي (LongPolling) لتخطي حظر فودافون و WE في مصر نهائياً
+        const db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+        });
 
         let virtualTrades = [];
         let marketScoreLog = [];
         let lastScoreChangeTime = null;
-        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v33') || '24';
-        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v33') || 'time_desc';
+        let statsTimeFilter = localStorage.getItem('momentumStatsTimeFilter_v34') || '24';
+        let openTradesSort = localStorage.getItem('momentumOpenTradesSort_v34') || 'time_desc';
 
         const formatDuration = (ms) => {
             if (!ms || isNaN(ms) || ms < 0) return '0د';
@@ -413,6 +418,7 @@
             priceWs.onclose = () => { setTimeout(connectBinanceWs, 3000); };
         };
 
+        // المزامنة الحية للإعدادات مباشرة من سحابة فايربيس (تحديث فور فتح الصفحة أو عند أي تعديل)
         const startSettingsSync = () => {
             onSnapshot(doc(db, "momentum_system_logs", "scanner_settings"), (docSnap) => {
                 if (docSnap.exists()) {
@@ -503,56 +509,58 @@
             }
 
             // ==========================================
-            // زر الحفظ v33 (إرسال مزدوج فوري: رندر + فايربيس)
+            // زر الحفظ v34 المباشر الفولاذي (يخزن مباشرة في فايربيس متخطياً أي حظر)
             // ==========================================
-            document.getElementById('save-settings-btn').addEventListener('click', () => {
+            document.getElementById('save-settings-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
                 
-                btn.innerText = "جاري الحفظ الفعلي..."; 
+                btn.innerText = "جاري الحفظ في السحابة..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
                 
-                const tf = document.getElementById('setting-tf').value || '15m';
-                const sl = (parseFloat(document.getElementById('setting-sl').value) || 0) / 100;
-                const tp = (parseFloat(document.getElementById('setting-tp').value) || 0) / 100;
-                const trail = (parseFloat(document.getElementById('setting-trail').value) || 0) / 100;
-                const vol = parseFloat(document.getElementById('setting-vol').value) || 2.0;
-                const cd = parseInt(document.getElementById('setting-cooldown').value) || 0;
-                const kill = document.getElementById('setting-auto-kill').checked;
-                const mom = document.getElementById('strat-momentum').checked;
-                const brk = document.getElementById('strat-breakout').checked;
-                const snp = document.getElementById('strat-sniper').checked;
+                const newSettings = {
+                    tf: document.getElementById('setting-tf').value || '15m',
+                    sl_perc: (parseFloat(document.getElementById('setting-sl').value) || 0) / 100,
+                    min_tp: (parseFloat(document.getElementById('setting-tp').value) || 0) / 100,
+                    trail_dist: (parseFloat(document.getElementById('setting-trail').value) || 0) / 100,
+                    vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
+                    cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
+                    auto_kill: document.getElementById('setting-auto-kill').checked,
+                    strats: {
+                        momentum: document.getElementById('strat-momentum').checked,
+                        breakout: document.getElementById('strat-breakout').checked,
+                        sniper: document.getElementById('strat-sniper').checked
+                    }
+                };
 
-                // 1. إرسال عبر رابط رندر لضمان وصوله عبر السيرفر
-                const renderLink = `https://momentum-backend-iq3b.onrender.com/update-settings?tf=${tf}&sl=${sl}&tp=${tp}&trail=${trail}&vol=${vol}&cd=${cd}&kill=${kill}&mom=${mom}&brk=${brk}&snp=${snp}`;
-                fetch(renderLink).catch(e => console.log(e));
+                try {
+                    // كتابة مباشرة في سحابة فايربيس باستخدام تقنية LongPolling (مستحيل أن تعود للوراء بعد الـ Refresh)
+                    await setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true });
 
-                // 2. إرسال مباشرة لفايربيس كنسخة احتياطية
-                const newSettings = { tf, sl_perc: sl, min_tp: tp, trail_dist: trail, vol_mult: vol, cooldown_mins: cd, auto_kill: kill, strats: { momentum: mom, breakout: brk, sniper: snp } };
-                setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true }).catch(e => console.log(e));
-
-                // 3. تحويل الزر للأخضر فوراً
-                setTimeout(() => {
-                    btn.innerText = "تم إرسالها وحفظها بالسيرفر ✓";
+                    btn.innerText = "تم الحفظ بنجاح 100% ✓";
                     btn.style.backgroundColor = "#10B981"; 
-                }, 400);
-
-                setTimeout(() => { 
-                    btn.innerText = originalText; 
-                    btn.style.backgroundColor = ""; 
-                    btn.disabled = false; 
-                }, 2500);
+                } catch (e) {
+                    console.error("Firebase Save Error:", e);
+                    btn.innerText = "خطأ في الحفظ!"; 
+                    btn.style.backgroundColor = "#EF4444"; 
+                } finally {
+                    setTimeout(() => { 
+                        btn.innerText = originalText; 
+                        btn.style.backgroundColor = ""; 
+                        btn.disabled = false; 
+                    }, 2500);
+                }
             });
 
             document.getElementById('stats-time-filter').addEventListener('change', (e) => {
-                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v33', statsTimeFilter); updateDashboardUI();
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v34', statsTimeFilter); updateDashboardUI();
             });
 
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
-                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v33', openTradesSort); updateDashboardUI();
+                openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v34', openTradesSort); updateDashboardUI();
             });
         });
 
