@@ -280,7 +280,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // [تحسين]: إضافة query, where, orderBy, limit لتقليل كمية البيانات المحملة
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -329,7 +330,7 @@
         const getStrategyBadge = (stratName) => {
             if(stratName === 'Sniper') return '<span class="badge-sniper text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Sniper</span>';
             if(stratName === 'Breakout') return '<span class="badge-breakout text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Breakout</span>';
-            if(stratName === 'BB_RSI') return '<span class="badge-bbrsi text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">BB+RSI</span>'; // شارة الاستراتيجية الجديدة
+            if(stratName === 'BB_RSI') return '<span class="badge-bbrsi text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">BB+RSI</span>'; 
             if(stratName === 'Manual') return '<span class="bg-gray-800 text-gray-300 border border-gray-600 text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Manual</span>';
             return '<span class="badge-momentum text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">Momentum</span>'; 
         };
@@ -384,7 +385,6 @@
         };
         document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('momentumSoundEnabled', soundEnabled); updateSoundUI(); if(soundEnabled) playSound('open'); });
 
-        // دالة الترتيب الحي للصفقات (Live DOM Sorting) المحدثة
         const liveSortOpenTrades = () => {
             const container = document.getElementById('active-trades-list');
             if (!container) return;
@@ -462,7 +462,6 @@
                     }
                 });
 
-                // حساب إجمالي الربح/الخسارة اللحظي لجميع الصفقات المفتوحة معاً
                 let totalFloatingPnl = 0;
                 openTrades.forEach(t => {
                     const currentPnl = ((t.currentPrice || t.entryPrice) - t.entryPrice) / t.entryPrice * 100;
@@ -477,7 +476,6 @@
                     floatPnlEl.className = `text-[12px] font-black dir-ltr mt-1 px-2 py-0.5 rounded border ${isWin ? 'text-brand-green bg-brand-green/10 border-brand-green/30' : (isLoss ? 'text-brand-red bg-brand-red/10 border-brand-red/30' : 'text-gray-500 bg-gray-900 border-gray-700')}`;
                 }
 
-                // تنفيذ الترتيب الحي بناءً على الخيار المحدد في الـ Select
                 liveSortOpenTrades();
             };
             priceWs.onerror = () => { setTimeout(connectBinanceWs, 3000); };
@@ -499,7 +497,7 @@
                         document.getElementById('strat-momentum').checked = s.strats.momentum;
                         document.getElementById('strat-breakout').checked = s.strats.breakout;
                         document.getElementById('strat-sniper').checked = s.strats.sniper;
-                        if (s.strats.bbrsi !== undefined) document.getElementById('strat-bbrsi').checked = s.strats.bbrsi; // قراءة الإعداد الجديد
+                        if (s.strats.bbrsi !== undefined) document.getElementById('strat-bbrsi').checked = s.strats.bbrsi;
                     }
                 }
             });
@@ -509,12 +507,10 @@
             startSettingsSync();
             connectBinanceWs(); 
 
-            // ضبط القيم المحفوظة للفلتر
             const selectSortEl = document.getElementById('open-trades-sort');
             if (openTradesSort && [...selectSortEl.options].some(o => o.value === openTradesSort)) {
                 selectSortEl.value = openTradesSort;
             }
-            
             document.getElementById('stats-time-filter').value = statsTimeFilter;
 
             onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
@@ -529,7 +525,9 @@
                 }
             });
 
-            onSnapshot(collection(db, "momentum_trades_v1"), (snapshot) => {
+            // [تحسين]: استدعاء آخر 150 صفقة فقط لتخفيف الضغط على قاعدة البيانات للمتصفح
+            const recentTradesQuery = query(collection(db, "momentum_trades_v1"), orderBy("openTime", "desc"), limit(150));
+            onSnapshot(recentTradesQuery, (snapshot) => {
                 const oldCount = virtualTrades.filter(t => t.status === 'open').length;
                 virtualTrades = [];
                 snapshot.forEach(docSnap => virtualTrades.push({ docId: docSnap.id, ...docSnap.data() }));
@@ -539,7 +537,6 @@
                 else if (oldCount > newCount) playSound('win'); 
                 
                 updateDashboardUI();
-                // تنفيذ ترتيب أولي بعد جلب البيانات
                 setTimeout(liveSortOpenTrades, 100);
             });
 
@@ -564,11 +561,10 @@
                         const price = parseFloat(data.price);
                         
                         const newTrade = {
-                            symbol: symbol, entryPrice: price, currentPrice: price, maxPrice: price, trailActive: false, 
-                            slLevel: price * 0.97, status: 'open', pnl: 0, openTime: Date.now(),
+                            symbol: symbol, entryPrice: price, maxPrice: price, trailActive: false, 
+                            slLevel: price * 0.97, status: 'open', openTime: Date.now(),
                             strategy: 'Manual', entryScore: 75, liveScore: 75,
-                            entryBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5},
-                            liveBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
+                            entryBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
                         };
                         
                         setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
@@ -586,7 +582,6 @@
                 if (btn.disabled) return;
                 
                 const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
-                
                 btn.innerText = "جاري الحفظ الفعلي..."; 
                 btn.disabled = true;
                 btn.style.backgroundColor = "#4B5563"; 
@@ -603,7 +598,7 @@
                         momentum: document.getElementById('strat-momentum').checked,
                         breakout: document.getElementById('strat-breakout').checked,
                         sniper: document.getElementById('strat-sniper').checked,
-                        bbrsi: document.getElementById('strat-bbrsi').checked // حفظ الإعداد الجديد
+                        bbrsi: document.getElementById('strat-bbrsi').checked
                     }
                 };
 
@@ -632,7 +627,6 @@
             document.getElementById('open-trades-sort').addEventListener('change', (e) => {
                 openTradesSort = e.target.value; 
                 localStorage.setItem('momentumOpenTradesSort_v35', openTradesSort); 
-                // نطلب الترتيب اللحظي فور تغيير الفلتر
                 liveSortOpenTrades(); 
             });
         });
@@ -769,11 +763,9 @@
                             <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Setup">St:${brk.setup}/15</span>
                             <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="BTC Health">BT:${brk.btc}/15</span>
                             <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Candle">Cn:${brk.candle}/10</span>
-                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Confirmation">Cf:${brk.confirm}/5</span>
                         </div>
                     </div>`;
                 
-                // تم إضافة سمة data-time لكي يعمل ترتيب الأحدث والأقدم
                 openHtml += `
                     <div id="card-${t.symbol}" data-time="${t.openTime}" data-pnl="${currentPnl}" data-score="${displayScore !== '--' ? displayScore : 0}" class="bg-gray-800 border ${cardColorClass} rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
                         <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">
@@ -872,4 +864,5 @@
         });
     </script>
 </body>
+    
 </html>
