@@ -14,7 +14,7 @@
                     fontFamily: { sans: ['Cairo', 'sans-serif'] },
                     colors: {
                         gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' },
-                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B' }
+                        brand: { green: '#10B981', red: '#EF4444', blue: '#3B82F6', gold: '#F59E0B', pink: '#ec4899', cyan: '#06b6d4', neon: '#ccff00' }
                     }
                 }
             }
@@ -43,15 +43,16 @@
         .tab-inactive { background-color: #1f2937; color: #9ca3af; border-color: #374151; }
         .tab-inactive:hover { background-color: #374151; color: white; }
 
-        /* Radar Styles */
+        /* System 2 Styles */
         .radar-scan-anim {
             position: absolute; width: 100%; height: 100%; border-radius: 50%;
-            background: conic-gradient(from 0deg, transparent 70%, rgba(16, 185, 129, 0.4) 100%);
+            background: conic-gradient(from 0deg, transparent 70%, rgba(6, 182, 212, 0.4) 100%);
             animation: radar-spin 2s linear infinite; pointer-events: none;
         }
         @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .pulse-circle { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.1); } }
+        .glass-panel { background: rgba(17, 17, 17, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -92,6 +93,7 @@
                     <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-brand-gold"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </button>
                 
+                <!-- This status badge is mainly for System 1 -->
                 <div id="db-status-badge" class="text-[10px] bg-brand-blue bg-opacity-20 border border-brand-blue border-opacity-30 text-brand-blue px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
                     <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     جاري الاتصال...
@@ -113,7 +115,7 @@
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
 
         <!-- ========================================== -->
-        <!-- TAB 1: SYSTEM 1 (MOMENTUM - EXACTLY AS PROVIDED) -->
+        <!-- TAB 1: SYSTEM 1 (MOMENTUM - UNTOUCHED) -->
         <!-- ========================================== -->
         <div id="view-momentum-app" class="flex flex-col gap-6">
             <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
@@ -321,69 +323,72 @@
             </section>
         </div>
 
+
         <!-- ========================================== -->
-        <!-- TAB 2: SYSTEM 2 (EXPLOSION RADAR - SWING) -->
+        <!-- TAB 2: SYSTEM 2 (EXPLOSION RADAR - UPDATED Klines + Multi-TF) -->
         <!-- ========================================== -->
         <div id="view-radar-app" class="hidden flex-col gap-6">
             
-            <div class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-5 border-r-4 border-r-brand-blue flex flex-col md:flex-row gap-6 items-center shadow-lg">
+            <div class="bg-gray-900 rounded-xl p-5 border-r-4 border-r-brand-cyan flex flex-col md:flex-row gap-6 items-center shadow-lg">
                 <div class="flex-1">
                     <h2 class="text-sm font-black text-white mb-2 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="2" y1="12" x2="4" y2="12"/></svg>
-                        النظام 2: رادار الانفجارات (Swing)
+                        <div class="w-6 h-6 rounded bg-brand-cyan/20 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-cyan"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                        </div>
+                        النظام 2: رادار الانفجارات الشامل (Swing)
                     </h2>
                     <p class="text-xs text-gray-400 leading-relaxed">
-                        هذا الرادار منفصل تماماً ويعمل من متصفحك مباشرة. يتيح لك البحث في أقوى 50 عملة سيولة عن 
-                        <span class="text-brand-gold font-bold">الانضغاط القاتل (Squeeze)</span> و
-                        <span class="text-brand-blue font-bold">دخول الحيتان السري</span> على الفريم الذي تختاره للبحث عن الانفجارات القادمة.
-                        <br><span class="text-[10px] text-brand-green mt-1 block font-bold">🛡️ نظام الحماية مفعل: يتم فحص العملات بتأخير زمني ذكي لمنع حظر الـ IP من باينانس.</span>
+                        هذا الرادار منفصل ويعمل من متصفحك مباشرة. يقوم بمسح <span class="text-brand-cyan font-bold">كافة العملات النشطة في السوق</span> التي تمتلك سيولة حقيقية (فوق 3 مليون$) للبحث عن 
+                        <span class="text-brand-neon font-bold">الانضغاط القاتل (Squeeze)</span> و
+                        <span class="text-brand-blue font-bold">دخول الحيتان السري</span>.
+                        <br><span class="text-[10px] text-brand-gold mt-1 block font-bold">🛡️ نظام الحماية: يتم فحص العملات بتأخير زمني آمن لمنع حظر الـ IP. قد يستغرق المسح بضع ثوانٍ.</span>
                     </p>
                 </div>
                 <div class="flex flex-col gap-2 shrink-0 w-full md:w-auto">
-                    <!-- التعديل في النظام 2: فلتر الفريم الزمني -->
+                    <!-- Added System 2 Timeframe Filter here -->
                     <div class="flex items-center gap-2 mb-1 justify-between bg-gray-950 p-1.5 rounded-lg border border-gray-800">
                         <label for="radar-timeframe" class="text-[10px] text-gray-400 font-bold ml-1">إطار البحث:</label>
-                        <select id="radar-timeframe" class="bg-gray-900 border border-gray-700 text-brand-gold text-xs rounded-md px-2 py-1 outline-none focus:border-brand-blue font-bold cursor-pointer">
+                        <select id="radar-timeframe" class="bg-gray-900 border border-gray-700 text-brand-cyan text-xs rounded-md px-2 py-1 outline-none focus:border-brand-cyan font-bold cursor-pointer">
                             <option value="5m">5 دقائق (سكالبينج)</option>
                             <option value="15m">15 دقيقة (سريع)</option>
-                            <option value="1h" selected>1 ساعة (متوسط - 1H)</option>
-                            <option value="4h">4 ساعات (سوينج - 4H)</option>
-                            <option value="1d">يومي (استثمار - 1D)</option>
+                            <option value="1h" selected>1 ساعة (متوسط)</option>
+                            <option value="4h">4 ساعات (سوينج)</option>
+                            <option value="1d">1 يوم (استثمار)</option>
                         </select>
                     </div>
 
-                    <button id="start-radar-scan-btn" class="bg-brand-blue hover:bg-blue-600 text-white font-black py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all">
+                    <button id="start-scan-btn" class="bg-gray-800 hover:bg-gray-700 text-brand-cyan border border-brand-cyan/50 hover:border-brand-cyan font-black py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        بدء المسح العميق (Top 50)
+                        بدء المسح الشامل (Global Scan)
                     </button>
-                    <div id="radar-status-badge" class="text-[10px] font-bold text-center text-gray-400 bg-gray-950 px-3 py-1.5 rounded-lg border border-gray-800">جاهز لبدء المسح...</div>
+                    <div id="status-badge" class="text-[10px] font-bold text-center text-gray-400 bg-gray-950 px-3 py-1.5 rounded-lg border border-gray-800">جاهز لبدء المسح...</div>
                 </div>
             </div>
 
-            <div id="radar-scanner-status" class="hidden flex-col items-center justify-center py-12 bg-gray-900 rounded-xl border border-gray-800 relative overflow-hidden shadow-lg">
-                <div class="absolute inset-0 bg-brand-blue/5 pulse-circle"></div>
+            <div id="scanner-status" class="hidden flex-col items-center justify-center py-12 bg-gray-900 rounded-xl border border-gray-800 relative overflow-hidden shadow-lg">
+                <div class="absolute inset-0 bg-brand-cyan/5 pulse-circle"></div>
                 <div class="relative w-16 h-16 mb-4">
                     <div class="radar-scan-anim"></div>
-                    <div class="absolute inset-1.5 border-2 border-brand-blue/30 rounded-full"></div>
-                    <div class="absolute inset-0 flex items-center justify-center text-brand-green font-black text-lg" id="radar-scan-percentage">0%</div>
+                    <div class="absolute inset-1.5 border-2 border-brand-cyan/30 rounded-full"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-brand-cyan font-black text-lg" id="scan-percentage">0%</div>
                 </div>
-                <h3 class="text-sm font-black text-white mb-1">جاري تحليل الذكاء الاصطناعي...</h3>
-                <p id="radar-scan-current-coin" class="text-xs text-brand-blue font-mono mb-4 h-4">تهيئة محرك البحث والتخفي...</p>
+                <h3 class="text-sm font-black text-white mb-1">جاري المسح الشامل للسوق...</h3>
+                <p id="scan-current-coin" class="text-xs text-brand-cyan font-mono mb-4 h-4">تهيئة محرك البحث...</p>
                 
-                <div class="w-48 bg-gray-950 rounded-full h-1.5 border border-gray-800 overflow-hidden">
-                    <div id="radar-scan-progress-bar" class="h-full bg-gradient-to-l from-brand-green to-brand-blue transition-all duration-300 w-0"></div>
+                <div class="w-64 bg-gray-950 rounded-full h-2 border border-gray-800 overflow-hidden">
+                    <div id="scan-progress-bar" class="h-full bg-gradient-to-l from-brand-cyan to-brand-blue transition-all duration-300 w-0"></div>
                 </div>
             </div>
 
-            <div id="radar-results-container" class="hidden flex-col gap-4">
+            <div id="results-container" class="hidden flex-col gap-4">
                 <div class="flex items-center justify-between border-b border-gray-800 pb-2">
                     <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                        <span class="text-brand-gold">🎯</span> أفضل العملات المرشحة لانفجار سعري
+                        <span class="text-brand-gold">🎯</span> أفضل العملات المرشحة للانفجار
                     </h2>
                     <span class="text-[10px] text-gray-400 bg-gray-950 px-2 py-1 rounded border border-gray-800">ترتيب تنازلي حسب القوة</span>
                 </div>
                 
-                <div id="radar-coins-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div id="coins-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Cards injected here -->
                 </div>
             </div>
@@ -399,7 +404,7 @@
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // ==========================================
-        // SYSTEM 1 LOGIC (UNTOUCHED FIREBASE/MOMENTUM LOGIC)
+        // SYSTEM 1 LOGIC (UNTOUCHED)
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
@@ -980,7 +985,6 @@
             } catch(e) {} finally { btn.innerHTML = originalHTML; }
         });
 
-
         // ==========================================
         // TAB SWITCHING LOGIC (MOMENTUM vs RADAR)
         // ==========================================
@@ -1018,102 +1022,188 @@
         const radar_calcBollinger = (data, period = 20, multiplier = 2.0) => { if(data.length < period) return null; const sma = radar_calcSMA(data, period); let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += Math.pow(data[i] - sma, 2); const stdDev = Math.sqrt(sum / period); return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma, bandwidth: ((sma + (stdDev * multiplier)) - (sma - (stdDev * multiplier))) / sma }; };
         const radar_calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
 
-        document.getElementById('start-radar-scan-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('start-radar-scan-btn'); 
-            const statusArea = document.getElementById('radar-scanner-status'); 
-            const resultsContainer = document.getElementById('radar-results-container'); 
-            const grid = document.getElementById('radar-coins-grid'); 
-            const progressBar = document.getElementById('radar-scan-progress-bar'); 
-            const percentageText = document.getElementById('radar-scan-percentage'); 
-            const currentCoinText = document.getElementById('radar-scan-current-coin'); 
-            const statusBadge = document.getElementById('radar-status-badge');
-            
+        document.getElementById('start-scan-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('start-scan-btn');
+            const statusArea = document.getElementById('scanner-status');
+            const resultsContainer = document.getElementById('results-container');
+            const grid = document.getElementById('coins-grid');
+            const progressBar = document.getElementById('scan-progress-bar');
+            const percentageText = document.getElementById('scan-percentage');
+            const currentCoinText = document.getElementById('scan-current-coin');
+            const statusBadge = document.getElementById('status-badge');
+
             // [تعديل النظام 2]: قراءة الفريم الزمني من الفلتر
             const selectedTF = document.getElementById('radar-timeframe').value;
 
-            btn.disabled = true; btn.innerHTML = 'جاري المسح الآمن...'; btn.classList.add('opacity-50', 'cursor-not-allowed');
-            statusBadge.innerHTML = `<span class="text-brand-blue animate-pulse">يتم المسح العميق (${selectedTF.toUpperCase()}) 🔍</span>`;
-            resultsContainer.classList.add('hidden'); statusArea.classList.remove('hidden'); statusArea.classList.add('flex'); grid.innerHTML = ''; progressBar.style.width = '0%';
+            btn.disabled = true;
+            btn.innerHTML = 'جاري المسح العميق...';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            statusBadge.innerHTML = `<span class="text-brand-cyan animate-pulse">يمسح السوق الشامل (${selectedTF.toUpperCase()}) 🔍</span>`;
+            
+            resultsContainer.classList.add('hidden');
+            statusArea.classList.remove('hidden');
+            statusArea.classList.add('flex');
+            grid.innerHTML = '';
+            progressBar.style.width = '0%';
             
             let explosionCandidates = [];
 
             try {
-                currentCoinText.innerText = 'جلب قائمة السيولة من باينانس...';
+                // 1. جلب كل العملات من السوق
+                currentCoinText.innerText = 'جلب خريطة السيولة من باينانس...';
                 const tickerRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
                 const tickers = await tickerRes.json();
-                const topCoins = tickers.filter(t => t.symbol.endsWith('USDT') && parseFloat(t.lastPrice) > 0.01 && !['USDCUSDT','FDUSDUSDT'].includes(t.symbol)).sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume)).slice(0, 50);
+                
+                // [تحديث النظام 2]: فلتر لجلب جميع العملات النشطة التي تتجاوز سيولتها 3 مليون دولار (تجنب الميتة والاستيبل كوينز)
+                const stableCoins = ['USDCUSDT','FDUSDUSDT','TUSDUSDT','BUSDUSDT','EURUSDT','USDPUSDT','AEURUSDT'];
+                const targetCoins = tickers.filter(t => {
+                    return t.symbol.endsWith('USDT') && 
+                           parseFloat(t.lastPrice) > 0.001 && 
+                           parseFloat(t.quoteVolume) > 3000000 && 
+                           !stableCoins.includes(t.symbol);
+                });
+                
+                // ترتيبها حسب السيولة لتنظيم العرض، دون تقليص عددها
+                targetCoins.sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume));
 
-                for (let i = 0; i < topCoins.length; i++) {
-                    const coin = topCoins[i];
-                    // [تحديث النظام 2]: عرض الفريم أثناء المسح
-                    currentCoinText.innerText = `تحليل الهيكل السعري (${selectedTF.toUpperCase()}): ${coin.symbol}`;
-                    const progress = Math.round(((i + 1) / topCoins.length) * 100);
-                    progressBar.style.width = `${progress}%`; percentageText.innerText = `${progress}%`;
+                // 2. مسح كل عملة بدقة على الإطار المختار
+                for (let i = 0; i < targetCoins.length; i++) {
+                    const coin = targetCoins[i];
+                    currentCoinText.innerText = `تحليل (${selectedTF.toUpperCase()}): ${coin.symbol} (${i+1}/${targetCoins.length})`;
+                    
+                    const progress = Math.round(((i + 1) / targetCoins.length) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    percentageText.innerText = `${progress}%`;
 
                     try {
-                        // [تعديل النظام 2]: استخدام الفريم الزمني المحدد في الـ API
                         const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${selectedTF}&limit=100`);
                         const klines = await klineRes.json();
                         
-                        const closes = klines.map(k => parseFloat(k[4])); const volumes = klines.map(k => parseFloat(k[5]));
-                        const currentPrice = closes[closes.length - 1]; const closedCloses = closes.slice(0, -1); const closedVolumes = volumes.slice(0, -1);
+                        const closes = klines.map(k => parseFloat(k[4]));
+                        const volumes = klines.map(k => parseFloat(k[5]));
                         
-                        const bb = radar_calcBollinger(closedCloses, 20, 2); const ema50 = radar_calcEMA(closedCloses, 50); const volAvg20 = radar_calcSMA(closedVolumes, 20);
+                        const currentPrice = closes[closes.length - 1];
+                        const closedCloses = closes.slice(0, -1);
+                        const closedVolumes = volumes.slice(0, -1);
+                        
+                        const bb = radar_calcBollinger(closedCloses, 20, 2);
+                        const ema50 = radar_calcEMA(closedCloses, 50);
+                        const volAvg20 = radar_calcSMA(closedVolumes, 20);
+                        
                         if(!bb || !ema50 || !volAvg20) continue;
 
                         const currentVol = closedVolumes[closedVolumes.length - 1];
-                        let score = 0; let reasons = [];
+                        let score = 0;
+                        let reasons = [];
 
-                        if (bb.bandwidth < 0.05) { score += 45; reasons.push("انضغاط قاتل (قنبلة موقوتة)"); } 
-                        else if (bb.bandwidth < 0.08) { score += 25; reasons.push("تجهيز لانفجار سعري قريب"); }
-
-                        const volRatio = currentVol / volAvg20;
-                        if (volRatio > 3.0) { score += 35; reasons.push("دخول عنيف للحيتان (شراء مخفي)"); } 
-                        else if (volRatio > 1.5) { score += 15; reasons.push("ارتفاع ملحوظ في الفوليوم"); }
-
-                        if (currentPrice > ema50) { score += 20; reasons.push("تمركز أعلى المتوسط (EMA50)"); }
-                        
-                        const distToUpperBB = ((bb.upper - currentPrice) / currentPrice) * 100;
-                        if (distToUpperBB > 1 && distToUpperBB < 8) { score += 10; }
-
-                        if (score >= 50 && bb.bandwidth < 0.10) {
-                            explosionCandidates.push({ symbol: coin.symbol, price: currentPrice, score: Math.min(100, score), reasons: reasons, bbw: (bb.bandwidth * 100).toFixed(2), target: ((bb.upper - currentPrice)/currentPrice * 100).toFixed(1) });
+                        // الانضغاط (Squeeze)
+                        const isSqueezing = bb.bandwidth < 0.08;
+                        if (isSqueezing) {
+                            score += 45;
+                            reasons.push("انضغاط سعري حاد (Squeeze)");
+                        } else if (bb.bandwidth < 0.12) {
+                            score += 25;
+                            reasons.push("تجهيز لانفجار سعري");
                         }
-                    } catch (err) { console.error(`Error fetching ${coin.symbol}`, err); }
+
+                        // بصمة الحيتان (Volume Spike)
+                        const volRatio = currentVol / volAvg20;
+                        if (volRatio > 3.0) {
+                            score += 35;
+                            reasons.push("دخول سيولة حيتان مفاجئة");
+                        } else if (volRatio > 1.5) {
+                            score += 15;
+                            reasons.push("ارتفاع ملحوظ في الفوليوم");
+                        }
+
+                        // الاتجاه (Trend Alignment)
+                        if (currentPrice > ema50) {
+                            score += 20;
+                            reasons.push("تمركز أعلى المتوسط (EMA50)");
+                        }
+                        
+                        // مسافة السعر من قمة البولينجر
+                        const distToUpperBB = ((bb.upper - currentPrice) / currentPrice) * 100;
+                        if (distToUpperBB > 1 && distToUpperBB < 15) {
+                            score += 10; 
+                        }
+
+                        if (score >= 50 && bb.bandwidth < 0.15) {
+                            explosionCandidates.push({
+                                symbol: coin.symbol,
+                                price: currentPrice,
+                                score: Math.min(100, score),
+                                reasons: reasons,
+                                bbw: (bb.bandwidth * 100).toFixed(2),
+                                target: ((bb.upper - currentPrice)/currentPrice * 100).toFixed(1)
+                            });
+                        }
+                        
+                    } catch (err) {
+                        console.error(`Error fetching ${coin.symbol}`, err);
+                    }
                     
-                    await new Promise(r => setTimeout(r, 250)); // Anti-ban delay
+                    // تأخير 100 مللي ثانية لحماية الـ IP تماماً (10 طلبات في الثانية، آمن جداً لباينانس)
+                    await new Promise(r => setTimeout(r, 100));
                 }
 
-                statusArea.classList.remove('flex'); statusArea.classList.add('hidden');
-                resultsContainer.classList.remove('hidden'); resultsContainer.classList.add('flex');
+                // 3. عرض النتائج
+                statusArea.classList.remove('flex');
+                statusArea.classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+                resultsContainer.classList.add('flex');
                 
                 if (explosionCandidates.length === 0) {
-                    statusBadge.innerHTML = '<span class="text-gray-400">السوق هادئ جداً</span>';
-                    // [تحديث النظام 2]: نص رسالة الفشل يعرض الفريم الحالي
-                    grid.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 bg-gray-950 rounded-xl border border-gray-800 font-bold text-xs border-dashed">السوق هادئ جداً أو متذبذب حالياً على إطار ${selectedTF.toUpperCase()}، لا توجد عملات تتطابق مع شروط الانفجار الصارمة. جرب فريماً آخر أو حاول لاحقاً.</div>`;
+                    statusBadge.innerHTML = '<span class="text-gray-400">لا توجد انفجارات وشيكة</span>';
+                    grid.innerHTML = `<div class="col-span-full text-center py-16 text-gray-500 bg-gray-900 rounded-xl border border-gray-800 font-bold text-sm">السوق هادئ جداً أو متذبذب حالياً على إطار ${selectedTF.toUpperCase()}، من بين كافة العملات لا توجد عملة تتطابق مع شروط الانفجار الصارمة. جرب فريماً آخر.</div>`;
                 } else {
-                    statusBadge.innerHTML = `<span class="text-brand-green">تم رصد ${explosionCandidates.length} فرصة 🔥</span>`;
+                    statusBadge.innerHTML = `<span class="text-brand-cyan">تم رصد ${explosionCandidates.length} فرصة 🔥</span>`;
+                    
+                    // ترتيب تنازلي حسب قوة الانفجار المتوقعة (Score)
                     explosionCandidates.sort((a, b) => b.score - a.score);
                     
                     explosionCandidates.forEach(coin => {
-                        let scoreColor = coin.score >= 80 ? 'text-brand-green border-brand-green shadow-[0_0_10px_rgba(16,185,129,0.2)]' : (coin.score >= 60 ? 'text-brand-blue border-brand-blue' : 'text-brand-gold border-brand-gold');
-                        let reasonsHtml = coin.reasons.map(r => `<span class="text-[9px] bg-gray-950 border border-gray-800 px-1.5 py-1 rounded text-gray-400 flex-1 text-center truncate" title="${r}">${r}</span>`).join('');
+                        let scoreColor = coin.score >= 80 ? 'text-brand-neon border-brand-neon shadow-[0_0_10px_rgba(204,255,0,0.2)]' : 
+                                         (coin.score >= 60 ? 'text-brand-cyan border-brand-cyan' : 'text-brand-blue border-brand-blue');
+                        
+                        let reasonsHtml = coin.reasons.map(r => `<span class="text-[9px] bg-gray-950 border border-gray-800 px-2 py-1.5 rounded text-gray-400 flex-1 text-center truncate" title="${r}">${r}</span>`).join('');
 
                         const card = document.createElement('div');
-                        card.className = `bg-gray-900 p-4 rounded-xl border-t-2 transition-all duration-300 flex flex-col justify-between h-full border-t-${coin.score >= 80 ? 'brand-green' : 'brand-blue'} shadow-md hover:bg-gray-800`;
+                        card.className = `bg-gray-900 p-5 rounded-xl border-t-2 transition-all duration-300 flex flex-col justify-between h-full border-t-${coin.score >= 80 ? 'brand-neon' : 'brand-cyan'} shadow-md hover:bg-gray-800`;
                         card.innerHTML = `
                             <div>
-                                <div class="flex justify-between items-start mb-3">
-                                    <div><h3 class="text-lg font-black text-white leading-none">${coin.symbol}</h3><span class="text-[10px] text-gray-500 font-mono block mt-0.5">السعر: ${coin.price.toPrecision(5)}</span></div>
-                                    <div class="flex flex-col items-center"><div class="text-lg font-black ${scoreColor.split(' ')[0]} bg-gray-950 w-10 h-10 flex items-center justify-center rounded-full border ${scoreColor.split(' ')[1]} ${scoreColor.split(' ')[2] || ''}">${coin.score}</div><span class="text-[7px] text-gray-500 uppercase font-bold mt-1 tracking-wider">قوة الإشارة</span></div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="text-xl font-black text-white leading-none">${coin.symbol}</h3>
+                                        <span class="text-[10px] text-gray-500 font-mono mt-1 block">السعر: ${coin.price.toPrecision(5)}</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="text-xl font-black ${scoreColor.split(' ')[0]} bg-gray-950 w-12 h-12 flex items-center justify-center rounded-full border ${scoreColor.split(' ')[1]} ${scoreColor.split(' ')[2] || ''}">
+                                            ${coin.score}
+                                        </div>
+                                        <span class="text-[7px] text-gray-500 uppercase font-bold mt-1 tracking-wider">قوة الإشارة</span>
+                                    </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2 mb-3">
-                                    <div class="bg-gray-950 border border-gray-800 rounded-lg p-2 text-center"><div class="text-[9px] text-gray-500 font-bold mb-0.5">انضغاط السعر</div><div class="text-xs font-black text-white font-mono">${coin.bbw}%</div></div>
-                                    <div class="bg-brand-blue/5 border border-brand-blue/30 rounded-lg p-2 text-center relative overflow-hidden"><div class="text-[9px] text-brand-blue font-bold mb-0.5 relative z-10">الهدف المتوقع</div><div class="text-xs font-black text-brand-blue font-mono relative z-10">+${coin.target}% 🚀</div></div>
+                                
+                                <div class="grid grid-cols-2 gap-3 mb-4">
+                                    <div class="bg-gray-950 border border-gray-800 rounded-lg p-2 text-center">
+                                        <div class="text-[9px] text-gray-500 font-bold mb-1">نسبة الانضغاط</div>
+                                        <div class="text-xs font-black text-white font-mono">${coin.bbw}%</div>
+                                    </div>
+                                    <div class="bg-brand-cyan/5 border border-brand-cyan/30 rounded-lg p-2 text-center relative overflow-hidden">
+                                        <div class="text-[9px] text-brand-cyan font-bold mb-1 relative z-10">الهدف المتوقع</div>
+                                        <div class="text-xs font-black text-brand-cyan font-mono relative z-10">+${coin.target}% 🚀</div>
+                                    </div>
                                 </div>
-                                <div class="space-y-1 mb-4"><div class="flex flex-wrap gap-1">${reasonsHtml}</div></div>
+
+                                <div class="space-y-1 mb-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        ${reasonsHtml}
+                                    </div>
+                                </div>
                             </div>
-                            <a href="https://www.binance.com/ar/trade/${coin.symbol}" target="_blank" class="w-full bg-gray-800 hover:bg-brand-blue text-white transition-colors font-bold text-[11px] py-2 rounded flex items-center justify-center gap-1.5 mt-auto border border-gray-700 hover:border-brand-blue">
+                            
+                            <a href="https://www.binance.com/ar/trade/${coin.symbol}" target="_blank" class="w-full bg-gray-800 hover:bg-gray-700 text-white transition-colors font-bold text-[11px] py-2 rounded flex items-center justify-center gap-1.5 mt-auto border border-gray-700">
                                 فحص على باينانس
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                             </a>
@@ -1121,10 +1211,17 @@
                         grid.appendChild(card);
                     });
                 }
+
             } catch (error) {
-                console.error("Scanning Error:", error); statusBadge.innerHTML = '<span class="text-brand-red">حدث خطأ في الاتصال</span>';
+                console.error("Scanning Error:", error);
+                statusBadge.innerHTML = '<span class="text-brand-red">حدث خطأ في الاتصال</span>';
             } finally {
-                btn.disabled = false; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>إعادة المسح`; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+                    إعادة المسح الشامل
+                `;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
     </script>
