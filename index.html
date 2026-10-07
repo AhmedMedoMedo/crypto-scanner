@@ -36,7 +36,14 @@
         .badge-breakout { background-color: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .badge-sniper { background-color: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
         .badge-bbrsi { background-color: rgba(249, 115, 22, 0.15); color: #F97316; border: 1px solid rgba(249, 115, 22, 0.3); }
-        
+
+        /* Tabs Styles */
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-active { background-color: #3B82F6; color: white; border-color: #3B82F6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+        .tab-inactive { background-color: #1f2937; color: #9ca3af; border-color: #374151; }
+        .tab-inactive:hover { background-color: #374151; color: white; }
+
+        /* Radar Styles */
         .radar-scan-anim {
             position: absolute; width: 100%; height: 100%; border-radius: 50%;
             background: conic-gradient(from 0deg, transparent 70%, rgba(16, 185, 129, 0.4) 100%);
@@ -45,11 +52,6 @@
         @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .pulse-circle { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.1); } }
-        
-        .tab-btn { transition: all 0.3s ease; }
-        .tab-active { background-color: #3B82F6; color: white; border-color: #3B82F6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
-        .tab-inactive { background-color: #1f2937; color: #9ca3af; border-color: #374151; }
-        .tab-inactive:hover { background-color: #374151; color: white; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -71,19 +73,19 @@
                     <span class="text-[9px] text-brand-gold font-mono tracking-widest uppercase">AHMED SYSTEM AI</span>
                 </div>
             </div>
-            
+
             <!-- Desktop Tabs -->
             <div class="hidden md:flex items-center gap-2 bg-gray-950 p-1 rounded-lg border border-gray-800">
                 <button id="nav-momentum-btn" class="tab-btn tab-active text-xs font-bold px-4 py-1.5 rounded-md flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>
-                    التداول اللحظي الآلي
+                    آلي لحظي
                 </button>
                 <button id="nav-radar-btn" class="tab-btn tab-inactive text-xs font-bold px-4 py-1.5 rounded-md flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="2" y1="12" x2="4" y2="12"/></svg>
-                    رادار الانفجارات السريعة (1H)
+                    رادار الانفجارات (1H)
                 </button>
             </div>
-
+            
             <div class="flex items-center gap-3">
                 <button id="sound-toggle-btn" class="text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border border-gray-700 shadow-sm" title="تفعيل التنبيهات الصوتية">
                     <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
@@ -111,84 +113,18 @@
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
 
         <!-- ========================================== -->
-        <!-- TAB 1: MOMENTUM SYSTEM (ORIGINAL, UNTOUCHED) -->
+        <!-- TAB 1: MOMENTUM SYSTEM (EXACTLY AS USER PROVIDED) -->
         <!-- ========================================== -->
         <div id="view-momentum-app" class="flex flex-col gap-6">
-            
-            <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
-                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
-                        <h2 class="text-sm font-bold text-white">إحصائيات الأداء</h2>
-                    </div>
-                    <select id="stats-time-filter" class="!w-auto !py-1 !px-2 !text-xs !bg-gray-950 border border-gray-700 rounded shadow-sm outline-none cursor-pointer">
-                        <option value="all">كل الأوقات</option>
-                        <option value="1">آخر 1 ساعة</option>
-                        <option value="6">آخر 6 ساعات</option>
-                        <option value="12">آخر 12 ساعة</option>
-                        <option value="24" selected>آخر 24 ساعة</option>
-                        <option value="168">آخر 7 أيام</option>
-                        <option value="720">آخر 30 يوم</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div class="stat-box">
-                        <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">إجمالي الصفقات</div>
-                        <div class="text-3xl font-black text-white" id="dash-total">0</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح (WIN RATE)</div>
-                        <div class="text-3xl font-black text-brand-blue" id="dash-winrate">0.0%</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">صافي الربح</div>
-                        <div class="text-3xl font-black text-gray-300 dir-ltr" id="dash-profit">0.00%</div>
-                    </div>
-                    <div class="stat-box border-brand-green/30 bg-brand-green/5 flex flex-col justify-center relative overflow-hidden group" id="open-trades-box">
-                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/20 pointer-events-none"></div>
-                        <div class="text-[11px] text-brand-green mb-1 font-bold uppercase tracking-wider relative z-10">صفقات مفتوحة</div>
-                        <div class="text-3xl font-black text-brand-green leading-none mb-1 relative z-10" id="dash-open">0</div>
-                        <div id="dash-floating-pnl" class="text-[12px] font-black text-gray-500 dir-ltr px-2 py-0.5 rounded border border-gray-700 bg-gray-900 mx-auto w-fit relative z-10 transition-colors duration-300">(0.00%)</div>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-                    <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية للسيرفر:</span>
-                    </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
-                        <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
-                    </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
-                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
-                        الصفقات المفتوحة حالياً
-                    </h3>
-                    <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer transition-colors focus:border-brand-gold">
-                        <option value="time_desc">ترتيب حسب: الأحدث أولاً</option>
-                        <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
-                        <option value="profit_desc">ترتيب حسب: الأكثر ربحاً (تحديث حي)</option>
-                        <option value="score_desc">ترتيب حسب: القوة Score (تحديث حي)</option>
-                    </select>
-                </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
-                    <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">جاري مسح السوق بحثاً عن فرص...</div>
-                </div>
-            </section>
-
             <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
                 <div id="market-health-glow" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-50"></div>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
                     <div class="flex items-center gap-3">
-                        <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">--%</div>
+                        <div id="market-health-score-circle" class="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-600 text-gray-400 bg-gray-800">
+                            --%
+                        </div>
                         <div class="flex flex-col">
-                            <h2 class="text-xs font-black text-white tracking-wide flex items-center gap-1.5">
+                            <h2 class="text-xs font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                                 مؤشر الذكاء الاصطناعي للسوق (Market Matrix)
                             </h2>
@@ -223,7 +159,7 @@
                 <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800 justify-between flex-wrap">
                     <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات</h2>
+                        <h2 class="text-sm font-bold text-white">إعدادات الرادار و الاستراتيجيات (الهدف %10-%5+)</h2>
                     </div>
                 </div>
                 
@@ -246,22 +182,19 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="input-group">
-                        <label>الإطار الزمني</label>
+                        <label>الإطار الزمني الأساسي</label>
                         <select id="setting-tf">
-                            <option value="1m">1 دقيقة (عالي المخاطر)</option>
-                            <option value="5m">5 دقائق (سريع)</option>
-                            <option value="15m" selected>15 دقيقة (أفضل دقة)</option>
-                            <option value="1h">1 ساعة (أهداف بعيدة)</option>
+                            <option value="1m">1 دقيقة (سكالبينج سريع)</option>
+                            <option value="5m">5 دقائق (خطف سريع)</option>
+                            <option value="15m" selected>15 دقيقة (أساسي)</option>
+                            <option value="1h">1 ساعة (أهداف أبعد)</option>
+                            <option value="4h">4 ساعات (استثمار)</option>
                         </select>
                     </div>
-                    <div class="input-group relative">
-                        <label class="text-brand-gold font-bold">أقصى صفقات متزامنة 🛡️</label>
-                        <input type="number" id="setting-max-trades" step="1" min="1" max="20" class="border-brand-gold/50 focus:border-brand-gold">
-                    </div>
                     <div class="input-group">
-                        <label>وقف الخسارة (%)</label>
+                        <label>وقف الخسارة الأولي (%)</label>
                         <input type="number" id="setting-sl" step="0.1">
                     </div>
                     <div class="input-group">
@@ -273,7 +206,7 @@
                         <input type="number" id="setting-trail" step="0.1">
                     </div>
                     <div class="input-group">
-                        <label>مضاعف السيولة</label>
+                        <label>مضاعف السيولة (Volume)</label>
                         <input type="number" id="setting-vol" step="0.1">
                     </div>
                     <div class="input-group">
@@ -288,23 +221,102 @@
                 </div>
             </section>
 
-            <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg mt-2">
+            <!-- لوحة الإحصائيات -->
+            <section class="bg-gray-900 rounded-xl border border-gray-800 p-5 shadow-lg">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-                    <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        سجل الصفقات المغلقة
-                        <span id="history-summary" class="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block"></span>
-                    </h3>
-                    <button id="clear-history-btn" class="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        مسح السجل
-                    </button>
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        إحصائيات الأداء
+                    </h2>
+                    <div class="input-group sm:w-48">
+                        <select id="stats-time-filter" class="!py-1.5 !text-xs !bg-gray-950 !text-brand-gold !font-bold !border-gray-700">
+                            <option value="all">كل الأوقات</option>
+                            <option value="1">آخر ساعة</option>
+                            <option value="4">آخر 4 ساعات</option>
+                            <option value="6">آخر 6 ساعات</option>
+                            <option value="12">آخر 12 ساعة</option>
+                            <option value="24" selected>آخر 24 ساعة</option>
+                            <option value="168">آخر 7 أيام</option>
+                            <option value="720">آخر 30 يوم</option>
+                        </select>
+                    </div>
                 </div>
-                
-                <div id="history-summary-mobile" class="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden"></div>
 
-                <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="closed-trades-list">
-                    <div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة بعد</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-box">
+                        <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">إجمالي الصفقات</div>
+                        <div class="text-3xl font-black text-white" id="dash-total">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">معدل النجاح (Win Rate)</div>
+                        <div class="text-3xl font-black text-brand-blue" id="dash-winrate">0.0%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-[11px] text-gray-400 mb-1.5 font-bold uppercase tracking-wider">صافي الربح</div>
+                        <div class="text-3xl font-black text-gray-300 dir-ltr" id="dash-profit">0.00%</div>
+                    </div>
+                    <div class="stat-box border-brand-green/30 bg-brand-green/5 flex flex-col justify-center">
+                        <div class="text-[11px] text-brand-green mb-1.5 font-bold uppercase tracking-wider flex items-center justify-center gap-1">
+                            صفقات مفتوحة
+                        </div>
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="text-3xl font-black text-brand-green leading-none" id="dash-open">0</div>
+                            <div id="dash-floating-pnl" class="text-[11px] font-bold text-gray-500 dir-ltr mt-1" title="إجمالي الأرباح/الخسائر الحالية للصفقات المفتوحة">(0.00%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-gold"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span class="text-xs font-bold text-gray-300">إضافة صفقة يدوية للسيرفر:</span>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <input type="text" id="manual-symbol-input" placeholder="مثال: SOLUSDT" class="w-full sm:w-48 bg-gray-950 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-brand-blue uppercase dir-ltr">
+                            <button id="add-manual-btn" class="bg-gray-800 hover:bg-brand-blue border border-gray-700 hover:border-brand-blue text-white text-xs font-bold py-1.5 px-3 rounded-md transition-colors shrink-0 whitespace-nowrap shadow-sm">إضافة للصفقات</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 pb-2 border-b border-gray-800">
+                        <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
+                            الصفقات المفتوحة حالياً
+                        </h3>
+                        <select id="open-trades-sort" class="!w-auto !py-1 !px-2 !text-[10px] !bg-gray-950 text-brand-gold !font-bold border border-gray-700 rounded shadow-sm outline-none cursor-pointer transition-colors focus:border-brand-gold">
+                            <option value="time_desc">ترتيب حسب: الأحدث أولاً</option>
+                            <option value="time_asc">ترتيب حسب: الأقدم أولاً</option>
+                            <option value="profit_desc">ترتيب حسب: الأكثر ربحاً (تحديث حي)</option>
+                            <option value="score_desc">ترتيب حسب: القوة Score (تحديث حي)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="active-trades-list">
+                        <div class="col-span-full text-xs text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">جاري مسح السوق بحثاً عن فرص...</div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-800">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                        <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            سجل الصفقات المغلقة
+                            <span id="history-summary" class="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block">
+                                (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
+                            </span>
+                        </h3>
+                        <button id="clear-history-btn" class="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            مسح السجل
+                        </button>
+                    </div>
+                    
+                    <div id="history-summary-mobile" class="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden">
+                        (إجمالي: 0 | رابحة: 0 | خاسرة: 0)
+                    </div>
+
+                    <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1" id="closed-trades-list">
+                        <div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة بعد</div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -369,12 +381,9 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- JAVASCRIPT LOGIC FOR BOTH SYSTEMS -->
+    <!-- JAVASCRIPT LOGIC -->
     <!-- ========================================== -->
     <script type="module">
-        // ------------------------------------------------------------------
-        // 1. MOMENTUM SYSTEM LOGIC (FIREBASE & WEBSOCKET)
-        // ------------------------------------------------------------------
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -489,12 +498,26 @@
             if (cards.length > 0 && cards[0].classList.contains('col-span-full')) return;
 
             cards.sort((a, b) => {
-                if (sortFilter === 'profit_desc') { return parseFloat(b.getAttribute('data-pnl') || 0) - parseFloat(a.getAttribute('data-pnl') || 0); } 
-                else if (sortFilter === 'score_desc') { return parseFloat(b.getAttribute('data-score') || 0) - parseFloat(a.getAttribute('data-score') || 0); } 
-                else if (sortFilter === 'time_desc') { return parseFloat(b.getAttribute('data-time') || 0) - parseFloat(a.getAttribute('data-time') || 0); } 
-                else if (sortFilter === 'time_asc') { return parseFloat(a.getAttribute('data-time') || 0) - parseFloat(b.getAttribute('data-time') || 0); }
+                if (sortFilter === 'profit_desc') {
+                    const pnlA = parseFloat(a.getAttribute('data-pnl') || 0);
+                    const pnlB = parseFloat(b.getAttribute('data-pnl') || 0);
+                    return pnlB - pnlA;
+                } else if (sortFilter === 'score_desc') {
+                    const scoreA = parseFloat(a.getAttribute('data-score') || 0);
+                    const scoreB = parseFloat(b.getAttribute('data-score') || 0);
+                    return scoreB - scoreA;
+                } else if (sortFilter === 'time_desc') {
+                    const timeA = parseFloat(a.getAttribute('data-time') || 0);
+                    const timeB = parseFloat(b.getAttribute('data-time') || 0);
+                    return timeB - timeA;
+                } else if (sortFilter === 'time_asc') {
+                    const timeA = parseFloat(a.getAttribute('data-time') || 0);
+                    const timeB = parseFloat(b.getAttribute('data-time') || 0);
+                    return timeA - timeB;
+                }
                 return 0;
             });
+
             cards.forEach(card => container.appendChild(card));
         };
 
@@ -506,25 +529,18 @@
             priceWs.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 const openTrades = virtualTrades.filter(t => t.status === 'open');
-                const floatPnlEl = document.getElementById('dash-floating-pnl');
-                const openTradesBox = document.getElementById('open-trades-box');
-
                 if(openTrades.length === 0) {
-                    if(floatPnlEl) { 
-                        floatPnlEl.innerText = '(0.00%)'; 
-                        floatPnlEl.className = 'text-[12px] font-black text-gray-500 dir-ltr px-2 py-0.5 rounded border border-gray-700 bg-gray-900 mx-auto w-fit relative z-10 transition-colors duration-300';
-                        openTradesBox.className = 'stat-box border-gray-700 bg-gray-900 flex flex-col justify-center relative overflow-hidden group';
-                    }
+                    const floatPnlEl = document.getElementById('dash-floating-pnl');
+                    if(floatPnlEl) { floatPnlEl.innerText = '(0.00%)'; floatPnlEl.className = 'text-[11px] font-bold text-gray-500 dir-ltr mt-1'; }
                     return;
                 }
                 
-                let totalFloatingPnl = 0;
-
                 data.forEach(ticker => {
                     const trade = openTrades.find(t => t.symbol === ticker.s);
                     if (trade) {
                         const currentPrice = parseFloat(ticker.c);
                         trade.currentPrice = currentPrice; 
+                        
                         const pnl = ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
                         
                         const priceEl = document.getElementById(`price-${trade.symbol}`);
@@ -535,33 +551,35 @@
                         if (pnlEl && cardEl) {
                             pnlEl.innerText = (pnl > 0 ? '+' : '') + pnl.toFixed(2) + '%';
                             const isWin = pnl >= 0;
+                            
                             pnlEl.className = `dir-ltr font-black text-[11px] ${isWin ? 'text-brand-green' : 'text-brand-red'}`;
                             cardEl.setAttribute('data-pnl', pnl); 
                             
-                            if (isWin) { cardEl.classList.remove('border-brand-red/30', 'border-brand-red'); cardEl.classList.add('border-brand-green/30'); } 
-                            else { cardEl.classList.remove('border-brand-green/30', 'border-brand-green'); cardEl.classList.add('border-brand-red/30'); }
+                            if (isWin) {
+                                cardEl.classList.remove('border-brand-red/30', 'text-brand-red', 'border-brand-red');
+                                cardEl.classList.add('border-brand-green/30');
+                            } else {
+                                cardEl.classList.remove('border-brand-green/30', 'text-brand-green', 'border-brand-green');
+                                cardEl.classList.add('border-brand-red/30');
+                            }
                         }
                     }
                 });
 
-                openTrades.forEach(t => { totalFloatingPnl += ((t.currentPrice || t.entryPrice) - t.entryPrice) / t.entryPrice * 100; });
+                let totalFloatingPnl = 0;
+                openTrades.forEach(t => {
+                    const currentPnl = ((t.currentPrice || t.entryPrice) - t.entryPrice) / t.entryPrice * 100;
+                    totalFloatingPnl += currentPnl;
+                });
 
-                if (floatPnlEl && openTradesBox) {
-                    const isWin = totalFloatingPnl >= 0;
+                const floatPnlEl = document.getElementById('dash-floating-pnl');
+                if (floatPnlEl) {
+                    const isWin = totalFloatingPnl > 0;
+                    const isLoss = totalFloatingPnl < 0;
                     floatPnlEl.innerText = `(${totalFloatingPnl > 0 ? '+' : ''}${totalFloatingPnl.toFixed(2)}%)`;
-                    
-                    if (isWin) {
-                        floatPnlEl.className = 'text-[12px] font-black dir-ltr px-2 py-0.5 rounded border text-brand-green bg-brand-green/10 border-brand-green/30 mx-auto w-fit relative z-10 transition-colors duration-300';
-                        openTradesBox.className = 'stat-box border-brand-green/30 bg-brand-green/5 flex flex-col justify-center relative overflow-hidden group';
-                        openTradesBox.querySelector('.text-\\[11px\\]').className = 'text-[11px] text-brand-green mb-1 font-bold uppercase tracking-wider relative z-10';
-                        document.getElementById('dash-open').className = 'text-3xl font-black text-brand-green leading-none mb-1 relative z-10';
-                    } else {
-                        floatPnlEl.className = 'text-[12px] font-black dir-ltr px-2 py-0.5 rounded border text-brand-red bg-brand-red/10 border-brand-red/30 mx-auto w-fit relative z-10 transition-colors duration-300';
-                        openTradesBox.className = 'stat-box border-brand-red/30 bg-brand-red/5 flex flex-col justify-center relative overflow-hidden group';
-                        openTradesBox.querySelector('.text-\\[11px\\]').className = 'text-[11px] text-brand-red mb-1 font-bold uppercase tracking-wider relative z-10';
-                        document.getElementById('dash-open').className = 'text-3xl font-black text-brand-red leading-none mb-1 relative z-10';
-                    }
+                    floatPnlEl.className = `text-[12px] font-black dir-ltr mt-1 px-2 py-0.5 rounded border ${isWin ? 'text-brand-green bg-brand-green/10 border-brand-green/30' : (isLoss ? 'text-brand-red bg-brand-red/10 border-brand-red/30' : 'text-gray-500 bg-gray-900 border-gray-700')}`;
                 }
+
                 liveSortOpenTrades();
             };
             priceWs.onerror = () => { setTimeout(connectBinanceWs, 3000); };
@@ -579,7 +597,6 @@
                     if(s.vol_mult !== undefined) document.getElementById('setting-vol').value = s.vol_mult;
                     if(s.cooldown_mins !== undefined) document.getElementById('setting-cooldown').value = s.cooldown_mins;
                     if(s.auto_kill !== undefined) document.getElementById('setting-auto-kill').checked = s.auto_kill;
-                    if(s.max_trades !== undefined) document.getElementById('setting-max-trades').value = s.max_trades;
                     if(s.strats) {
                         document.getElementById('strat-momentum').checked = s.strats.momentum;
                         document.getElementById('strat-breakout').checked = s.strats.breakout;
@@ -591,16 +608,20 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            startSettingsSync(); connectBinanceWs(); 
+            startSettingsSync();
+            connectBinanceWs(); 
 
             const selectSortEl = document.getElementById('open-trades-sort');
-            if (openTradesSort && [...selectSortEl.options].some(o => o.value === openTradesSort)) selectSortEl.value = openTradesSort;
+            if (openTradesSort && [...selectSortEl.options].some(o => o.value === openTradesSort)) {
+                selectSortEl.value = openTradesSort;
+            }
             document.getElementById('stats-time-filter').value = statsTimeFilter;
 
             onSnapshot(doc(db, "momentum_system_logs", "market_health"), (docSnap) => {
                 if (docSnap.exists()) {
                     document.getElementById('db-status-badge').innerHTML = `<span class="w-2 h-2 bg-brand-green rounded-full animate-pulse"></span> سحابي متصل`;
                     document.getElementById('db-status-badge').className = 'text-[10px] bg-brand-green/20 border border-brand-green/30 text-brand-green px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm';
+                    
                     const data = docSnap.data();
                     marketScoreLog = data.log || [];
                     if(marketScoreLog.length > 0) lastScoreChangeTime = marketScoreLog[0].time;
@@ -613,35 +634,60 @@
                 const oldCount = virtualTrades.filter(t => t.status === 'open').length;
                 virtualTrades = [];
                 snapshot.forEach(docSnap => virtualTrades.push({ docId: docSnap.id, ...docSnap.data() }));
+                
                 const newCount = virtualTrades.filter(t => t.status === 'open').length;
-                if (newCount > oldCount) playSound('open'); else if (oldCount > newCount) playSound('win'); 
-                updateDashboardUI(); setTimeout(liveSortOpenTrades, 100);
+                if (newCount > oldCount) playSound('open');
+                else if (oldCount > newCount) playSound('win'); 
+                
+                updateDashboardUI();
+                setTimeout(liveSortOpenTrades, 100);
             });
 
-            document.getElementById('add-manual-btn').addEventListener('click', async () => {
-                const inputEl = document.getElementById('manual-symbol-input');
-                let symbol = inputEl.value.trim().toUpperCase();
-                if (!symbol) return;
-                if (!symbol.endsWith('USDT')) symbol += 'USDT';
-                if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) { alert('هذه الصفقة مفتوحة بالفعل!'); return; }
+            const manualAddBtn = document.getElementById('add-manual-btn');
+            if (manualAddBtn) {
+                manualAddBtn.addEventListener('click', async () => {
+                    const inputEl = document.getElementById('manual-symbol-input');
+                    let symbol = inputEl.value.trim().toUpperCase();
+                    if (!symbol) return;
+                    if (!symbol.endsWith('USDT')) symbol += 'USDT';
 
-                const btn = document.getElementById('add-manual-btn');
-                const origText = btn.innerText; btn.innerText = 'جاري...'; btn.disabled = true;
-                try {
-                    const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-                    if (!res.ok) throw new Error();
-                    const data = await res.json();
-                    const price = parseFloat(data.price);
-                    const newTrade = { symbol: symbol, entryPrice: price, maxPrice: price, trailActive: false, slLevel: price * 0.97, status: 'open', openTime: Date.now(), strategy: 'Manual', entryScore: 75, liveScore: 75 };
-                    setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
-                    inputEl.value = '';
-                } catch (err) { alert('خطأ: تأكد من صحة الرمز'); } finally { btn.innerText = origText; btn.disabled = false; }
-            });
+                    if (virtualTrades.some(t => t.symbol === symbol && t.status === 'open')) {
+                        alert('هذه الصفقة مفتوحة بالفعل!'); return;
+                    }
+
+                    const origText = manualAddBtn.innerText;
+                    manualAddBtn.innerText = 'جاري...'; manualAddBtn.disabled = true;
+                    try {
+                        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+                        if (!res.ok) throw new Error();
+                        const data = await res.json();
+                        const price = parseFloat(data.price);
+                        
+                        const newTrade = {
+                            symbol: symbol, entryPrice: price, maxPrice: price, trailActive: false, 
+                            slLevel: price * 0.97, status: 'open', openTime: Date.now(),
+                            strategy: 'Manual', entryScore: 75, liveScore: 75,
+                            entryBreakdown: {trend:15,volume:15,rsi:10,setup:10,btc:10,candle:10,confirm:5}
+                        };
+                        
+                        setDoc(doc(collection(db, "momentum_trades_v1")), newTrade).catch(e => console.log(e));
+                        inputEl.value = '';
+                    } catch (err) {
+                        alert('خطأ: تأكد من صحة الرمز (مثال: SOLUSDT)');
+                    } finally {
+                        manualAddBtn.innerText = origText; manualAddBtn.disabled = false;
+                    }
+                });
+            }
 
             document.getElementById('save-settings-btn').addEventListener('click', () => {
                 const btn = document.getElementById('save-settings-btn');
                 if (btn.disabled) return;
-                const originalText = "حفظ الإعدادات وإرسالها للسيرفر"; btn.innerText = "جاري الحفظ الفعلي..."; btn.disabled = true; btn.style.backgroundColor = "#4B5563"; 
+                
+                const originalText = "حفظ الإعدادات وإرسالها للسيرفر";
+                btn.innerText = "جاري الحفظ الفعلي..."; 
+                btn.disabled = true;
+                btn.style.backgroundColor = "#4B5563"; 
                 
                 const newSettings = {
                     tf: document.getElementById('setting-tf').value || '15m',
@@ -651,25 +697,50 @@
                     vol_mult: parseFloat(document.getElementById('setting-vol').value) || 2.0,
                     cooldown_mins: parseInt(document.getElementById('setting-cooldown').value) || 0,
                     auto_kill: document.getElementById('setting-auto-kill').checked,
-                    max_trades: parseInt(document.getElementById('setting-max-trades').value) || 5,
                     strats: {
-                        momentum: document.getElementById('strat-momentum').checked, breakout: document.getElementById('strat-breakout').checked,
-                        sniper: document.getElementById('strat-sniper').checked, bbrsi: document.getElementById('strat-bbrsi').checked
+                        momentum: document.getElementById('strat-momentum').checked,
+                        breakout: document.getElementById('strat-breakout').checked,
+                        sniper: document.getElementById('strat-sniper').checked,
+                        bbrsi: document.getElementById('strat-bbrsi').checked
                     }
                 };
 
                 setDoc(doc(db, "momentum_system_logs", "scanner_settings"), newSettings, { merge: true })
-                    .then(() => { btn.innerText = "تم الحفظ بنجاح 100% ✓"; btn.style.backgroundColor = "#10B981"; })
-                    .catch(e => { btn.innerText = "خطأ في الحفظ"; btn.style.backgroundColor = "#EF4444"; });
-                setTimeout(() => { btn.innerText = originalText; btn.style.backgroundColor = ""; btn.disabled = false; }, 2500);
+                    .then(() => {
+                        btn.innerText = "تم الحفظ بنجاح 100% ✓";
+                        btn.style.backgroundColor = "#10B981"; 
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        btn.innerText = "خطأ في الحفظ";
+                        btn.style.backgroundColor = "#EF4444";
+                    });
+
+                setTimeout(() => { 
+                    btn.innerText = originalText; 
+                    btn.style.backgroundColor = ""; 
+                    btn.disabled = false; 
+                }, 2500);
             });
 
-            document.getElementById('stats-time-filter').addEventListener('change', (e) => { statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v35', statsTimeFilter); updateDashboardUI(); });
-            document.getElementById('open-trades-sort').addEventListener('change', (e) => { openTradesSort = e.target.value; localStorage.setItem('momentumOpenTradesSort_v35', openTradesSort); liveSortOpenTrades(); });
+            document.getElementById('stats-time-filter').addEventListener('change', (e) => {
+                statsTimeFilter = e.target.value; localStorage.setItem('momentumStatsTimeFilter_v35', statsTimeFilter); updateDashboardUI();
+            });
+
+            document.getElementById('open-trades-sort').addEventListener('change', (e) => {
+                openTradesSort = e.target.value; 
+                localStorage.setItem('momentumOpenTradesSort_v35', openTradesSort); 
+                liveSortOpenTrades(); 
+            });
         });
 
         const updateMarketHealthUI = (score, status) => {
-            const container = document.getElementById('market-health-container'); const glow = document.getElementById('market-health-glow'); const circle = document.getElementById('market-health-score-circle'); const text = document.getElementById('market-health-text'); const bar = document.getElementById('market-health-bar');
+            const container = document.getElementById('market-health-container');
+            const glow = document.getElementById('market-health-glow');
+            const circle = document.getElementById('market-health-score-circle');
+            const text = document.getElementById('market-health-text');
+            const bar = document.getElementById('market-health-bar');
+
             circle.innerText = score + '%'; bar.style.width = score + '%';
 
             if (score >= 75) {
@@ -692,110 +763,218 @@
                 text.innerHTML = '<span class="text-brand-red text-xs">🔴 سلبي وخطر (تجنب الدخول - حماية نشطة)</span>';
             }
 
-            const historyEl = document.getElementById('market-health-history'); const logContainer = document.getElementById('market-score-log-container');
+            const historyEl = document.getElementById('market-health-history');
+            const logContainer = document.getElementById('market-score-log-container');
             if (lastScoreChangeTime !== null) {
-                historyEl.innerHTML = `مستقر <span class="text-white font-bold ml-1">${formatTimeAgo(lastScoreChangeTime)}</span>`; historyEl.classList.remove('hidden');
+                const timeAgo = formatTimeAgo(lastScoreChangeTime);
+                historyEl.innerHTML = `مستقر على هذه النسبة <span class="text-white font-bold ml-1">${timeAgo}</span>`;
+                historyEl.classList.remove('hidden');
+
+                const logsToShow = marketScoreLog.slice(0, 5); 
                 let logHtml = `<div class="text-[10px] text-gray-400 font-bold mb-2 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> سجل تغيرات السوق (آخر 5):</div><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 w-full pt-1">`;
-                marketScoreLog.slice(0, 5).forEach((entry, index) => {
-                    const timeStr = new Date(entry.time).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', month: 'numeric', day: 'numeric' });
-                    const sColor = getScoreColorClass(entry.score);
-                    logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1 mt-1">
-                        ${index === 0 ? '<span class="absolute -top-1.5 -right-1.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand-blue"></span></span>' : ''}
-                        <div class="absolute -top-2.5 right-2 ${index === 0 ? 'bg-brand-blue text-white border-brand-blue' : 'bg-gray-800 text-gray-400 border-gray-700'} text-[8px] px-1.5 rounded border font-bold z-10 shadow-sm">${index === 0 ? 'الحالي' : `#${index + 1}`}</div>
-                        <span class="font-black ${sColor.text} text-xs dir-ltr mt-0.5">${entry.score}%</span>
-                        <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
-                    </div>`;
-                });
-                logContainer.innerHTML = logHtml + `</div>`; logContainer.classList.remove('hidden'); logContainer.classList.add('flex');
+                
+                if (logsToShow.length > 0) {
+                    logsToShow.forEach((entry, index) => {
+                        const timeStr = new Date(entry.time).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', month: 'numeric', day: 'numeric' });
+                        const sColor = getScoreColorClass(entry.score);
+                        const isCurrent = index === 0 ? '<span class="absolute -top-1.5 -right-1.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-brand-blue"></span></span>' : '';
+                        const labelText = index === 0 ? 'الحالي' : `#${index + 1}`;
+                        const labelClass = index === 0 ? 'bg-brand-blue text-white border-brand-blue' : 'bg-gray-800 text-gray-400 border-gray-700';
+
+                        logHtml += `<div class="relative bg-gray-950/80 border ${index === 0 ? 'border-brand-blue/50' : 'border-gray-800'} px-2 py-1.5 rounded-lg flex flex-col justify-center items-center shadow-sm gap-1 mt-1">
+                            ${isCurrent}
+                            <div class="absolute -top-2.5 right-2 ${labelClass} text-[8px] px-1.5 rounded border font-bold z-10 shadow-sm">${labelText}</div>
+                            <span class="font-black ${sColor.text} text-xs dir-ltr mt-0.5">${entry.score}%</span>
+                            <span class="text-[8px] text-gray-500 font-mono text-center leading-tight">${timeStr}</span>
+                        </div>`;
+                    });
+                }
+                logHtml += `</div>`;
+                logContainer.innerHTML = logHtml;
+                logContainer.classList.remove('hidden');
+                logContainer.classList.add('flex');
             }
         };
 
         const updateDashboardUI = () => {
             const openTrades = virtualTrades.filter(t => t.status === 'open');
             let allClosedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+            
             let filteredClosedTrades = allClosedTrades;
-            if (statsTimeFilter !== 'all') { const timeLimit = Date.now() - (parseInt(statsTimeFilter) * 60 * 60 * 1000); filteredClosedTrades = allClosedTrades.filter(t => t.closeTime >= timeLimit); }
+            if (statsTimeFilter !== 'all') {
+                const hours = parseInt(statsTimeFilter);
+                const timeLimit = Date.now() - (hours * 60 * 60 * 1000);
+                filteredClosedTrades = allClosedTrades.filter(t => t.closeTime >= timeLimit);
+            }
 
             let won = 0, lost = 0, totalPnl = 0;
-            filteredClosedTrades.forEach(trade => { if(trade.status === 'won') won++; if(trade.status === 'lost') lost++; totalPnl += (trade.pnl || 0); });
-            const closedCount = won + lost; const winRate = closedCount > 0 ? (won / closedCount) * 100 : 0;
+            filteredClosedTrades.forEach(trade => {
+                if(trade.status === 'won') won++;
+                if(trade.status === 'lost') lost++;
+                totalPnl += (trade.pnl || 0);
+            });
 
-            document.getElementById('dash-total').innerText = closedCount; document.getElementById('dash-winrate').innerText = winRate.toFixed(1) + '%';
-            const profitEl = document.getElementById('dash-profit'); profitEl.innerText = (totalPnl > 0 ? '+' : '') + totalPnl.toFixed(2) + '%'; profitEl.className = `text-3xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
+            const closedCount = won + lost;
+            const winRate = closedCount > 0 ? (won / closedCount) * 100 : 0;
+
+            document.getElementById('dash-total').innerText = closedCount;
+            document.getElementById('dash-winrate').innerText = winRate.toFixed(1) + '%';
+            const profitEl = document.getElementById('dash-profit');
+            profitEl.innerText = (totalPnl > 0 ? '+' : '') + totalPnl.toFixed(2) + '%';
+            profitEl.className = `text-3xl font-black dir-ltr ${totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'}`;
             document.getElementById('dash-open').innerText = openTrades.length;
 
             const summaryText = `(إجمالي: ${closedCount} | رابحة: <span class="text-brand-green font-bold">${won}</span> | خاسرة: <span class="text-brand-red font-bold">${lost}</span>)`;
-            document.getElementById('history-summary').innerHTML = summaryText; document.getElementById('history-summary-mobile').innerHTML = summaryText;
+            document.getElementById('history-summary').innerHTML = summaryText;
+            document.getElementById('history-summary-mobile').innerHTML = summaryText;
 
             let openHtml = '';
+            
             for (let t of openTrades) {
                 const currentPnl = ((t.currentPrice || t.entryPrice) - t.entryPrice) / t.entryPrice * 100;
                 const pColor = currentPnl >= 0 ? 'text-brand-green border-brand-green' : 'text-brand-red border-brand-red';
                 const cardColorClass = currentPnl >= 0 ? 'border-brand-green/30' : 'border-brand-red/30';
-                const sColor = getScoreColorClass(t.liveScore || t.entryScore || 50); const displayScore = t.liveScore || t.entryScore || '--';
+
+                const trailStatus = t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`;
+                const timeAgoText = formatTimeAgo(t.openTime);
+                const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
                 
+                const sColor = getScoreColorClass(t.liveScore || t.entryScore || 50);
+                const brk = t.liveBreakdown || t.entryBreakdown || {trend:0,volume:0,rsi:0,setup:0,btc:0,candle:0,confirm:0};
+                const displayScore = t.liveScore || t.entryScore || '--';
+
                 let health = { text: '⚖️ مسار مستقر', class: 'text-brand-gold border-brand-gold/30 bg-brand-gold/10' };
                 if (displayScore !== '--') {
-                    if (displayScore >= 70) health = { text: '🚀 مساحة جيدة للصعود', class: 'text-brand-green border-brand-green/30 bg-brand-green/10' };
+                    if (displayScore >= 70) health = { text: '🚀 مساحة جيدة للصعود', class: 'text-brand-green border-brand-green/30 bg-brand-green/10 shadow-[0_0_8px_rgba(16,185,129,0.1)]' };
                     else if (displayScore < 45) health = { text: '📉 تراجع الزخم', class: 'text-gray-400 border-gray-700 bg-gray-800' };
-                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️ خطر انعكاس', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse' };
+                    if (currentPnl > 2 && displayScore < 60) health = { text: '⚠️ خطر انعكاس (تشبع)', class: 'text-brand-red border-brand-red/30 bg-brand-red/10 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.2)]' };
                 }
 
+                const scoreHtml = `
+                    <div class="mb-2 mt-1 px-1 border-t border-gray-700/50 pt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[9px] font-bold text-gray-400">Live Score</span>
+                            <span class="text-xs font-black ${sColor.text}">${displayScore}%</span>
+                        </div>
+                        <div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5">
+                            <div class="h-1 rounded-full ${sColor.bg} transition-all duration-500" style="width: ${displayScore}%"></div>
+                        </div>
+                        <div class="flex flex-wrap gap-1 justify-center">
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Trend">Tr:${brk.trend}/20</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Volume">Vo:${brk.volume}/20</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="RSI">RS:${brk.rsi}/15</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Setup">St:${brk.setup}/15</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="BTC Health">BT:${brk.btc}/15</span>
+                            <span class="text-[7px] text-gray-400 bg-gray-950 px-1 rounded border border-gray-800" title="Candle">Cn:${brk.candle}/10</span>
+                        </div>
+                    </div>`;
+                
                 openHtml += `
                     <div id="card-${t.symbol}" data-time="${t.openTime}" data-pnl="${currentPnl}" data-score="${displayScore !== '--' ? displayScore : 0}" class="bg-gray-800 border ${cardColorClass} rounded-lg shadow-md flex flex-col justify-between hover:border-brand-blue/50 transition-colors relative pt-6 pb-2.5 px-3">
-                        <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">${formatTimeAgo(t.openTime)}</div>
+                        <div class="absolute top-0 right-0 bg-gray-900 border-b border-l border-gray-700/50 rounded-bl-lg px-2 py-0.5 text-[9px] text-gray-400 font-bold flex items-center gap-1 z-10">
+                            ${timeAgoText}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        
                         <div class="flex justify-between items-center mb-1.5 border-b border-gray-700/50 pb-1.5 gap-2">
-                            <div class="flex items-center gap-1 min-w-0 overflow-hidden"><span class="text-white font-bold text-xs" title="${t.symbol}">${t.symbol}</span>${getStrategyBadge(t.strategy || 'Momentum')}</div>
+                            <div class="flex items-center gap-1 min-w-0 overflow-hidden">
+                                <span class="text-white font-bold text-xs flex-wrap" title="${t.symbol}">${t.symbol}</span>
+                                ${stratBadge}
+                            </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <span id="pnl-${t.symbol}" class="dir-ltr font-black text-[11px] ${pColor.split(' ')[0]}">${currentPnl > 0 ? '+' : ''}${currentPnl.toFixed(2)}%</span>
-                                <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white bg-red-500/10 rounded p-1" title="حذف"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                                <button onclick="window.cancelOpenTrade('${t.docId}')" class="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20" title="إلغاء وحذف الصفقة">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                                <a href="https://www.binance.com/ar/trade/${t.symbol}" target="_self" class="text-gray-400 hover:text-white transition-colors bg-gray-950 rounded p-1 hover:bg-brand-blue" title="تداول على باينانس">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                </a>
                             </div>
                         </div>
-                        <div class="mb-2 mt-1 px-1 border-t border-gray-700/50 pt-2"><div class="flex justify-between items-center mb-1"><span class="text-[9px] font-bold text-gray-400">Live Score</span><span class="text-xs font-black ${sColor.text}">${displayScore}%</span></div><div class="w-full bg-gray-950 rounded-full h-1 border border-gray-800 mb-1.5"><div class="h-1 rounded-full ${sColor.bg}" style="width: ${displayScore}%"></div></div></div>
-                        <div class="flex justify-between items-center mb-1 text-[10px] mt-2"><span class="text-gray-400">الدخول:</span><span class="text-gray-300 font-mono">${(t.entryPrice || 0).toPrecision(5)}</span></div>
-                        <div class="flex justify-between items-center mb-2 text-[10px]"><span class="text-gray-400">الحالي:</span><span id="price-${t.symbol}" class="text-white font-bold font-mono">${(t.currentPrice || t.entryPrice).toPrecision(5)}</span></div>
+                        
+                        ${scoreHtml}
+
+                        <div class="flex justify-between items-center mb-1 text-[10px] mt-2">
+                            <span class="text-gray-400">الدخول:</span>
+                            <span class="text-gray-300 font-mono">${(t.entryPrice || 0).toPrecision(5)}</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2 text-[10px]">
+                            <span class="text-gray-400">الحالي:</span>
+                            <span id="price-${t.symbol}" class="text-white font-bold font-mono">${(t.currentPrice || t.entryPrice).toPrecision(5)}</span>
+                        </div>
                         <div class="mt-auto flex flex-col gap-1.5 pt-1 border-t border-gray-700/50">
-                            <div class="text-[9px] ${health.class} rounded px-1 py-1 text-center font-bold border truncate">${health.text}</div>
-                            <div class="text-[10px] text-brand-gold bg-gray-950 rounded px-1 py-1.5 text-center font-bold border border-gray-700">${t.trailActive ? '✨ ملاحقة نشطة' : `الوقف: ${(t.slLevel || 0).toPrecision(5)}`}</div>
+                            <div class="text-[9px] ${health.class} rounded px-1 py-1 text-center font-bold border transition-colors duration-500 truncate" title="${health.text}">${health.text}</div>
+                            <div class="text-[10px] text-brand-gold bg-gray-950 rounded px-1 py-1.5 text-center font-bold border border-gray-700">${trailStatus}</div>
                         </div>
                     </div>`;
             }
-            if(!openHtml) openHtml = '<div class="col-span-full text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لا توجد صفقات مفتوحة حالياً</div>';
+            if(!openHtml) openHtml = '<div class="col-span-full text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لا توجد صفقات مفتوحة حالياً... بانتظار الفرص</div>';
             document.getElementById('active-trades-list').innerHTML = openHtml;
 
             let closedHtml = '';
-            filteredClosedTrades.sort((a, b) => b.closeTime - a.closeTime).slice(0, 50).forEach(t => {
-                const isWin = t.status === 'won'; const pColor = isWin ? 'text-brand-green' : 'text-brand-red'; const bgColor = isWin ? 'bg-brand-green/5 border-brand-green/20' : 'bg-brand-red/5 border-brand-red/20';
+            const sortedClosed = filteredClosedTrades.sort((a, b) => b.closeTime - a.closeTime).slice(0, 50);
+            sortedClosed.forEach(t => {
+                const isWin = t.status === 'won';
+                const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
+                const bgColor = isWin ? 'bg-brand-green/5 border-brand-green/20' : 'bg-brand-red/5 border-brand-red/20';
+                const icon = isWin ? '✓' : '✗';
+                const durationStr = (t.openTime && t.closeTime && t.closeTime > t.openTime) ? formatDuration(t.closeTime - t.openTime) : 'غير محدد';
+                const timeStr = t.closeTime ? new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const stratBadge = getStrategyBadge(t.strategy || 'Momentum');
+                
+                const entryScoreBadge = t.entryScore ? `<span class="text-[8px] bg-gray-900 border border-gray-700 px-1 rounded text-gray-400" title="Entry Strength Score">القوة: ${t.entryScore}%</span>` : '';
+
                 closedHtml += `
                     <div class="flex items-center justify-between p-2.5 rounded-lg border ${bgColor} hover:bg-gray-800/80 transition-colors mb-2 gap-2">
                         <div class="flex flex-col flex-1 min-w-0">
-                            <div class="flex items-center gap-1 flex-wrap"><span class="font-bold text-white text-xs">${t.symbol}</span>${getStrategyBadge(t.strategy || 'Momentum')}</div>
-                            <div class="flex items-center gap-2 mt-1"><span class="text-[9px] text-gray-500 font-mono">${t.closeTime ? new Date(t.closeTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span></div>
+                            <div class="flex items-center gap-1 flex-wrap">
+                                <span class="font-bold text-white text-xs" title="${t.symbol}">${t.symbol}</span>
+                                ${stratBadge}
+                                ${entryScoreBadge}
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] text-gray-500 font-mono">${timeStr}</span>
+                                <span class="text-[8px] text-gray-400 bg-gray-950 border border-gray-800 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-inner whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    استغرقت: ${durationStr}
+                                </span>
+                            </div>
                         </div>
                         <div class="flex items-center justify-end gap-2 shrink-0 w-auto">
                             <span class="dir-ltr font-black text-xs ${pColor}">${(t.pnl || 0) > 0 ? '+' : ''}${(t.pnl || 0).toFixed(2)}%</span>
-                            <span class="${pColor} font-bold text-sm bg-gray-950 w-5 h-5 flex items-center justify-center rounded border ${pColor.replace('text', 'border')}/50">${isWin ? '✓' : '✗'}</span>
+                            <span class="${pColor} font-bold text-sm bg-gray-950 w-5 h-5 flex items-center justify-center rounded border ${pColor.replace('text', 'border')}/50 shadow-sm">${icon}</span>
                         </div>
                     </div>`;
             });
-            if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة</div>';
+            if (!closedHtml) closedHtml = '<div class="text-[11px] text-gray-500 text-center py-8 bg-gray-950 rounded-lg border border-gray-800 border-dashed">لم يتم إغلاق أي صفقة في هذه الفترة</div>';
             document.getElementById('closed-trades-list').innerHTML = closedHtml;
         };
 
-        window.cancelOpenTrade = async (docId) => { if (confirm(`هل أنت متأكد من إلغاء وحذف هذه الصفقة؟`)) try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) {} };
+        window.cancelOpenTrade = async (docId) => {
+            if (!confirm(`هل أنت متأكد من إلغاء وحذف هذه الصفقة؟`)) return;
+            try { await deleteDoc(doc(db, "momentum_trades_v1", docId)); } catch(e) {}
+        };
+
         document.getElementById('clear-history-btn').addEventListener('click', async () => {
-            if (!confirm(`حذف السجل؟`)) return;
-            const btn = document.getElementById('clear-history-btn'); const orig = btn.innerHTML; btn.innerHTML = `جاري الحذف...`;
-            try { for (let t of virtualTrades.filter(t => t.status === 'won' || t.status === 'lost')) await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); } catch(e) {} finally { btn.innerHTML = orig; }
+            if (!confirm(`هل أنت متأكد من حذف الصفقات المغلقة من السيرفر؟`)) return;
+            const btn = document.getElementById('clear-history-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `جاري الحذف...`;
+            try {
+                const closedTrades = virtualTrades.filter(t => t.status === 'won' || t.status === 'lost');
+                for (let t of closedTrades) { await deleteDoc(doc(db, "momentum_trades_v1", t.docId)); }
+            } catch(e) {} finally { btn.innerHTML = originalHTML; }
         });
 
         // ------------------------------------------------------------------
-        // 2. TAB SWITCHING LOGIC (CLEAN ISOLATION)
+        // TAB SWITCHING LOGIC
         // ------------------------------------------------------------------
         const viewMomentum = document.getElementById('view-momentum-app');
         const viewRadar = document.getElementById('view-radar-app');
-        const btnMom = document.getElementById('nav-momentum-btn'); const btnRad = document.getElementById('nav-radar-btn');
-        const btnMomMob = document.getElementById('nav-momentum-btn-mob'); const btnRadMob = document.getElementById('nav-radar-btn-mob');
+        const btnMom = document.getElementById('nav-momentum-btn'); 
+        const btnRad = document.getElementById('nav-radar-btn');
+        const btnMomMob = document.getElementById('nav-momentum-btn-mob'); 
+        const btnRadMob = document.getElementById('nav-radar-btn-mob');
 
         const switchTab = (tab) => {
             if (tab === 'momentum') {
@@ -811,18 +990,27 @@
             }
         };
 
-        btnMom.addEventListener('click', () => switchTab('momentum')); btnRad.addEventListener('click', () => switchTab('radar'));
-        btnMomMob.addEventListener('click', () => switchTab('momentum')); btnRadMob.addEventListener('click', () => switchTab('radar'));
+        btnMom.addEventListener('click', () => switchTab('momentum')); 
+        btnRad.addEventListener('click', () => switchTab('radar'));
+        btnMomMob.addEventListener('click', () => switchTab('momentum')); 
+        btnRadMob.addEventListener('click', () => switchTab('radar'));
 
         // ------------------------------------------------------------------
-        // 3. EXPLOSION RADAR LOGIC (CLIENT-SIDE, 1H, ANTI-BAN)
+        // EXPLOSION RADAR LOGIC (CLIENT-SIDE, 1H, ANTI-BAN)
         // ------------------------------------------------------------------
         const radar_calcSMA = (data, period) => { if(data.length < period) return null; let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += data[i]; return sum / period; };
         const radar_calcBollinger = (data, period = 20, multiplier = 2.0) => { if(data.length < period) return null; const sma = radar_calcSMA(data, period); let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += Math.pow(data[i] - sma, 2); const stdDev = Math.sqrt(sum / period); return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma, bandwidth: ((sma + (stdDev * multiplier)) - (sma - (stdDev * multiplier))) / sma }; };
         const radar_calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
 
         document.getElementById('start-radar-scan-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('start-radar-scan-btn'); const statusArea = document.getElementById('radar-scanner-status'); const resultsContainer = document.getElementById('radar-results-container'); const grid = document.getElementById('radar-coins-grid'); const progressBar = document.getElementById('radar-scan-progress-bar'); const percentageText = document.getElementById('radar-scan-percentage'); const currentCoinText = document.getElementById('radar-scan-current-coin'); const statusBadge = document.getElementById('radar-status-badge');
+            const btn = document.getElementById('start-radar-scan-btn'); 
+            const statusArea = document.getElementById('radar-scanner-status'); 
+            const resultsContainer = document.getElementById('radar-results-container'); 
+            const grid = document.getElementById('radar-coins-grid'); 
+            const progressBar = document.getElementById('radar-scan-progress-bar'); 
+            const percentageText = document.getElementById('radar-scan-percentage'); 
+            const currentCoinText = document.getElementById('radar-scan-current-coin'); 
+            const statusBadge = document.getElementById('radar-status-badge');
 
             btn.disabled = true; btn.innerHTML = 'جاري المسح الآمن...'; btn.classList.add('opacity-50', 'cursor-not-allowed');
             statusBadge.innerHTML = '<span class="text-brand-blue animate-pulse">يتم المسح العميق (1H) 🔍</span>';
@@ -843,7 +1031,6 @@
                     progressBar.style.width = `${progress}%`; percentageText.innerText = `${progress}%`;
 
                     try {
-                        // استخدام فريم 1H بدلاً من 4H لاصطياد انفجارات قريبة جداً (1-3 أيام)
                         const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=1h&limit=100`);
                         const klines = await klineRes.json();
                         
@@ -856,7 +1043,6 @@
                         const currentVol = closedVolumes[closedVolumes.length - 1];
                         let score = 0; let reasons = [];
 
-                        // شروط الانضغاط على فريم 1 ساعة
                         if (bb.bandwidth < 0.05) { score += 45; reasons.push("انضغاط قاتل (قنبلة موقوتة)"); } 
                         else if (bb.bandwidth < 0.08) { score += 25; reasons.push("تجهيز لانفجار سعري قريب"); }
 
@@ -874,7 +1060,6 @@
                         }
                     } catch (err) { console.error(`Error fetching ${coin.symbol}`, err); }
                     
-                    // تأخير زمني متعمد للحماية من حظر باينانس (Anti-Ban Throttling)
                     await new Promise(r => setTimeout(r, 250)); 
                 }
 
