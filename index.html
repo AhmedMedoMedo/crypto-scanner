@@ -78,11 +78,11 @@
             <div class="hidden md:flex items-center gap-2 bg-gray-950 p-1 rounded-lg border border-gray-800">
                 <button id="nav-momentum-btn" class="tab-btn tab-active text-xs font-bold px-4 py-1.5 rounded-md flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>
-                    آلي لحظي
+                    النظام 1 (آلي لحظي)
                 </button>
                 <button id="nav-radar-btn" class="tab-btn tab-inactive text-xs font-bold px-4 py-1.5 rounded-md flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="2" y1="12" x2="4" y2="12"/></svg>
-                    رادار الانفجارات (1H)
+                    النظام 2 (رادار الانفجارات)
                 </button>
             </div>
             
@@ -103,17 +103,17 @@
     <!-- Mobile Tabs -->
     <div class="md:hidden flex p-3 bg-gray-900 border-b border-gray-800 gap-2 sticky top-16 z-40">
         <button id="nav-momentum-btn-mob" class="tab-btn tab-active flex-1 text-xs font-bold py-2 rounded-md flex justify-center items-center gap-1.5">
-            آلي لحظي
+            النظام 1 (آلي)
         </button>
         <button id="nav-radar-btn-mob" class="tab-btn tab-inactive flex-1 text-xs font-bold py-2 rounded-md flex justify-center items-center gap-1.5">
-            رادار الانفجارات (1H)
+            النظام 2 (رادار)
         </button>
     </div>
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
 
         <!-- ========================================== -->
-        <!-- TAB 1: MOMENTUM SYSTEM (EXACTLY AS USER PROVIDED) -->
+        <!-- TAB 1: SYSTEM 1 (MOMENTUM - EXACTLY AS PROVIDED) -->
         <!-- ========================================== -->
         <div id="view-momentum-app" class="flex flex-col gap-6">
             <div id="market-health-container" class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-xl flex flex-col gap-4 transition-all duration-700 relative overflow-hidden">
@@ -322,7 +322,7 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 2: EXPLOSION RADAR SYSTEM (ISOLATED) -->
+        <!-- TAB 2: SYSTEM 2 (EXPLOSION RADAR - SWING) -->
         <!-- ========================================== -->
         <div id="view-radar-app" class="hidden flex-col gap-6">
             
@@ -330,17 +330,28 @@
                 <div class="flex-1">
                     <h2 class="text-sm font-black text-white mb-2 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-blue"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="2" y1="12" x2="4" y2="12"/></svg>
-                        رادار الانفجارات السريعة (Swing 1H)
+                        النظام 2: رادار الانفجارات (Swing)
                     </h2>
                     <p class="text-xs text-gray-400 leading-relaxed">
-                        هذا الرادار منفصل تماماً ويعمل من متصفحك مباشرة لحمايتك من استهلاك السيرفر. تم برمجته على إطار <strong>1 ساعة (1H)</strong> للبحث عن الانفجارات القريبة جداً التي ستحدث خلال <strong>24 إلى 72 ساعة كحد أقصى</strong>.
-                        يبحث عن:
-                        <span class="text-brand-gold font-bold">الانضغاط القاتل (Squeeze)</span>، 
-                        و<span class="text-brand-blue font-bold">دخول الحيتان السري</span>.
-                        <br><span class="text-[10px] text-brand-green mt-1 block font-bold">🛡️ نظام الحماية مفعل: يتم فحص العملات بتأخير زمني لمنع حظر الـ IP من باينانس.</span>
+                        هذا الرادار منفصل تماماً ويعمل من متصفحك مباشرة. يتيح لك البحث في أقوى 50 عملة سيولة عن 
+                        <span class="text-brand-gold font-bold">الانضغاط القاتل (Squeeze)</span> و
+                        <span class="text-brand-blue font-bold">دخول الحيتان السري</span> على الفريم الذي تختاره للبحث عن الانفجارات القادمة.
+                        <br><span class="text-[10px] text-brand-green mt-1 block font-bold">🛡️ نظام الحماية مفعل: يتم فحص العملات بتأخير زمني ذكي لمنع حظر الـ IP من باينانس.</span>
                     </p>
                 </div>
                 <div class="flex flex-col gap-2 shrink-0 w-full md:w-auto">
+                    <!-- التعديل في النظام 2: فلتر الفريم الزمني -->
+                    <div class="flex items-center gap-2 mb-1 justify-between bg-gray-950 p-1.5 rounded-lg border border-gray-800">
+                        <label for="radar-timeframe" class="text-[10px] text-gray-400 font-bold ml-1">إطار البحث:</label>
+                        <select id="radar-timeframe" class="bg-gray-900 border border-gray-700 text-brand-gold text-xs rounded-md px-2 py-1 outline-none focus:border-brand-blue font-bold cursor-pointer">
+                            <option value="5m">5 دقائق (سكالبينج)</option>
+                            <option value="15m">15 دقيقة (سريع)</option>
+                            <option value="1h" selected>1 ساعة (متوسط - 1H)</option>
+                            <option value="4h">4 ساعات (سوينج - 4H)</option>
+                            <option value="1d">يومي (استثمار - 1D)</option>
+                        </select>
+                    </div>
+
                     <button id="start-radar-scan-btn" class="bg-brand-blue hover:bg-blue-600 text-white font-black py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         بدء المسح العميق (Top 50)
@@ -356,7 +367,7 @@
                     <div class="absolute inset-1.5 border-2 border-brand-blue/30 rounded-full"></div>
                     <div class="absolute inset-0 flex items-center justify-center text-brand-green font-black text-lg" id="radar-scan-percentage">0%</div>
                 </div>
-                <h3 class="text-sm font-black text-white mb-1">جاري تحليل الذكاء الاصطناعي (1H)...</h3>
+                <h3 class="text-sm font-black text-white mb-1">جاري تحليل الذكاء الاصطناعي...</h3>
                 <p id="radar-scan-current-coin" class="text-xs text-brand-blue font-mono mb-4 h-4">تهيئة محرك البحث والتخفي...</p>
                 
                 <div class="w-48 bg-gray-950 rounded-full h-1.5 border border-gray-800 overflow-hidden">
@@ -367,7 +378,7 @@
             <div id="radar-results-container" class="hidden flex-col gap-4">
                 <div class="flex items-center justify-between border-b border-gray-800 pb-2">
                     <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                        <span class="text-brand-gold">🎯</span> أفضل العملات المرشحة لانفجار سريع (1-3 أيام)
+                        <span class="text-brand-gold">🎯</span> أفضل العملات المرشحة لانفجار سعري
                     </h2>
                     <span class="text-[10px] text-gray-400 bg-gray-950 px-2 py-1 rounded border border-gray-800">ترتيب تنازلي حسب القوة</span>
                 </div>
@@ -381,12 +392,15 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- SCRIPTS (SYSTEM 1 & SYSTEM 2 COMBINED) -->
     <!-- ========================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // ==========================================
+        // SYSTEM 1 LOGIC (UNTOUCHED FIREBASE/MOMENTUM LOGIC)
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
             authDomain: "smartscanner-a5e0d.firebaseapp.com",
@@ -966,9 +980,10 @@
             } catch(e) {} finally { btn.innerHTML = originalHTML; }
         });
 
-        // ------------------------------------------------------------------
-        // TAB SWITCHING LOGIC
-        // ------------------------------------------------------------------
+
+        // ==========================================
+        // TAB SWITCHING LOGIC (MOMENTUM vs RADAR)
+        // ==========================================
         const viewMomentum = document.getElementById('view-momentum-app');
         const viewRadar = document.getElementById('view-radar-app');
         const btnMom = document.getElementById('nav-momentum-btn'); 
@@ -995,9 +1010,10 @@
         btnMomMob.addEventListener('click', () => switchTab('momentum')); 
         btnRadMob.addEventListener('click', () => switchTab('radar'));
 
-        // ------------------------------------------------------------------
-        // EXPLOSION RADAR LOGIC (CLIENT-SIDE, 1H, ANTI-BAN)
-        // ------------------------------------------------------------------
+
+        // ==========================================
+        // SYSTEM 2 LOGIC (EXPLOSION RADAR - CLIENT SIDE ONLY)
+        // ==========================================
         const radar_calcSMA = (data, period) => { if(data.length < period) return null; let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += data[i]; return sum / period; };
         const radar_calcBollinger = (data, period = 20, multiplier = 2.0) => { if(data.length < period) return null; const sma = radar_calcSMA(data, period); let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += Math.pow(data[i] - sma, 2); const stdDev = Math.sqrt(sum / period); return { upper: sma + (stdDev * multiplier), lower: sma - (stdDev * multiplier), sma: sma, bandwidth: ((sma + (stdDev * multiplier)) - (sma - (stdDev * multiplier))) / sma }; };
         const radar_calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
@@ -1011,9 +1027,12 @@
             const percentageText = document.getElementById('radar-scan-percentage'); 
             const currentCoinText = document.getElementById('radar-scan-current-coin'); 
             const statusBadge = document.getElementById('radar-status-badge');
+            
+            // [تعديل النظام 2]: قراءة الفريم الزمني من الفلتر
+            const selectedTF = document.getElementById('radar-timeframe').value;
 
             btn.disabled = true; btn.innerHTML = 'جاري المسح الآمن...'; btn.classList.add('opacity-50', 'cursor-not-allowed');
-            statusBadge.innerHTML = '<span class="text-brand-blue animate-pulse">يتم المسح العميق (1H) 🔍</span>';
+            statusBadge.innerHTML = `<span class="text-brand-blue animate-pulse">يتم المسح العميق (${selectedTF.toUpperCase()}) 🔍</span>`;
             resultsContainer.classList.add('hidden'); statusArea.classList.remove('hidden'); statusArea.classList.add('flex'); grid.innerHTML = ''; progressBar.style.width = '0%';
             
             let explosionCandidates = [];
@@ -1026,12 +1045,14 @@
 
                 for (let i = 0; i < topCoins.length; i++) {
                     const coin = topCoins[i];
-                    currentCoinText.innerText = `تحليل الهيكل السعري (1H): ${coin.symbol}`;
+                    // [تحديث النظام 2]: عرض الفريم أثناء المسح
+                    currentCoinText.innerText = `تحليل الهيكل السعري (${selectedTF.toUpperCase()}): ${coin.symbol}`;
                     const progress = Math.round(((i + 1) / topCoins.length) * 100);
                     progressBar.style.width = `${progress}%`; percentageText.innerText = `${progress}%`;
 
                     try {
-                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=1h&limit=100`);
+                        // [تعديل النظام 2]: استخدام الفريم الزمني المحدد في الـ API
+                        const klineRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${selectedTF}&limit=100`);
                         const klines = await klineRes.json();
                         
                         const closes = klines.map(k => parseFloat(k[4])); const volumes = klines.map(k => parseFloat(k[5]));
@@ -1060,7 +1081,7 @@
                         }
                     } catch (err) { console.error(`Error fetching ${coin.symbol}`, err); }
                     
-                    await new Promise(r => setTimeout(r, 250)); 
+                    await new Promise(r => setTimeout(r, 250)); // Anti-ban delay
                 }
 
                 statusArea.classList.remove('flex'); statusArea.classList.add('hidden');
@@ -1068,7 +1089,8 @@
                 
                 if (explosionCandidates.length === 0) {
                     statusBadge.innerHTML = '<span class="text-gray-400">السوق هادئ جداً</span>';
-                    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 bg-gray-950 rounded-xl border border-gray-800 font-bold text-xs border-dashed">السوق هادئ جداً أو متذبذب حالياً على إطار 1 ساعة، لا توجد عملات تتطابق مع شروط الانفجار الصارمة خلال 1-3 أيام القادمة. جرب لاحقاً.</div>';
+                    // [تحديث النظام 2]: نص رسالة الفشل يعرض الفريم الحالي
+                    grid.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 bg-gray-950 rounded-xl border border-gray-800 font-bold text-xs border-dashed">السوق هادئ جداً أو متذبذب حالياً على إطار ${selectedTF.toUpperCase()}، لا توجد عملات تتطابق مع شروط الانفجار الصارمة. جرب فريماً آخر أو حاول لاحقاً.</div>`;
                 } else {
                     statusBadge.innerHTML = `<span class="text-brand-green">تم رصد ${explosionCandidates.length} فرصة 🔥</span>`;
                     explosionCandidates.sort((a, b) => b.score - a.score);
