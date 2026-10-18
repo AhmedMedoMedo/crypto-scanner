@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Production build outputs
+dist/
+build/
+
+# Build caches
+tsconfig.tsbuildinfo
+bun.lock
+.vite/
+
+# Secret credentials (Protected from GitHub Push Rejection)
+serviceAccountKey.json
+backend/serviceAccountKey.json
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*

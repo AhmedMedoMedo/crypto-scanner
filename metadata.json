@@ -1,0 +1,5 @@
+{
+  "name": "Momentum Crypto Scanner",
+  "description": "منظومة مسح ومراقبة سوق العملات الرقمية بالذكاء الاصطناعي ورادار الانفجارات السعرية اللحظية",
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
