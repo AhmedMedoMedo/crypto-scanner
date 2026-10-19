@@ -197,31 +197,65 @@ const evaluateTf = (
   };
 };
 
+let cachedMatrixData: MarketHealthData | null = null;
+
+const safeFetchKlines = async (tf: string): Promise<KlinePoint[]> => {
+  const urls = [
+    `https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=${tf}&limit=100`,
+    `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${tf}&limit=100`,
+  ];
+  for (const url of urls) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const raw = await res.json();
+        if (Array.isArray(raw) && raw.length > 0) {
+          return parseKlines(raw);
+        }
+      }
+    } catch {
+      // Try next endpoint or return []
+    }
+  }
+  return [];
+};
+
 export const fetchLiveMarketMatrix = async (): Promise<MarketHealthData | null> => {
+  // 1. Try local backend server route via proxy (ultra-fast, zero CORS, zero network failure)
   try {
-    const [res1m, res5m, res15m, res1h, res4h] = await Promise.all([
-      fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=100'),
-      fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=5m&limit=100'),
-      fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=100'),
-      fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=100'),
-      fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=100'),
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch('/api/market-matrix', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.score === 'number' && data.matrix && Object.keys(data.matrix).length > 0) {
+        cachedMatrixData = data;
+        return data;
+      }
+    }
+  } catch {
+    // Proceed gracefully to direct browser fetch
+  }
+
+  // 2. Direct browser fetch with safe per-timeframe fallback (never throws TypeError)
+  try {
+    const [klines1m, klines5m, klines15m, klines1h, klines4h] = await Promise.all([
+      safeFetchKlines('1m'),
+      safeFetchKlines('5m'),
+      safeFetchKlines('15m'),
+      safeFetchKlines('1h'),
+      safeFetchKlines('4h'),
     ]);
 
-    if (!res1m.ok || !res5m.ok || !res15m.ok) return null;
-
-    const [data1m, data5m, data15m, data1h, data4h] = await Promise.all([
-      res1m.json(),
-      res5m.json(),
-      res15m.json(),
-      res1h.ok ? res1h.json() : [],
-      res4h.ok ? res4h.json() : [],
-    ]);
-
-    const klines1m = parseKlines(data1m);
-    const klines5m = parseKlines(data5m);
-    const klines15m = parseKlines(data15m);
-    const klines1h = parseKlines(data1h);
-    const klines4h = parseKlines(data4h);
+    // If completely offline and no data received, return cached data if available
+    if (klines1m.length === 0 && klines5m.length === 0 && klines15m.length === 0) {
+      if (cachedMatrixData) return cachedMatrixData;
+      return null;
+    }
 
     // Evaluate Micro Execution Timeframes
     const score1m = evaluateTf('1m', klines1m, 'نبض الزخم اللحظي (1m)');
@@ -310,7 +344,7 @@ export const fetchLiveMarketMatrix = async (): Promise<MarketHealthData | null> 
         '⚠️ تباين الأطر الزمنية: ارتداد لحظي عكس اتجاه 4h، اكتفِ بأهداف سريعة وحرك وقف الخسارة فوراً لحجز الأرباح.';
     }
 
-    return {
+    const result: MarketHealthData = {
       score: compositeScore,
       status,
       matrix: {
@@ -337,8 +371,10 @@ export const fetchLiveMarketMatrix = async (): Promise<MarketHealthData | null> 
           : '+2.5% - +4.0%',
       log: [{ score: compositeScore, time: Date.now() }],
     };
-  } catch (e) {
-    console.error('Error fetching live 5-timeframe market matrix:', e);
-    return null;
+
+    cachedMatrixData = result;
+    return result;
+  } catch {
+    return cachedMatrixData;
   }
 };

@@ -85,10 +85,19 @@ export interface MarketHealthData {
 }
 
 export interface ExplosionCandidate {
+  rank?: number;
   symbol: string;
   price: number;
   score: number;
   reasons: string[];
   bbw: string;
   target: string;
+  tradeType?: 'SCALP' | 'SWING_1_2_DAYS';
+  holdingPeriod?: string;
+  slPrice?: number;
+  slPercent?: string;
+  riskReward?: string;
+  volSpikeRatio?: string;
+  rsiValue?: number;
+  trendDirection?: 'strong_up' | 'breakout' | 'pullback';
 }

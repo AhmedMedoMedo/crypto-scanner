@@ -71,8 +71,31 @@ process.on('SIGINT', () => {
 
 const BACKEND_PORT = process.env.BACKEND_PORT || 10000;
 
+let latestMarketMatrixData = null;
+
 const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+    }
+
+    if (req.url === '/api/market-matrix' || req.url === '/market-matrix') {
+        res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+        res.end(JSON.stringify(latestMarketMatrixData || {
+            score: 55,
+            status: 'neutral',
+            alignment: 'partial',
+            recommendation: 'جاري فحص ومزامنة مصفوفة الأطر الخمسة...',
+            matrix: {}
+        }));
+        return;
+    }
+
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
 });
@@ -353,6 +376,24 @@ const analyzeMarketHealth = async () => {
             if (marketScoreLog.length > 6) marketScoreLog = marketScoreLog.slice(0, 6);
             currentMarketScore = compositeScore;
         }
+
+        latestMarketMatrixData = {
+            score: compositeScore,
+            status: globalMarketStatus,
+            log: marketScoreLog,
+            matrix: matrixPayload,
+            macroScore,
+            microScore,
+            macroStatus,
+            microStatus,
+            macroMicroSynergy,
+            synergyLabel,
+            alignment,
+            scalpOpportunity,
+            recommendation,
+            targetProjection: macroMicroSynergy === 'PERFECT_5_TF' ? '+5.0% - +9.0%' : (scalpOpportunity ? '+4.0% - +6.5%' : '+2.5% - +4.0%'),
+            lastUpdate: Date.now()
+        };
 
         if (systemRef) {
             await systemRef.set({

@@ -200,22 +200,26 @@ export const App: React.FC = () => {
     let isMounted = true;
 
     const loadLiveMatrix = async () => {
-      const liveData = await fetchLiveMarketMatrix();
-      if (!isMounted || !liveData) return;
-      setMarketHealth((prev) => {
-        const combinedLogs =
-          prev?.log && prev.log.length > 0
-            ? prev.log[0].score !== liveData.score
-              ? [{ score: liveData.score, time: Date.now() }, ...prev.log].slice(0, 6)
-              : prev.log
-            : liveData.log;
+      try {
+        const liveData = await fetchLiveMarketMatrix();
+        if (!isMounted || !liveData) return;
+        setMarketHealth((prev) => {
+          const combinedLogs =
+            prev?.log && prev.log.length > 0
+              ? prev.log[0].score !== liveData.score
+                ? [{ score: liveData.score, time: Date.now() }, ...prev.log].slice(0, 6)
+                : prev.log
+              : liveData.log;
 
-        return {
-          ...prev,
-          ...liveData,
-          log: combinedLogs,
-        };
-      });
+          return {
+            ...prev,
+            ...liveData,
+            log: combinedLogs,
+          };
+        });
+      } catch {
+        // Silently preserve state
+      }
     };
 
     loadLiveMatrix();
@@ -425,7 +429,7 @@ export const App: React.FC = () => {
             </section>
           </div>
         ) : (
-          <ExplosionRadar />
+          <ExplosionRadar onAddTrade={handleAddTrade} />
         )}
       </main>
     </div>
