@@ -195,45 +195,189 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
     } catch (e) { console.error("Error:", e.message); }
 };
 
+const evaluateTfData = (tfName, klines, label) => {
+    if (!klines || klines.length === 0) return { tf: tfName, score: 50, status: 'neutral', rsi: 50, trend: 'flat', volRatio: 1, label };
+    const closes = klines.map(k => parseFloat(k[4]));
+    const volumes = klines.map(k => parseFloat(k[5]));
+    const currentPrice = closes[closes.length - 1];
+    const closedCloses = closes.slice(0, -1);
+    const closedVolumes = volumes.slice(0, -1);
+
+    const rsi = Math.round(calcRSI(closedCloses, 14) || 50);
+    const volSma = calcSMA(closedVolumes, 20) || 1;
+    const currentVol = closedVolumes[closedVolumes.length - 1] || 1;
+    const volRatio = Number((currentVol / volSma).toFixed(2));
+
+    let score = 30;
+    let trend = 'flat';
+
+    if (tfName === '4h') {
+        const ema50 = calcEMA(closedCloses, 50);
+        const ema200 = calcEMA(closedCloses, Math.min(200, closedCloses.length - 1));
+        if (ema200 && currentPrice > ema200) { score += 25; trend = 'up'; }
+        else if (ema200 && currentPrice < ema200 * 0.98) { score -= 20; trend = 'down'; }
+        if (ema50 && ema200 && ema50 > ema200) { score += 20; trend = 'up'; }
+        if (ema50 && currentPrice > ema50) score += 15;
+        if (rsi >= 50 && rsi <= 66) score += 20;
+        else if (rsi > 66 && rsi <= 76) score += 12;
+        else if (rsi < 40) score -= 15;
+        if (volRatio >= 1.2) score += 10;
+    } else if (tfName === '1h') {
+        const ema20 = calcEMA(closedCloses, 20) || currentPrice;
+        const ema50 = calcEMA(closedCloses, Math.min(50, closedCloses.length - 1)) || currentPrice;
+        if (currentPrice > ema50 && ema20 > ema50) { trend = 'up'; score += 40; }
+        else if (currentPrice < ema50 && ema20 < ema50) { trend = 'down'; score -= 20; }
+        else { trend = 'flat'; score += 10; }
+        if (rsi >= 48 && rsi <= 68) score += 25;
+        else if (rsi > 68 && rsi <= 78) score += 12;
+        else if (rsi < 42) score -= 15;
+        if (volRatio >= 1.3) score += 15;
+        else if (volRatio >= 0.9) score += 8;
+    } else {
+        const ema9 = calcEMA(closedCloses, 9) || currentPrice;
+        const ema21 = calcEMA(closedCloses, 21) || currentPrice;
+        const ema50 = calcEMA(closedCloses, Math.min(50, closedCloses.length - 1)) || currentPrice;
+        if (currentPrice > ema9 && ema9 > ema21) {
+            trend = 'up'; score += 35;
+            if (currentPrice > ema50) score += 10;
+        } else if (currentPrice < ema9 && ema9 < ema21) {
+            trend = 'down'; score -= 15;
+        } else {
+            trend = 'flat'; score += 10;
+        }
+        if (rsi >= 50 && rsi <= 68) score += 25;
+        else if (rsi > 68 && rsi <= 78) score += 15;
+        else if (rsi > 78) score -= 10;
+        else if (rsi >= 40 && rsi < 50) score += 5;
+        else score -= 15;
+        if (volRatio >= 1.5) score += 15;
+        else if (volRatio >= 1.0) score += 8;
+    }
+
+    score = Math.max(5, Math.min(100, Math.round(score)));
+    let status = 'neutral';
+    if (score >= 65) status = 'bullish';
+    else if (score < 45) status = 'bearish';
+
+    return { tf: tfName, score, status, rsi, trend, volRatio, label };
+};
+
 const analyzeMarketHealth = async () => {
     if (isCheckingMarket) return;
     isCheckingMarket = true;
     try {
-        const [res15m, res4h] = await Promise.all([
-            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=250'),
-            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=250')
+        const [res1m, res5m, res15m, res1h, res4h] = await Promise.all([
+            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=100'),
+            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=5m&limit=100'),
+            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=100'),
+            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=100'),
+            fetch('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=100')
         ]);
-        if(!res15m.ok || !res4h.ok) return;
-        const klines15m = await res15m.json(); const klines4h = await res4h.json();
-        const closes15m = klines15m.map(k => parseFloat(k[4])); const volumes15m = klines15m.map(k => parseFloat(k[5])); const opens15m = klines15m.map(k => parseFloat(k[1]));
-        const closes4h = klines4h.map(k => parseFloat(k[4]));
-        const btcCurrentPrice = closes15m[closes15m.length - 1];
-        
-        const ema50_4h = calcEMA(closes4h, 50); const ema200_4h = calcEMA(closes4h, 200);
-        const ema20_15m = calcEMA(closes15m, 20); const ema50_15m = calcEMA(closes15m, 50); const rsi_15m = calcRSI(closes15m, 14); const volSMA_15m = calcSMA(volumes15m, 20);
-        const currentVol = volumes15m[volumes15m.length - 1]; const prevVol = volumes15m[volumes15m.length - 2];
-        
-        let score = 0;
-        if (ema200_4h && ema50_15m) {
-            let macroScore = 0; if (btcCurrentPrice > ema200_4h) macroScore += 15; else if (btcCurrentPrice > ema200_4h * 0.98) macroScore += 5; if (ema50_4h > ema200_4h) macroScore += 10; score += macroScore;
-            let momentumScore = 0; let priceDist20 = (btcCurrentPrice - ema20_15m) / ema20_15m * 100; if (priceDist20 > 0.5) momentumScore += 15; else if (priceDist20 > 0) momentumScore += 10; else if (priceDist20 > -0.5) momentumScore += 5; if (btcCurrentPrice > ema50_15m) momentumScore += 10; if (ema20_15m > ema50_15m) momentumScore += 10; score += momentumScore;
-            let rsiScore = 0; if (rsi_15m >= 50 && rsi_15m <= 65) rsiScore = 25; else if (rsi_15m > 65 && rsi_15m <= 75) rsiScore = 15; else if (rsi_15m > 75) rsiScore = 5; else if (rsi_15m >= 40 && rsi_15m < 50) rsiScore = 10; else rsiScore = 0; score += rsiScore;
-            if (volSMA_15m) { let volRatio = Math.max(currentVol, prevVol) / volSMA_15m; if (volRatio > 1.5) score += 15; else if (volRatio > 1.0) score += 10; else if (volRatio > 0.7) score += 5; }
-            let flashDumpPenalty = 0; for(let i = 1; i <= 3; i++) { if (opens15m.length - i >= 0) { let kOpen = opens15m[opens15m.length - i]; let kClose = closes15m[closes15m.length - i]; let dropPercent = ((kOpen - kClose) / kOpen) * 100; if (dropPercent > 1.0) { flashDumpPenalty = 40; break; } } }
-            score -= flashDumpPenalty; if (score < 0) score = 0; if (score > 100) score = 100;
-        } else { score = 50; }
+        if(!res1m.ok || !res5m.ok || !res15m.ok) return;
 
-        if (score >= 75) globalMarketStatus = 'bullish'; else if (score >= 55) globalMarketStatus = 'neutral'; else globalMarketStatus = 'bearish';
+        const [klines1m, klines5m, klines15m, klines1h, klines4h] = await Promise.all([
+            res1m.json(), res5m.json(), res15m.json(), res1h.ok ? res1h.json() : [], res4h.ok ? res4h.json() : []
+        ]);
 
-        if (currentMarketScore !== score) {
-            marketScoreLog.unshift({ score: score, time: Date.now() });
-            if (marketScoreLog.length > 6) marketScoreLog = marketScoreLog.slice(0, 6);
-            currentMarketScore = score;
-            if (systemRef) {
-                await systemRef.set({ score: score, status: globalMarketStatus, log: marketScoreLog, lastUpdate: Date.now() });
-            }
+        const tf1m = evaluateTfData('1m', klines1m, 'نبض الزخم اللحظي (1m)');
+        const tf5m = evaluateTfData('5m', klines5m, 'تأكيد مسار الحركة (5m)');
+        const tf15m = evaluateTfData('15m', klines15m, 'قاعدة الهدف 4%+ (15m)');
+        const tf1h = evaluateTfData('1h', klines1h, 'المسار اليومي والزخم (1h)');
+        const tf4h = evaluateTfData('4h', klines4h, 'الاتجاه الماكرو المؤسسي (4h)');
+
+        const macroScore = Math.round((tf4h.score * 0.55) + (tf1h.score * 0.45));
+        const microScore = Math.round((tf15m.score * 0.40) + (tf5m.score * 0.35) + (tf1m.score * 0.25));
+
+        let macroStatus = 'neutral';
+        if (macroScore >= 65) macroStatus = 'bullish';
+        else if (macroScore < 48) macroStatus = 'bearish';
+
+        let microStatus = 'neutral';
+        if (microScore >= 65) microStatus = 'bullish';
+        else if (microScore < 48) microStatus = 'bearish';
+
+        let compositeScore = Math.round((macroScore * 0.4) + (microScore * 0.6));
+        compositeScore = Math.max(5, Math.min(100, compositeScore));
+
+        const all5Bullish = tf4h.status === 'bullish' && tf1h.status === 'bullish' && tf15m.status === 'bullish' && tf5m.status === 'bullish' && tf1m.status === 'bullish';
+        const all5Bearish = tf4h.status === 'bearish' && tf1h.status === 'bearish' && tf15m.status === 'bearish' && tf5m.status === 'bearish' && tf1m.status === 'bearish';
+
+        let macroMicroSynergy = 'MIXED_DIVERGENCE';
+        let synergyLabel = 'تباين بين الماكرو والمايكرو: تذبذب مع ارتدادات محدودة';
+
+        if (all5Bullish || (macroStatus === 'bullish' && microStatus === 'bullish' && compositeScore >= 75)) {
+            macroMicroSynergy = 'PERFECT_5_TF';
+            synergyLabel = '🔥🔥 توافق خماسي مثالي (4h + 1h + 15m + 5m + 1m): أقصى درجات أمان وانفجار صفقات +4%';
+        } else if (macroStatus === 'bullish' && microStatus !== 'bearish') {
+            macroMicroSynergy = 'STRONG_TREND';
+            synergyLabel = '🚀 الاتجاه العام صاعد (4h/1h): السكالبينج اللحظي مدعوم بقوة مؤسسية';
+        } else if (macroStatus === 'bearish' && microStatus === 'bullish') {
+            macroMicroSynergy = 'MIXED_DIVERGENCE';
+            synergyLabel = '⚠️ تحذير فخ صعودي (Bull Trap): الماكرو (4h) هابط بينما المايكرو صاعد، التزم بوقف الخسارة بدقة';
+        } else if (macroStatus === 'bearish' && microStatus === 'bearish') {
+            macroMicroSynergy = 'BEARISH_DANGER';
+            synergyLabel = '🔴 خطر شامل (سلبية الماكرو والمايكرو): الحماية الآلية نشطة لمنع الخسائر';
         }
-    } catch (e) { } finally { isCheckingMarket = false; }
+
+        let alignment = 'partial';
+        if (all5Bullish) alignment = 'full';
+        else if (all5Bearish || macroMicroSynergy === 'MIXED_DIVERGENCE') alignment = 'divergent';
+
+        const scalpOpportunity = (macroStatus === 'bullish' && microScore >= 60) || (microStatus === 'bullish' && compositeScore >= 65);
+
+        let status = 'neutral';
+        if (compositeScore >= 70 && macroStatus !== 'bearish') status = 'bullish';
+        else if (compositeScore < 48 || macroStatus === 'bearish') status = 'bearish';
+
+        globalMarketStatus = status;
+
+        let recommendation = synergyLabel;
+        if (macroMicroSynergy === 'PERFECT_5_TF') {
+            recommendation = '🔥🔥 بيئة تداول أسطورية: صعود الحيتان (4h & 1h) يتطابق مع زخم السكالبينج (15m & 5m & 1m)! اقتنص صفقات +4% بثقة.';
+        } else if (macroMicroSynergy === 'STRONG_TREND') {
+            recommendation = '⚡ اتجاه ماكرو قوي: استغل موجات 1m و 5m السريعة للدخول مع اتجاه اليوم وساعة الصفر، الأهداف تمتد لـ 4% فأكثر.';
+        } else if (macroMicroSynergy === 'MIXED_DIVERGENCE') {
+            recommendation = '⚠️ تباين الأطر الزمنية: ارتداد لحظي عكس اتجاه 4h، اكتفِ بأهداف سريعة وحرك وقف الخسارة فوراً لحجز الأرباح.';
+        }
+
+        const matrixPayload = {
+            '1m': tf1m,
+            '5m': tf5m,
+            '15m': tf15m,
+            '1h': tf1h,
+            '4h': tf4h
+        };
+
+        if (currentMarketScore !== compositeScore) {
+            marketScoreLog.unshift({ score: compositeScore, time: Date.now() });
+            if (marketScoreLog.length > 6) marketScoreLog = marketScoreLog.slice(0, 6);
+            currentMarketScore = compositeScore;
+        }
+
+        if (systemRef) {
+            await systemRef.set({
+                score: compositeScore,
+                status: globalMarketStatus,
+                log: marketScoreLog,
+                matrix: matrixPayload,
+                macroScore,
+                microScore,
+                macroStatus,
+                microStatus,
+                macroMicroSynergy,
+                synergyLabel,
+                alignment,
+                scalpOpportunity,
+                recommendation,
+                targetProjection: macroMicroSynergy === 'PERFECT_5_TF' ? '+5.0% - +9.0%' : (scalpOpportunity ? '+4.0% - +6.5%' : '+2.5% - +4.0%'),
+                lastUpdate: Date.now()
+            });
+        }
+    } catch (e) {
+        console.error("Error analyzing market health:", e.message);
+    } finally {
+        isCheckingMarket = false;
+    }
 };
 
 // [تحسين 3]: الذاكرة المحلية لمعالجة الملاحقة دون إرهاق قاعدة البيانات

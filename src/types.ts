@@ -51,10 +51,37 @@ export interface MarketScoreLogEntry {
   score: number;
 }
 
+export interface TimeframeMatrixScore {
+  tf: '1m' | '5m' | '15m' | '1h' | '4h' | string;
+  score: number;
+  status: 'bullish' | 'neutral' | 'bearish';
+  rsi: number;
+  trend: 'up' | 'down' | 'flat';
+  volRatio: number;
+  label: string;
+}
+
 export interface MarketHealthData {
   score: number;
   status?: string;
   log?: MarketScoreLogEntry[];
+  matrix?: {
+    '1m'?: TimeframeMatrixScore;
+    '5m'?: TimeframeMatrixScore;
+    '15m'?: TimeframeMatrixScore;
+    '1h'?: TimeframeMatrixScore;
+    '4h'?: TimeframeMatrixScore;
+  };
+  macroScore?: number;
+  microScore?: number;
+  macroStatus?: 'bullish' | 'neutral' | 'bearish';
+  microStatus?: 'bullish' | 'neutral' | 'bearish';
+  macroMicroSynergy?: 'PERFECT_5_TF' | 'STRONG_TREND' | 'MIXED_DIVERGENCE' | 'BEARISH_DANGER';
+  synergyLabel?: string;
+  alignment?: 'full' | 'partial' | 'divergent';
+  scalpOpportunity?: boolean;
+  recommendation?: string;
+  targetProjection?: string;
 }
 
 export interface ExplosionCandidate {

@@ -20,6 +20,7 @@ import { ManualTradeForm } from './components/ManualTradeForm';
 import { ActiveTradesGrid } from './components/ActiveTradesGrid';
 import { ClosedTradesList } from './components/ClosedTradesList';
 import { ExplosionRadar } from './components/ExplosionRadar';
+import { fetchLiveMarketMatrix } from './utils/marketMatrixCalculator';
 
 const defaultSettings: ScannerSettings = {
   tf: '15m',
@@ -158,6 +159,7 @@ export const App: React.FC = () => {
               breakout: s.strats?.breakout ?? prev.strats.breakout,
               sniper: s.strats?.sniper ?? prev.strats.sniper,
               bbrsi: s.strats?.bbrsi ?? prev.strats.bbrsi,
+              turboScalp: s.strats?.turboScalp ?? prev.strats.turboScalp,
             },
           }));
         }
@@ -178,7 +180,11 @@ export const App: React.FC = () => {
         if (docSnap.exists()) {
           setIsConnected(true);
           const data = docSnap.data() as MarketHealthData;
-          setMarketHealth(data);
+          setMarketHealth((prev) => ({
+            ...prev,
+            ...data,
+            matrix: data.matrix || prev?.matrix,
+          }));
         }
       },
       (error) => {
@@ -187,6 +193,37 @@ export const App: React.FC = () => {
     );
 
     return () => unsubscribe();
+  }, []);
+
+  // Live Multi-Timeframe AI Market Matrix (1m, 5m, 15m)
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLiveMatrix = async () => {
+      const liveData = await fetchLiveMarketMatrix();
+      if (!isMounted || !liveData) return;
+      setMarketHealth((prev) => {
+        const combinedLogs =
+          prev?.log && prev.log.length > 0
+            ? prev.log[0].score !== liveData.score
+              ? [{ score: liveData.score, time: Date.now() }, ...prev.log].slice(0, 6)
+              : prev.log
+            : liveData.log;
+
+        return {
+          ...prev,
+          ...liveData,
+          log: combinedLogs,
+        };
+      });
+    };
+
+    loadLiveMatrix();
+    const interval = setInterval(loadLiveMatrix, 10000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Sync Trades from Firestore
