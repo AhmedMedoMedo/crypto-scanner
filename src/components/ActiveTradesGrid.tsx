@@ -59,6 +59,13 @@ export const ActiveTradesGrid: React.FC<ActiveTradesGridProps> = ({
         </span>
       );
     }
+    if (stratName === 'TurboScalp') {
+      return (
+        <span className="badge-turboscalp text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">
+          ⚡ Turbo 4%+
+        </span>
+      );
+    }
     if (stratName === 'Manual') {
       return (
         <span className="bg-gray-800 text-gray-300 border border-gray-600 text-[8px] font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">

@@ -20,7 +20,7 @@ export interface Trade {
   openTime: number;
   closeTime?: number;
   pnl?: number;
-  strategy?: 'Momentum' | 'Breakout' | 'Sniper' | 'BB_RSI' | 'Manual' | string;
+  strategy?: 'Momentum' | 'Breakout' | 'Sniper' | 'BB_RSI' | 'TurboScalp' | 'Manual' | string;
   entryScore?: number;
   liveScore?: number;
   entryBreakdown?: StrategyBreakdown;
@@ -32,6 +32,7 @@ export interface StrategyFlags {
   breakout: boolean;
   sniper: boolean;
   bbrsi?: boolean;
+  turboScalp?: boolean;
 }
 
 export interface ScannerSettings {

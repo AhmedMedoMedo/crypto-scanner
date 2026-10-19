@@ -34,6 +34,7 @@ const defaultSettings: ScannerSettings = {
     breakout: true,
     sniper: true,
     bbrsi: true,
+    turboScalp: true,
   },
 };
 
@@ -232,13 +233,23 @@ export const App: React.FC = () => {
   // Connect to Binance WebSocket for ticker prices
   useEffect(() => {
     let ws: WebSocket | null = null;
-    let reconnectTimeout: ReturnType<typeof setTimeout>;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isDisposed = false;
 
     const connectWs = () => {
+      if (isDisposed) return;
       try {
+        if (ws) {
+          try {
+            ws.close();
+          } catch (e) {}
+          ws = null;
+        }
+
         ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
 
         ws.onmessage = (event) => {
+          if (isDisposed) return;
           try {
             const data = JSON.parse(event.data) as Array<{ s: string; c: string }>;
             if (!Array.isArray(data)) return;
@@ -248,7 +259,7 @@ export const App: React.FC = () => {
               let changed = false;
               for (const ticker of data) {
                 const price = parseFloat(ticker.c);
-                if (updated[ticker.s] !== price) {
+                if (price > 0 && updated[ticker.s] !== price) {
                   updated[ticker.s] = price;
                   changed = true;
                 }
@@ -261,22 +272,35 @@ export const App: React.FC = () => {
         };
 
         ws.onerror = () => {
-          if (ws) ws.close();
+          if (ws) {
+            try {
+              ws.close();
+            } catch (e) {}
+          }
         };
 
         ws.onclose = () => {
-          reconnectTimeout = setTimeout(connectWs, 3000);
+          if (!isDisposed) {
+            reconnectTimeout = setTimeout(connectWs, 3000);
+          }
         };
       } catch (err) {
-        reconnectTimeout = setTimeout(connectWs, 3000);
+        if (!isDisposed) {
+          reconnectTimeout = setTimeout(connectWs, 3000);
+        }
       }
     };
 
     connectWs();
 
     return () => {
-      clearTimeout(reconnectTimeout);
-      if (ws) ws.close();
+      isDisposed = true;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (ws) {
+        try {
+          ws.close();
+        } catch (e) {}
+      }
     };
   }, []);
 
@@ -295,8 +319,10 @@ export const App: React.FC = () => {
   let totalFloatingPnl = 0;
   openTrades.forEach((t) => {
     const currentPrice = t.currentPrice || t.entryPrice;
-    const pnl = ((currentPrice - t.entryPrice) / t.entryPrice) * 100;
-    totalFloatingPnl += pnl;
+    if (t.entryPrice && t.entryPrice > 0) {
+      const pnl = ((currentPrice - t.entryPrice) / t.entryPrice) * 100;
+      totalFloatingPnl += pnl;
+    }
   });
 
   return (

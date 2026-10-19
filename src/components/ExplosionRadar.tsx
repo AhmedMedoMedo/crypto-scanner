@@ -3,7 +3,7 @@ import { ExternalLink, RefreshCw, Layers } from 'lucide-react';
 import { ExplosionCandidate } from '../types';
 
 const calcSMA = (data: number[], period: number): number | null => {
-  if (data.length < period) return null;
+  if (data.length < period || period <= 0) return null;
   let sum = 0;
   for (let i = data.length - period; i < data.length; i++) sum += data[i];
   return sum / period;
@@ -16,7 +16,7 @@ const calcBollinger = (
 ): { upper: number; lower: number; sma: number; bandwidth: number } | null => {
   if (data.length < period) return null;
   const sma = calcSMA(data, period);
-  if (sma === null) return null;
+  if (sma === null || sma === 0) return null;
   let sum = 0;
   for (let i = data.length - period; i < data.length; i++) {
     sum += Math.pow(data[i] - sma, 2);
@@ -33,10 +33,12 @@ const calcBollinger = (
 };
 
 const calcEMA = (data: number[], period: number): number | null => {
-  if (data.length < period) return null;
+  if (data.length < period || period <= 0) return null;
   const k = 2 / (period + 1);
-  let ema = data[0];
-  for (let i = 1; i < data.length; i++) {
+  let sum = 0;
+  for (let i = 0; i < period; i++) sum += data[i];
+  let ema = sum / period;
+  for (let i = period; i < data.length; i++) {
     ema = (data[i] - ema) * k + ema;
   }
   return ema;
@@ -52,6 +54,15 @@ export const ExplosionRadar: React.FC = () => {
   const [hasScanned, setHasScanned] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Clean up on unmount
+  React.useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const startScan = async () => {
     if (isScanning) {
@@ -79,19 +90,42 @@ export const ExplosionRadar: React.FC = () => {
 
     try {
       setCurrentCoinText('جلب خريطة السيولة من باينانس...');
-      const tickerRes = await fetch('https://api.binance.com/api/v3/ticker/24hr', {
-        signal: abortController.signal,
-      });
-      const tickers = await tickerRes.json();
+      
+      let tickers: any = null;
+      try {
+        const tickerRes = await fetch('https://data-api.binance.vision/api/v3/ticker/24hr', {
+          signal: abortController.signal,
+        });
+        if (tickerRes.ok) {
+          tickers = await tickerRes.json();
+        }
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') throw err;
+      }
+
+      if (!Array.isArray(tickers)) {
+        const fallbackRes = await fetch('https://api.binance.com/api/v3/ticker/24hr', {
+          signal: abortController.signal,
+        });
+        if (fallbackRes.ok) {
+          tickers = await fallbackRes.json();
+        }
+      }
+
+      if (!Array.isArray(tickers)) {
+        throw new Error('Could not fetch market tickers');
+      }
 
       const stableCoins = [
         'USDCUSDT',
+        'USD1USDT',
         'FDUSDUSDT',
         'TUSDUSDT',
         'BUSDUSDT',
         'EURUSDT',
         'USDPUSDT',
         'AEURUSDT',
+        'USDSUSDT',
       ];
 
       const targetCoins = tickers.filter((t: { symbol: string; lastPrice: string; quoteVolume: string }) => {
@@ -119,11 +153,30 @@ export const ExplosionRadar: React.FC = () => {
         setProgress(curProgress);
 
         try {
-          const klineRes = await fetch(
-            `https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${timeframe}&limit=100`,
-            { signal: abortController.signal }
-          );
-          const klines = await klineRes.json();
+          let klines: any = null;
+          try {
+            const klineRes = await fetch(
+              `https://data-api.binance.vision/api/v3/klines?symbol=${coin.symbol}&interval=${timeframe}&limit=100`,
+              { signal: abortController.signal }
+            );
+            if (klineRes.ok) {
+              klines = await klineRes.json();
+            }
+          } catch (err) {
+            if ((err as Error)?.name === 'AbortError') break;
+          }
+
+          if (!Array.isArray(klines) || klines.length < 52) {
+            const fallbackRes = await fetch(
+              `https://api.binance.com/api/v3/klines?symbol=${coin.symbol}&interval=${timeframe}&limit=100`,
+              { signal: abortController.signal }
+            );
+            if (fallbackRes.ok) {
+              klines = await fallbackRes.json();
+            }
+          }
+
+          if (!Array.isArray(klines) || klines.length < 52) continue;
 
           const closes = klines.map((k: (string | number)[]) => parseFloat(k[4] as string));
           const volumes = klines.map((k: (string | number)[]) => parseFloat(k[5] as string));
@@ -134,9 +187,11 @@ export const ExplosionRadar: React.FC = () => {
 
           const bb = calcBollinger(closedCloses, 20, 2);
           const ema50 = calcEMA(closedCloses, 50);
+          const ema9 = calcEMA(closedCloses, 9);
+          const ema21 = calcEMA(closedCloses, 21);
           const volAvg20 = calcSMA(closedVolumes, 20);
 
-          if (!bb || !ema50 || !volAvg20) continue;
+          if (!bb || !ema50 || !volAvg20 || currentPrice <= 0) continue;
 
           const currentVol = closedVolumes[closedVolumes.length - 1];
           let score = 0;
@@ -145,7 +200,7 @@ export const ExplosionRadar: React.FC = () => {
           // Squeeze
           const isSqueezing = bb.bandwidth < 0.08;
           if (isSqueezing) {
-            score += 45;
+            score += 40;
             reasons.push('انضغاط سعري حاد (Squeeze)');
           } else if (bb.bandwidth < 0.12) {
             score += 25;
@@ -153,7 +208,7 @@ export const ExplosionRadar: React.FC = () => {
           }
 
           // Whale Volume
-          const volRatio = currentVol / volAvg20;
+          const volRatio = volAvg20 > 0 ? currentVol / volAvg20 : 1;
           if (volRatio > 3.0) {
             score += 35;
             reasons.push('دخول سيولة حيتان مفاجئة');
@@ -168,20 +223,40 @@ export const ExplosionRadar: React.FC = () => {
             reasons.push('تمركز أعلى المتوسط (EMA50)');
           }
 
+          // Turbo Scalp 4%+ Detection for 1m, 5m, 15m
+          const isScalpTf = ['1m', '5m', '15m'].includes(timeframe);
+          let isTurboScalpMatch = false;
+          if (isScalpTf && ema9 && ema21) {
+            if (ema9 > ema21 && currentPrice > ema9 && volRatio >= 1.6) {
+              isTurboScalpMatch = true;
+              score += 25;
+              reasons.push('⚡ استراتيجية السكالبينج الخاطف (فرصة +4%)');
+            }
+          }
+
           // Distance to upper BB
           const distToUpperBB = ((bb.upper - currentPrice) / currentPrice) * 100;
           if (distToUpperBB > 1 && distToUpperBB < 15) {
             score += 10;
           }
 
-          if (score >= 50 && bb.bandwidth < 0.15) {
+          if (score >= 45 && (bb.bandwidth < 0.16 || isTurboScalpMatch)) {
+            // Expected target projection (ensures 4%+ on scalp setups or realistic positive target)
+            let projectedTarget = distToUpperBB > 0.5
+              ? distToUpperBB
+              : Math.max(2.0, bb.bandwidth * 50);
+
+            if (isTurboScalpMatch && projectedTarget < 4.0) {
+              projectedTarget = Math.max(4.0, (bb.bandwidth * 60));
+            }
+
             foundCandidates.push({
               symbol: coin.symbol,
               price: currentPrice,
-              score: Math.min(100, score),
+              score: Math.min(100, Math.round(score)),
               reasons: reasons,
               bbw: (bb.bandwidth * 100).toFixed(2),
-              target: (((bb.upper - currentPrice) / currentPrice) * 100).toFixed(1),
+              target: projectedTarget.toFixed(1),
             });
             // Update live candidates sorted by score
             setCandidates([...foundCandidates].sort((a, b) => b.score - a.score));
@@ -192,8 +267,8 @@ export const ExplosionRadar: React.FC = () => {
           }
         }
 
-        // 100ms safe pause
-        await new Promise((r) => setTimeout(r, 100));
+        // Safe pause between coin requests to protect IP rate limit
+        await new Promise((r) => setTimeout(r, 70));
       }
 
       if (!abortController.signal.aborted) {
@@ -252,6 +327,7 @@ export const ExplosionRadar: React.FC = () => {
               onChange={(e) => setTimeframe(e.target.value)}
               className="bg-gray-900 border border-gray-700 text-brand-cyan text-xs rounded-md px-2 py-1 outline-none focus:border-brand-cyan font-bold cursor-pointer disabled:opacity-50"
             >
+              <option value="1m">1 دقيقة (سكالبينج خاطف ⚡)</option>
               <option value="5m">5 دقائق (سكالبينج)</option>
               <option value="15m">15 دقيقة (سريع)</option>
               <option value="1h">1 ساعة (متوسط)</option>

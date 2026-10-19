@@ -7,6 +7,7 @@
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 3000",
+    "start": "node backend/server.js",
     "start:backend": "node backend/server.js"
   },
   "dependencies": {

@@ -30,17 +30,26 @@ if (!serviceAccount) {
 }
 
 if (!serviceAccount) {
-  console.error('❌ Error: No service account credentials found! Set SERVICE_ACCOUNT_KEY or supply serviceAccountKey.json.');
+  console.log('ℹ️ Backend running in Standalone Mode (Set SERVICE_ACCOUNT_KEY or supply serviceAccountKey.json to sync with Firestore).');
 } else {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
 }
 
-const db = admin.firestore();
-const tradesRef = db.collection('momentum_trades_v1');
-const systemRef = db.collection('momentum_system_logs').doc('market_health');
-const settingsRef = db.collection('momentum_system_logs').doc('scanner_settings');
+let db = null;
+try {
+  const apps = (admin && admin.apps) ? admin.apps : [];
+  if (apps.length > 0) {
+    db = admin.firestore();
+  }
+} catch (e) {
+  db = null;
+}
+
+const tradesRef = db ? db.collection('momentum_trades_v1') : null;
+const systemRef = db ? db.collection('momentum_system_logs').doc('market_health') : null;
+const settingsRef = db ? db.collection('momentum_system_logs').doc('scanner_settings') : null;
 
 process.on('uncaughtException', (err) => {
     console.error('⚠️ Unhandled Exception:', err.message);
@@ -50,13 +59,33 @@ process.on('unhandledRejection', (reason) => {
     console.error('⚠️ Unhandled Rejection:', reason);
 });
 
+process.on('SIGTERM', () => {
+    console.log('🛑 Received SIGTERM, shutting down cleanly...');
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    console.log('🛑 Received SIGINT, shutting down cleanly...');
+    process.exit(0);
+});
+
 const BACKEND_PORT = process.env.BACKEND_PORT || 10000;
 
-http.createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
-}).listen(BACKEND_PORT, () => {
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.log(`📡 Port ${BACKEND_PORT} already in use. Continuing in scanner mode.`);
+    } else {
+        console.error('Server HTTP error:', err.message);
+    }
+});
+
+server.listen(BACKEND_PORT, () => {
     console.log(`📡 Backend HTTP server running on port ${BACKEND_PORT}`);
 });
 
@@ -70,12 +99,13 @@ const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 
 
 let SETTINGS = { 
     tf: '15m', sl_perc: 0.03, min_tp: 0.05, trail_dist: 0.015, vol_mult: 2.0, cooldown_mins: 15, auto_kill: true, 
-    strats: { momentum: true, breakout: true, sniper: true, bbrsi: true } 
+    strats: { momentum: true, breakout: true, sniper: true, bbrsi: true, turboScalp: true } 
 };
 
 // [تحسين 1]: استخدام onSnapshot بدلاً من جلب الإعدادات كل 5 ثوانٍ
 let lastSettingsString = "";
-settingsRef.onSnapshot((docSnap) => {
+if (settingsRef) {
+  settingsRef.onSnapshot((docSnap) => {
     if (docSnap.exists) {
         SETTINGS = { ...SETTINGS, ...docSnap.data() };
         const currentSettingsString = `${SETTINGS.tf}-${SETTINGS.vol_mult}-${SETTINGS.sl_perc}-${SETTINGS.auto_kill}`;
@@ -84,16 +114,20 @@ settingsRef.onSnapshot((docSnap) => {
             lastSettingsString = currentSettingsString;
         }
     }
-}, err => console.error("Settings Sync Error:", err));
+  }, err => console.error("Settings Sync Error:", err));
+}
 
 // [تحسين 2]: استماع حي للصفقات المفتوحة فقط، بدلاً من جلبها كل 5 ثوانٍ
-tradesRef.where('status', '==', 'open').onSnapshot((snapshot) => {
+if (tradesRef) {
+  tradesRef.where('status', '==', 'open').onSnapshot((snapshot) => {
     let activeTrades = [];
     snapshot.forEach(doc => { activeTrades.push({ docId: doc.id, ...doc.data() }); });
     virtualTrades = activeTrades; // تحديث الذاكرة فوراً عند أي تغيير
-}, err => console.error("Trades Sync Error:", err));
+  }, err => console.error("Trades Sync Error:", err));
+}
 
 const cleanOldTrades = async () => {
+    if (!db || !tradesRef) return;
     try {
         const timeLimit = Date.now() - (24 * 60 * 60 * 1000);
         const snapshot = await tradesRef.where('status', 'in', ['won', 'lost']).get();
@@ -116,12 +150,15 @@ const calculateTradeStrength = (isLive, strategy, price, open, high, low, vol, v
     
     if (strategy === 'BB_RSI') {
         if (rsi < 25) b.rsi = 15; else if (rsi < 30) b.rsi = 12; else if (rsi < 35) b.rsi = 10; else b.rsi = 5;
+    } else if (strategy === 'TurboScalp') {
+        if (rsi >= 50 && rsi <= 68) b.rsi = 15; else if (rsi > 68 && rsi <= 75) b.rsi = 12; else if (rsi >= 45 && rsi < 50) b.rsi = 10; else b.rsi = 5;
     } else {
         if (rsi >= 55 && rsi <= 72) b.rsi = 15; else if (rsi > 72 && rsi <= 80) b.rsi = 12; else if (rsi >= 50 && rsi < 55) b.rsi = 10; else if (rsi > 80) b.rsi = 5; else b.rsi = 2; 
     }
 
     if (strategy === 'Breakout') { b.setup = price > bbUpper ? 15 : (price > bbUpper * 0.99 ? 10 : 5); } 
     else if (strategy === 'BB_RSI') { b.setup = 15; }
+    else if (strategy === 'TurboScalp') { let pDist = Math.abs((price - ema9) / ema9) * 100; b.setup = pDist < 1.5 ? 15 : (pDist < 2.5 ? 12 : 8); }
     else { let pDist = Math.abs((price - ema9) / ema9) * 100; b.setup = pDist < 1 ? 15 : (pDist < 2 ? 10 : 5); }
     
     b.btc = Math.min(15, (btcScore / 100) * 15);
@@ -135,13 +172,17 @@ const calculateTradeStrength = (isLive, strategy, price, open, high, low, vol, v
 };
 
 const enterNewTrade = async (symbol, price, strategy, healthData) => {
+    if (!tradesRef) return;
     if (exitCooldowns[symbol] && Date.now() < exitCooldowns[symbol]) return;
     if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') return;
     if (virtualTrades.find(t => t.symbol === symbol && t.status === 'open')) return;
 
+    // لصفقات السكالبينج الخاطف، وقف الخسارة محسوب بدقة (2% - 2.5% كحد أقصى) لحماية رأس المال
+    const slRate = strategy === 'TurboScalp' ? Math.min(SETTINGS.sl_perc || 0.025, 0.025) : (SETTINGS.sl_perc || 0.03);
+
     const newTrade = {
         symbol: symbol, entryPrice: price, maxPrice: price, trailActive: false, 
-        slLevel: price * (1 - SETTINGS.sl_perc), status: 'open', openTime: Date.now(),
+        slLevel: price * (1 - slRate), status: 'open', openTime: Date.now(),
         strategy: strategy, entryScore: healthData.score, liveScore: healthData.score,
         entryBreakdown: healthData.breakdown
     };
@@ -188,16 +229,21 @@ const analyzeMarketHealth = async () => {
             marketScoreLog.unshift({ score: score, time: Date.now() });
             if (marketScoreLog.length > 6) marketScoreLog = marketScoreLog.slice(0, 6);
             currentMarketScore = score;
-            await systemRef.set({ score: score, status: globalMarketStatus, log: marketScoreLog, lastUpdate: Date.now() });
+            if (systemRef) {
+                await systemRef.set({ score: score, status: globalMarketStatus, log: marketScoreLog, lastUpdate: Date.now() });
+            }
         }
     } catch (e) { } finally { isCheckingMarket = false; }
 };
 
 // [تحسين 3]: الذاكرة المحلية لمعالجة الملاحقة دون إرهاق قاعدة البيانات
 let memoryTrades = {}; 
+let isManagingTrades = false;
 
 const manageOpenTrades = async () => {
-    if (virtualTrades.length === 0) return;
+    if (isManagingTrades) return;
+    if (!db || !tradesRef || virtualTrades.length === 0) return;
+    isManagingTrades = true;
     
     try {
         const tickRes = await fetch('https://data-api.binance.vision/api/v3/ticker/price');
@@ -215,24 +261,30 @@ const manageOpenTrades = async () => {
 
             // جلب البيانات من الذاكرة العشوائية لتوفير الكتابة
             if (!memoryTrades[trade.docId]) {
-                memoryTrades[trade.docId] = { maxPrice: trade.maxPrice || trade.entryPrice, slLevel: trade.slLevel, trailActive: trade.trailActive };
+                memoryTrades[trade.docId] = { 
+                    maxPrice: trade.maxPrice || trade.entryPrice, 
+                    slLevel: trade.slLevel || (trade.entryPrice * (1 - (SETTINGS.sl_perc || 0.03))), 
+                    trailActive: !!trade.trailActive 
+                };
             }
             let mem = memoryTrades[trade.docId];
             
-            let pnl = ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
+            let pnl = trade.entryPrice > 0 ? ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100 : 0;
             
             if (currentPrice > mem.maxPrice) mem.maxPrice = currentPrice;
 
-            if (!mem.trailActive && pnl >= (SETTINGS.min_tp * 100)) {
+            // تفعيل الملاحقة: لصفقات TurboScalp تبدأ الملاحقة عند تحقيق الهدف 4% أو min_tp
+            const targetMinTp = trade.strategy === 'TurboScalp' ? Math.min(SETTINGS.min_tp || 0.04, 0.04) : (SETTINGS.min_tp || 0.05);
+            if (!mem.trailActive && pnl >= (targetMinTp * 100)) {
                 mem.trailActive = true; 
-                console.log(`✨ [تفعيل الملاحقة في الذاكرة] ${trade.symbol}`);
+                console.log(`✨ [تفعيل الملاحقة في الذاكرة] ${trade.symbol} (${trade.strategy || 'Auto'})`);
                 // نكتب في DB فقط عند تفعيل الملاحقة لأول مرة
                 batch.update(tradesRef.doc(trade.docId), { trailActive: true }); 
                 hasUpdates = true;
             }
 
             if (mem.trailActive) {
-                const trailDistValue = mem.maxPrice * SETTINGS.trail_dist;
+                const trailDistValue = mem.maxPrice * (SETTINGS.trail_dist || 0.015);
                 const potentialSl = mem.maxPrice - trailDistValue;
                 if (potentialSl > mem.slLevel) mem.slLevel = potentialSl;
             }
@@ -253,10 +305,16 @@ const manageOpenTrades = async () => {
         }
 
         if (hasUpdates) await batch.commit();
-    } catch (e) {}
+    } catch (e) {
+    } finally {
+        isManagingTrades = false;
+    }
 };
 
+let isScanningMarket = false;
 const scanMarket = async () => {
+    if (isScanningMarket) return;
+    isScanningMarket = true;
     try {
         await analyzeMarketHealth();
         const tickRes = await fetch('https://data-api.binance.vision/api/v3/ticker/24hr');
@@ -283,6 +341,22 @@ const scanMarket = async () => {
                 const closePosition = (closedHighs[closedHighs.length - 1] - closedLows[closedLows.length - 1]) > 0 ? (closedPrice - closedLows[closedLows.length - 1]) / (closedHighs[closedHighs.length - 1] - closedLows[closedLows.length - 1]) : 0;
                 const isStrongClose = closePosition > 0.75;
 
+                // استراتيجية السكالبينج الخاطف 4%+ (مخصصة لفريمات 1m و 5m و 15m فقط)
+                const isScalpTf = ['1m', '5m', '15m'].includes(SETTINGS.tf);
+                if (SETTINGS.strats.turboScalp !== false && isScalpTf) {
+                    const isTrendAligned = closedPrice > ema50 && ema9 > ema21 && closedPrice >= ema9;
+                    const isRsiRunway = rsi >= 50 && rsi <= 68;
+                    const isScalpVol = closedVol >= (volAvg20 * Math.max(1.7, SETTINGS.vol_mult * 0.85));
+                    const isImpulse = isGreenCandle && closePosition >= 0.68;
+                    const bbDist = ((bb.upper - closedPrice) / closedPrice) * 100;
+                    const hasExpansionRoom = bbDist >= 2.0 || closedPrice > bb.upper;
+
+                    if (isTrendAligned && isRsiRunway && isScalpVol && isImpulse && hasExpansionRoom) {
+                        await enterNewTrade(coin.symbol, currentPrice, 'TurboScalp', calculateTradeStrength(false, 'TurboScalp', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50));
+                        continue;
+                    }
+                }
+
                 if (SETTINGS.strats.bbrsi) {
                     let touchedLowerBB = false;
                     for(let i = 1; i <= 3; i++) {
@@ -306,9 +380,12 @@ const scanMarket = async () => {
                 else if (SETTINGS.strats.breakout && isVolumeSpike && isGreenCandle && closedPrice > prevClosedHigh && closedPrice > bb.upper && rsi > 60) {
                     await enterNewTrade(coin.symbol, currentPrice, 'Breakout', calculateTradeStrength(false, 'Breakout', currentPrice, currentOpen, currentHigh, currentLow, currentVol, volAvg20, rsi, ema9, ema21, bb.upper, currentMarketScore || 50));
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
-    } catch (err) {}
+    } catch (err) {
+    } finally {
+        isScanningMarket = false;
+    }
 };
 
 console.log("🚀 Server Engine Running in OPTIMIZED Mode (Low DB Cost)...");

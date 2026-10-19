@@ -14,8 +14,19 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
   const [formData, setFormData] = useState<ScannerSettings>(initialSettings);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
+  const [slInput, setSlInput] = useState(() => (initialSettings.sl_perc * 100).toString());
+  const [minTpInput, setMinTpInput] = useState(() => (initialSettings.min_tp * 100).toString());
+  const [trailDistInput, setTrailDistInput] = useState(() => (initialSettings.trail_dist * 100).toString());
+  const [volMultInput, setVolMultInput] = useState(() => initialSettings.vol_mult.toString());
+  const [cooldownInput, setCooldownInput] = useState(() => initialSettings.cooldown_mins.toString());
+
   useEffect(() => {
     setFormData(initialSettings);
+    setSlInput((initialSettings.sl_perc * 100).toString());
+    setMinTpInput((initialSettings.min_tp * 100).toString());
+    setTrailDistInput((initialSettings.trail_dist * 100).toString());
+    setVolMultInput(initialSettings.vol_mult.toString());
+    setCooldownInput(initialSettings.cooldown_mins.toString());
   }, [initialSettings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +34,16 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
     if (saveStatus === 'saving') return;
 
     setSaveStatus('saving');
-    const success = await onSave(formData);
+    const toSave: ScannerSettings = {
+      ...formData,
+      sl_perc: (parseFloat(slInput) || 0) / 100,
+      min_tp: (parseFloat(minTpInput) || 0) / 100,
+      trail_dist: (parseFloat(trailDistInput) || 0) / 100,
+      vol_mult: parseFloat(volMultInput) || 0,
+      cooldown_mins: parseInt(cooldownInput, 10) || 0,
+    };
+
+    const success = await onSave(toSave);
     if (success) {
       setSaveStatus('success');
     } else {
@@ -47,7 +67,7 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 pb-4 border-b border-gray-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-4 pb-4 border-b border-gray-800">
           <div className="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-gray-800">
             <label htmlFor="strat-momentum" className="!mb-0 cursor-pointer flex-1 text-white font-bold text-xs">
               الزخم (Momentum) 🔵
@@ -62,7 +82,7 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
                   strats: { ...formData.strats, momentum: e.target.checked },
                 })
               }
-              className="accent-brand-blue w-4 h-4"
+              className="accent-brand-blue w-4 h-4 cursor-pointer"
             />
           </div>
 
@@ -80,7 +100,7 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
                   strats: { ...formData.strats, breakout: e.target.checked },
                 })
               }
-              className="accent-brand-green w-4 h-4"
+              className="accent-brand-green w-4 h-4 cursor-pointer"
             />
           </div>
 
@@ -98,7 +118,7 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
                   strats: { ...formData.strats, sniper: e.target.checked },
                 })
               }
-              className="accent-purple-500 w-4 h-4"
+              className="accent-purple-500 w-4 h-4 cursor-pointer"
             />
           </div>
 
@@ -116,7 +136,30 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
                   strats: { ...formData.strats, bbrsi: e.target.checked },
                 })
               }
-              className="accent-orange-500 w-4 h-4"
+              className="accent-orange-500 w-4 h-4 cursor-pointer"
+            />
+          </div>
+
+          <div className="input-group flex items-center bg-gray-950 p-2 rounded-lg border border-yellow-500/30">
+            <label htmlFor="strat-turboscalp" className="!mb-0 cursor-pointer flex-1 text-white font-bold text-xs flex flex-col justify-center">
+              <span className="flex items-center gap-1 text-brand-gold">
+                السكالبينج الخاطف ⚡
+              </span>
+              <span className="text-[9px] text-gray-400">
+                أهداف +4% (1m/5m/15m)
+              </span>
+            </label>
+            <input
+              type="checkbox"
+              id="strat-turboscalp"
+              checked={formData.strats.turboScalp !== false}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  strats: { ...formData.strats, turboScalp: e.target.checked },
+                })
+              }
+              className="accent-yellow-500 w-4 h-4 cursor-pointer"
             />
           </div>
         </div>
@@ -141,13 +184,8 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
             <input
               type="number"
               step="0.1"
-              value={formData.sl_perc ? (formData.sl_perc * 100).toFixed(1) : ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  sl_perc: (parseFloat(e.target.value) || 0) / 100,
-                })
-              }
+              value={slInput}
+              onChange={(e) => setSlInput(e.target.value)}
             />
           </div>
 
@@ -156,13 +194,8 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
             <input
               type="number"
               step="0.1"
-              value={formData.min_tp ? (formData.min_tp * 100).toFixed(1) : ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  min_tp: (parseFloat(e.target.value) || 0) / 100,
-                })
-              }
+              value={minTpInput}
+              onChange={(e) => setMinTpInput(e.target.value)}
             />
           </div>
 
@@ -171,13 +204,8 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
             <input
               type="number"
               step="0.1"
-              value={formData.trail_dist ? (formData.trail_dist * 100).toFixed(1) : ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  trail_dist: (parseFloat(e.target.value) || 0) / 100,
-                })
-              }
+              value={trailDistInput}
+              onChange={(e) => setTrailDistInput(e.target.value)}
             />
           </div>
 
@@ -186,13 +214,8 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
             <input
               type="number"
               step="0.1"
-              value={formData.vol_mult || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  vol_mult: parseFloat(e.target.value) || 0,
-                })
-              }
+              value={volMultInput}
+              onChange={(e) => setVolMultInput(e.target.value)}
             />
           </div>
 
@@ -202,13 +225,8 @@ export const ScannerSettingsCard: React.FC<ScannerSettingsCardProps> = ({
               type="number"
               step="1"
               min="0"
-              value={formData.cooldown_mins ?? ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  cooldown_mins: parseInt(e.target.value) || 0,
-                })
-              }
+              value={cooldownInput}
+              onChange={(e) => setCooldownInput(e.target.value)}
             />
           </div>
 
