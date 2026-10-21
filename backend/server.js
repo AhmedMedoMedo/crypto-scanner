@@ -149,16 +149,10 @@ if (tradesRef) {
   }, err => console.error("Trades Sync Error:", err));
 }
 
+// تم إلغاء الحذف التلقائي نهائياً للحفاظ على كافة الصفقات المغلقة والأرباح التاريخية للمستخدم
 const cleanOldTrades = async () => {
-    if (!db || !tradesRef) return;
-    try {
-        const timeLimit = Date.now() - (24 * 60 * 60 * 1000);
-        const snapshot = await tradesRef.where('status', 'in', ['won', 'lost']).get();
-        const batch = db.batch();
-        let deleted = 0;
-        snapshot.forEach(doc => { if (doc.data().closeTime < timeLimit) { batch.delete(doc.ref); deleted++; } });
-        if (deleted > 0) await batch.commit();
-    } catch (err) {}
+    // Permanent retention: never delete past trades
+    return;
 };
 
 const calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
@@ -579,8 +573,6 @@ console.log("🚀 Server Engine Running in OPTIMIZED Mode (Low DB Cost)...");
 setInterval(scanMarket, 15000);        
 // manageOpenTrades: checks trailing stop every 3s
 setInterval(manageOpenTrades, 3000);   
-// cleanOldTrades: cleanup once an hour
-setInterval(cleanOldTrades, 60 * 60 * 1000);
 
 // Run initial scan on startup
 scanMarket();

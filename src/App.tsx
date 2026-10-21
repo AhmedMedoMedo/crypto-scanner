@@ -235,7 +235,7 @@ export const App: React.FC = () => {
     const tradesQuery = query(
       collection(db, 'momentum_trades_v1'),
       orderBy('openTime', 'desc'),
-      limit(150)
+      limit(2500)
     );
 
     const unsubscribe = onSnapshot(
@@ -250,7 +250,41 @@ export const App: React.FC = () => {
           });
         });
 
-        const newOpenCount = fetchedTrades.filter((t) => t.status === 'open').length;
+        // Persistent Local Vault: prevents any past trade or profit from disappearing
+        let mergedTrades = fetchedTrades;
+        try {
+          const VAULT_KEY = 'momentum_trades_vault_v1';
+          const savedVaultStr = localStorage.getItem(VAULT_KEY);
+          const savedVault: Record<string, Trade> = savedVaultStr ? JSON.parse(savedVaultStr) : {};
+
+          // Store incoming closed trades in permanent vault
+          fetchedTrades.forEach((t) => {
+            if (t.status === 'won' || t.status === 'lost') {
+              savedVault[t.docId] = t;
+            }
+          });
+
+          // Check if any historical closed trades from vault are missing from fetchedTrades
+          const fetchedIds = new Set(fetchedTrades.map((t) => t.docId));
+          const restoredFromVault: Trade[] = [];
+          Object.values(savedVault).forEach((vt) => {
+            if (!fetchedIds.has(vt.docId)) {
+              restoredFromVault.push(vt);
+            }
+          });
+
+          if (restoredFromVault.length > 0) {
+            mergedTrades = [...fetchedTrades, ...restoredFromVault].sort(
+              (a, b) => (b.openTime || 0) - (a.openTime || 0)
+            );
+          }
+
+          localStorage.setItem(VAULT_KEY, JSON.stringify(savedVault));
+        } catch (vaultErr) {
+          console.warn('Vault sync notice:', vaultErr);
+        }
+
+        const newOpenCount = mergedTrades.filter((t) => t.status === 'open').length;
 
         if (prevOpenCountRef.current !== null) {
           if (newOpenCount > prevOpenCountRef.current) {
@@ -261,7 +295,7 @@ export const App: React.FC = () => {
         }
         prevOpenCountRef.current = newOpenCount;
 
-        setTrades(fetchedTrades);
+        setTrades(mergedTrades);
       },
       (error) => {
         console.warn('Trades subscription error', error);

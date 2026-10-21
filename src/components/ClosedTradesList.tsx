@@ -25,19 +25,36 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
     filteredClosed = allClosed.filter((t) => (t.closeTime || 0) >= timeLimit);
   }
 
-  const sortedClosed = [...filteredClosed]
-    .sort((a, b) => (b.closeTime || 0) - (a.closeTime || 0))
-    .slice(0, 50);
+  const [displayLimit, setDisplayLimit] = useState(100);
+
+  const sortedClosed = [...filteredClosed].sort(
+    (a, b) => (b.closeTime || 0) - (a.closeTime || 0)
+  );
+
+  const visibleClosed = sortedClosed.slice(0, displayLimit);
 
   let wonCount = 0;
   let lostCount = 0;
+  let totalClosedPnl = 0;
   filteredClosed.forEach((t) => {
     if (t.status === 'won') wonCount++;
     if (t.status === 'lost') lostCount++;
+    totalClosedPnl += t.pnl || 0;
   });
 
   const handleClear = async () => {
-    if (!window.confirm('هل أنت متأكد من حذف الصفقات المغلقة من السيرفر؟')) return;
+    if (
+      !window.confirm(
+        '⚠️ تحذير هام: هل أنت متأكد من مسح سجل الصفقات المغلقة؟ سيتم الاحتفاظ بنسخة أرشيفية محلية لحماية بياناتك.'
+      )
+    )
+      return;
+
+    // Backup to local storage before clearing
+    try {
+      localStorage.setItem('momentum_trades_backup_cleared', JSON.stringify(allClosed));
+    } catch {}
+
     setClearing(true);
     try {
       await onClearHistory();
@@ -123,7 +140,7 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
             لم يتم إغلاق أي صفقة بعد
           </div>
         ) : (
-          sortedClosed.map((t) => {
+          visibleClosed.map((t) => {
             const isWin = t.status === 'won';
             const pColor = isWin ? 'text-brand-green' : 'text-brand-red';
             const bgColor = isWin
@@ -185,6 +202,15 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
               </div>
             );
           })
+        )}
+
+        {sortedClosed.length > visibleClosed.length && (
+          <button
+            onClick={() => setDisplayLimit((prev) => prev + 100)}
+            className="w-full py-2 bg-gray-950 hover:bg-gray-800 border border-gray-800 text-xs font-bold text-brand-blue rounded-lg transition-colors cursor-pointer mt-2 flex items-center justify-center gap-1"
+          >
+            عرض باقي الصفقات ({sortedClosed.length - visibleClosed.length} صفقة إضافية) ⬇️
+          </button>
         )}
       </div>
     </div>
