@@ -4,6 +4,7 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 
+
 let serviceAccount = null;
 if (process.env.SERVICE_ACCOUNT_KEY) {
   try {
@@ -76,8 +77,8 @@ let latestMarketMatrixData = null;
 
 const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
@@ -85,7 +86,9 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    if (req.url === '/api/market-matrix' || req.url === '/market-matrix') {
+    const pathname = req.url ? req.url.split('?')[0].replace(/\/+$/, '') : '';
+
+    if (pathname === '/api/market-matrix' || pathname === '/market-matrix') {
         res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
         res.end(JSON.stringify(latestMarketMatrixData || {
             score: 55,
@@ -97,7 +100,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    if (req.url === '/api/clear-history' || req.url === '/clear-history') {
+    if (pathname === '/api/clear-history' || pathname === '/clear-history') {
         try {
             if (tradesRef && db) {
                 const snapshotWon = await tradesRef.where('status', '==', 'won').get();
@@ -130,7 +133,7 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
-    if (req.url === '/api/test-notification') {
+    if (pathname === '/api/test-notification' || pathname === '/test-notification') {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
@@ -181,6 +184,8 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+
+
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
 });
@@ -202,6 +207,10 @@ let currentMarketScore = null;
 let globalMarketStatus = 'neutral';
 let isCheckingMarket = false;
 let marketScoreLog = [];
+let lastReportedMarketStatus = null;
+let lastReportedMarketScore = null;
+let lastMarketAlertTime = 0;
+const MARKET_ALERT_COOLDOWN_MS = 3 * 60 * 1000; // 3 دقائق كحد أدنى بين تنبيهات السوق لتجنب التكرار
 const exitCooldowns = {};
 const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 'EURUSDT', 'XAUTUSDT', 'PAXGUSDT', 'BUSDUSDT', 'AEURUSDT', 'USDSUSDT'];
 
@@ -283,6 +292,8 @@ const sendTelegramNotification = (textHtml) => {
     }
 };
 
+
+
 const calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
 const calcSMA = (data, period) => { if(data.length < period) return null; let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += data[i]; return sum / period; };
 const calcRSI = (data, period = 14) => { if(data.length <= period) return null; let gains = 0, losses = 0; for (let i = 1; i <= period; i++) { let diff = data[i] - data[i - 1]; if (diff >= 0) gains += diff; else losses -= diff; } let avgGain = gains / period; let avgLoss = losses / period; for (let i = period + 1; i < data.length; i++) { let diff = data[i] - data[i - 1]; avgGain = ((avgGain * (period - 1)) + (diff >= 0 ? diff : 0)) / period; avgLoss = ((avgLoss * (period - 1)) + (diff < 0 ? -diff : 0)) / period; } if (avgLoss === 0) return 100; return 100 - (100 / (1 + (avgGain / avgLoss))); };
@@ -349,7 +360,7 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
         // ستتم إضافتها لـ virtualTrades تلقائياً عبر onSnapshot
         console.log(`🟢 [دخول فرصة نارية] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
 
-        // إرسال تنبيه تلجرام فوري لهاتف المستخدم
+        // إرسال تنبيه فوري لهاتف المستخدم عبر التلجرام
         if (SETTINGS.notifications && SETTINGS.notifications.enabled && SETTINGS.notifications.notifyOnOpen !== false) {
             const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             const msg = `🎯 <b>[صيد صفقة جديدة]</b> 🟢\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${symbol}\n📈 <b>الاستراتيجية:</b> <b>${strategy}</b>\n💵 <b>سعر الدخول:</b> <code>$${price}</code>\n🛡️ <b>وقف الخسارة:</b> <code>$${newTrade.slLevel.toFixed(4)}</code>\n⚡ <b>قوة الإشارة:</b> <code>${healthData.score}%</code>\n💰 <b>رأس المال:</b> <code>$${perTradeAlloc}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>رادار الصفقات اللحظي</i>`;
@@ -554,6 +565,51 @@ const analyzeMarketHealth = async () => {
                 lastUpdate: Date.now()
             });
         }
+
+        // [نظام تنبيهات تغير وضع السوق الفوري]:
+        // تنبيه عند تحسن وضع السوق (Bullish / انتعاش)
+        // تنبيه عند تدهور أو سوء وضع السوق (Bearish / خطر)
+        const notif = SETTINGS && SETTINGS.notifications;
+        if (notif && notif.enabled) {
+            const channel = notif.channel || 'all';
+            const now = Date.now();
+            const timePassed = now - lastMarketAlertTime;
+
+            if (lastReportedMarketStatus !== null && timePassed >= MARKET_ALERT_COOLDOWN_MS) {
+                const isImproved = (
+                    (lastReportedMarketStatus === 'bearish' && (globalMarketStatus === 'neutral' || globalMarketStatus === 'bullish')) ||
+                    (lastReportedMarketStatus === 'neutral' && globalMarketStatus === 'bullish') ||
+                    (lastReportedMarketScore !== null && lastReportedMarketScore < 50 && compositeScore >= 66)
+                );
+
+                const isDeteriorated = (
+                    (lastReportedMarketStatus === 'bullish' && (globalMarketStatus === 'neutral' || globalMarketStatus === 'bearish')) ||
+                    (lastReportedMarketStatus === 'neutral' && globalMarketStatus === 'bearish') ||
+                    (lastReportedMarketScore !== null && lastReportedMarketScore >= 60 && compositeScore < 48)
+                );
+
+                const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+                if (isImproved && notif.notifyOnMarketImprovement !== false) {
+                    lastReportedMarketStatus = globalMarketStatus;
+                    lastReportedMarketScore = compositeScore;
+                    lastMarketAlertTime = now;
+
+                    const tgMsg = `🟢 <b>[انتعاش وتحسن وضع السوق]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n📊 <b>حالة السوق الجديدة:</b> <b>صاعد وإيجابي (${globalMarketStatus.toUpperCase()})</b>\n⚡ <b>مؤشر أمان السوق:</b> <code>${compositeScore}%</code>\n🎯 <b>توافق الأطر:</b> ${synergyLabel}\n💡 <b>التوصية الفنية:</b>\n<i>${recommendation}</i>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n✨ <i>بيئة مواتية لصيد فرص السكالبينج والانفجارات السعرية</i>`;
+                    sendTelegramNotification(tgMsg);
+                } else if (isDeteriorated && notif.notifyOnMarketDeterioration !== false) {
+                    lastReportedMarketStatus = globalMarketStatus;
+                    lastReportedMarketScore = compositeScore;
+                    lastMarketAlertTime = now;
+
+                    const tgMsg = `🔴 <b>[تحذير: تدهور وضع السوق ودخول مرحلة الخطر]</b> ⚠️\n━━━━━━━━━━━━━━━━━━\n📊 <b>حالة السوق الحالية:</b> <b>هابط / مرحلة خطر (${globalMarketStatus.toUpperCase()})</b>\n⚡ <b>مؤشر أمان السوق:</b> <code>${compositeScore}%</code>\n⚠️ <b>توافق الأطر:</b> ${synergyLabel}\n🛡️ <b>الإجراء التلقائي:</b>\n<i>تم تفعيل أنظمة الدفاع وتجميد الصفقات الجديدة تلقائياً لحماية المحفظة.</i>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🛑 <i>نظام الحماية الآلي نشط لحفظ رأس المال</i>`;
+                    sendTelegramNotification(tgMsg);
+                }
+            } else if (lastReportedMarketStatus === null) {
+                lastReportedMarketStatus = globalMarketStatus;
+                lastReportedMarketScore = compositeScore;
+            }
+        }
     } catch (e) {
         console.error("Error analyzing market health:", e.message);
     } finally {
@@ -663,19 +719,33 @@ const manageOpenTrades = async () => {
                 if (SETTINGS.cooldown_mins > 0) exitCooldowns[trade.symbol] = Date.now() + (SETTINGS.cooldown_mins * 60 * 1000);
                 console.log(`🔴 [إغلاق صفقة وحفظ DB] ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
 
-                // إرسال تنبيه تلجرام فوري بنتيجة الصفقة
+                // إرسال تنبيه فوري بنتيجة الصفقة (تلجرام أو إيميل أو الاثنين معاً)
                 if (SETTINGS.notifications && SETTINGS.notifications.enabled) {
                     const isWin = status === 'won';
                     const shouldSend = (isWin && SETTINGS.notifications.notifyOnCloseWin !== false) || (!isWin && SETTINGS.notifications.notifyOnCloseLoss !== false);
                     if (shouldSend) {
+                        const channel = SETTINGS.notifications.channel || 'all';
                         const headerIcon = isWin ? '🏆' : '🛑';
                         const title = isWin ? 'تم إغلاق صفقة بربح' : 'تم إغلاق صفقة';
                         const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
                         const alloc = trade.allocatedCapital || (SETTINGS.portfolio_capital ? SETTINGS.portfolio_capital / (SETTINGS.max_open_trades || 10) : 100);
                         const dollarVal = (alloc * pnl) / 100;
                         const dollarStr = `(${pnl >= 0 ? '+' : ''}$${dollarVal.toFixed(2)})`;
-                        const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
-                        sendTelegramNotification(msg);
+
+                        // 1. تلجرام
+                        if (channel === 'telegram' || channel === 'all') {
+                            const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
+                            sendTelegramNotification(msg);
+                        }
+
+                        // 2. إيميل
+                        if ((channel === 'email' || channel === 'all') && SETTINGS.notifications.emailAddress) {
+                            const emailSubj = `[Momentum AI] ${headerIcon} ${title}: #${trade.symbol} (${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%)`;
+                            const emailTxt = `${title}\nالعملة: #${trade.symbol}\nالنتيجة: ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}\nالاستراتيجية: ${trade.strategy || 'Auto'}\nسعر الدخول: $${trade.entryPrice}\nسعر الإغلاق: $${currentPrice}\nالتوقيت: ${timeStr}`;
+                            const color = isWin ? '#10b981' : '#ef4444';
+                            const emailHtml = `<div dir="rtl" style="font-family:Arial,sans-serif;background:#0b0f19;color:#fff;padding:20px;border-radius:10px;"><h2 style="color:${color};">${headerIcon} ${title}</h2><p style="font-size:18px;font-weight:bold;color:${color};">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</p><p><strong>العملة:</strong> #${trade.symbol}</p><p><strong>الاستراتيجية:</strong> ${trade.strategy || 'Auto'}</p><p><strong>سعر الدخول:</strong> $${trade.entryPrice}</p><p><strong>سعر الإغلاق:</strong> $${currentPrice}</p><p style="color:#9ca3af;">⏱️ ${timeStr}</p></div>`;
+                            sendEmailNotificationBackend(SETTINGS.notifications.emailAddress, emailSubj, emailHtml, emailTxt, SETTINGS.notifications.smtpConfig);
+                        }
                     }
                 }
             }

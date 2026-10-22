@@ -30,6 +30,7 @@ import {
   notifyTradeOpen,
   notifyEmergencyAction,
   testTelegramConnection,
+  testEmailConnection,
 } from './utils/notificationService';
 
 const defaultSettings: ScannerSettings = {
@@ -164,19 +165,20 @@ export const App: React.FC = () => {
 
   // Quick Test Notification from Card
   const handleQuickTestNotification = async () => {
-    if (!settings.notifications?.telegramBotToken || !settings.notifications?.telegramChatId) {
+    const notif = settings.notifications;
+    const hasTg = Boolean(notif?.telegramBotToken && notif?.telegramChatId);
+
+    if (!hasTg) {
       setIsNotifModalOpen(true);
       return;
     }
+
     setTestingNotif(true);
     try {
-      const res = await testTelegramConnection(
-        settings.notifications.telegramBotToken,
-        settings.notifications.telegramChatId
-      );
-      alert(res.message);
+      await testTelegramConnection(notif!.telegramBotToken, notif!.telegramChatId);
+      setIsNotifModalOpen(true);
     } catch (e: any) {
-      alert(`خطأ: ${e?.message || 'تعذر الاتصال'}`);
+      setIsNotifModalOpen(true);
     } finally {
       setTestingNotif(false);
     }
@@ -624,8 +626,10 @@ export const App: React.FC = () => {
         onOpenNotifications={() => setIsNotifModalOpen(true)}
         notificationsEnabled={Boolean(
           settings.notifications?.enabled &&
-            settings.notifications?.telegramBotToken &&
-            settings.notifications?.telegramChatId
+            ((settings.notifications?.channel === 'email' && settings.notifications?.emailAddress) ||
+              (settings.notifications?.channel === 'telegram' && settings.notifications?.telegramBotToken) ||
+              (settings.notifications?.channel === 'all' &&
+                (settings.notifications?.telegramBotToken || settings.notifications?.emailAddress)))
         )}
       />
 

@@ -2,15 +2,15 @@ import { Trade, NotificationSettings } from '../types';
 
 export const defaultNotificationSettings: NotificationSettings = {
   enabled: false,
-  channel: 'telegram',
   telegramBotToken: '',
   telegramChatId: '',
-  emailAddress: '',
   webhookUrl: '',
   notifyOnOpen: true,
   notifyOnCloseWin: true,
   notifyOnCloseLoss: true,
   notifyOnEmergency: true,
+  notifyOnMarketImprovement: true,
+  notifyOnMarketDeterioration: true,
 };
 
 /**
@@ -55,13 +55,13 @@ export async function sendTelegramMessage(
   } catch (err: any) {
     return {
       success: false,
-      error: err?.message || 'خطأ في الاتصال بسيرفر التلجرام. تأكد من اتصال الإنترنت.',
+      error: err?.message || 'خطأ في الاتصال بسيرفر التلجرام.',
     };
   }
 }
 
 /**
- * Send test connection message
+ * Send test connection message for Telegram
  */
 export async function testTelegramConnection(
   token: string,
@@ -82,7 +82,9 @@ export async function testTelegramConnection(
   • 🟢 فتح وصيد أي فرصة جديدة
   • 🎯 تحقيق الهدف والربح (Take Profit)
   • 🛑 تفعيل وقف الخسارة (Stop Loss)
-  • 🚨 تفعيل بروتوكول حماية السوق
+  • 🚀 انتعاش وتحسن وضع السوق (Bullish)
+  • 🔴 تدهور وضع السوق ودخول مرحلة الخطر (Bearish)
+  • 🚨 تفعيل بروتوكول حماية المحفظة
 
 ⏱️ <b>التوقيت:</b> <code>${nowStr}</code>
 ━━━━━━━━━━━━━━━━━━
@@ -93,18 +95,18 @@ export async function testTelegramConnection(
   if (res.success) {
     return {
       success: true,
-      message: 'تم إرسال الرسالة التجريبية بنجاح! تفقد تطبيق التلجرام الآن ستجد الرسالة وصلت فوراً ✓',
+      message: 'تم إرسال رسالة التلجرام التجريبية بنجاح! تفقد تطبيق التلجرام الآن ستجد الرسالة وصلت فوراً ✓',
     };
   } else {
     return {
       success: false,
-      message: `فشل الإرسال: ${res.error}`,
+      message: `فشل إرسال التلجرام: ${res.error}`,
     };
   }
 }
 
 /**
- * Send Trade Entry Notification
+ * Send Trade Entry Notification via Telegram
  */
 export async function notifyTradeOpen(
   settings: NotificationSettings | undefined,
@@ -123,7 +125,7 @@ export async function notifyTradeOpen(
   const allocStr = trade.allocatedCapital ? `$${trade.allocatedCapital.toFixed(2)}` : '$100.00';
   const scoreStr = trade.entryScore ? `${trade.entryScore}%` : 'ممتاز';
 
-  const text = `
+  const tgText = `
 🎯 <b>[صيد صفقة جديدة]</b> 🟢
 ━━━━━━━━━━━━━━━━━━
 🪙 <b>العملة:</b> #${trade.symbol} (<code>${symbolClean}</code>)
@@ -137,11 +139,11 @@ export async function notifyTradeOpen(
 🤖 <i>رادار الصفقات اللحظي - نظام أحمد</i>
 `.trim();
 
-  await sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, text);
+  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
 }
 
 /**
- * Send Trade Close Notification
+ * Send Trade Close Notification via Telegram
  */
 export async function notifyTradeClose(
   settings: NotificationSettings | undefined,
@@ -175,7 +177,7 @@ export async function notifyTradeClose(
       ? `(${dollarPnl >= 0 ? '+' : ''}$${dollarPnl.toFixed(2)})`
       : '';
 
-  const text = `
+  const tgText = `
 ${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}
 ━━━━━━━━━━━━━━━━━━
 🪙 <b>العملة:</b> #${trade.symbol}
@@ -188,11 +190,11 @@ ${reason ? `📝 <b>السبب:</b> ${reason}\n` : ''}━━━━━━━━�
 ${isWin ? '✨ <i>تم حجز الربح وإضافته للرصيد بنجاح!</i>' : '🛡️ <i>تم حماية باقي الرصيد بوقف الخسارة</i>'}
 `.trim();
 
-  await sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, text);
+  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
 }
 
 /**
- * Send Emergency Defense Action Notification
+ * Send Emergency Defense Action Notification via Telegram
  */
 export async function notifyEmergencyAction(
   settings: NotificationSettings | undefined,
@@ -214,7 +216,7 @@ export async function notifyEmergencyAction(
       ? 'إغلاق فوري للصفقات الخاسرة وتأمين الرابحة بريك إيفن'
       : 'تشديد الوقف ورفع البريك إيفن';
 
-  const text = `
+  const tgText = `
 🚨 <b>[تنبيه تدخل طوارئ السوق]</b> 🛡️
 ━━━━━━━━━━━━━━━━━━
 ⚠️ <b>حالة السوق:</b> انخفاض مؤشر الأمان أو مرحلة خطر
@@ -225,5 +227,66 @@ export async function notifyEmergencyAction(
 🛡️ <i>نظام حماية المحفظة التلقائي</i>
 `.trim();
 
-  await sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, text);
+  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
+}
+
+/**
+ * Send Market Condition Change Notification via Telegram (Improvement or Deterioration)
+ */
+export async function notifyMarketStatusChange(
+  settings: NotificationSettings | undefined,
+  type: 'improvement' | 'deterioration',
+  data: {
+    status: 'bullish' | 'neutral' | 'bearish';
+    score: number;
+    synergyLabel?: string;
+    recommendation?: string;
+  }
+): Promise<void> {
+  if (!settings || !settings.enabled) return;
+  if (type === 'improvement' && !settings.notifyOnMarketImprovement) return;
+  if (type === 'deterioration' && !settings.notifyOnMarketDeterioration) return;
+  if (!settings.telegramBotToken || !settings.telegramChatId) return;
+
+  const isImprovement = type === 'improvement';
+  const headerIcon = isImprovement ? '🟢' : '🔴';
+  const title = isImprovement
+    ? 'انتعاش وتحسن وضع السوق'
+    : 'تحذير: تدهور وضع السوق ودخول مرحلة الخطر';
+
+  const timeStr = new Date().toLocaleTimeString('ar-EG', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const synergy = data.synergyLabel || (isImprovement ? 'توافق إيجابي للأطر الزمنية' : 'سلبية أو تباين في الأطر');
+  const recommendation = data.recommendation || (isImprovement ? 'بيئة مواتية لصيد فرص السكالبينج' : 'الحماية الآلية نشطة لحماية المحفظة');
+
+  const tgText = isImprovement
+    ? `
+${headerIcon} <b>[${title}]</b> 🚀
+━━━━━━━━━━━━━━━━━━
+📊 <b>حالة السوق:</b> <b>صاعد وإيجابي (${data.status.toUpperCase()})</b>
+⚡ <b>مؤشر أمان السوق:</b> <code>${data.score}%</code>
+🎯 <b>توافق الأطر:</b> ${synergy}
+💡 <b>التوصية:</b>
+<i>${recommendation}</i>
+⏱️ <b>الوقت:</b> <code>${timeStr}</code>
+━━━━━━━━━━━━━━━━━━
+✨ <i>بيئة مواتية لصيد صفقات السكالبينج والانفجارات السعرية</i>
+`.trim()
+    : `
+${headerIcon} <b>[${title}]</b> ⚠️
+━━━━━━━━━━━━━━━━━━
+📊 <b>حالة السوق:</b> <b>هابط / مرحلة خطر (${data.status.toUpperCase()})</b>
+⚡ <b>مؤشر أمان السوق:</b> <code>${data.score}%</code>
+⚠️ <b>توافق الأطر:</b> ${synergy}
+🛡️ <b>الإجراء التلقائي:</b>
+<i>تم تفعيل بروتوكول حماية المحفظة وتجميد الصفقات الجديدة تلقائياً.</i>
+⏱️ <b>الوقت:</b> <code>${timeStr}</code>
+━━━━━━━━━━━━━━━━━━
+🛑 <i>نظام الحماية الآلي نشط لحفظ رأس المال</i>
+`.trim();
+
+  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
 }

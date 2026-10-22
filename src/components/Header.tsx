@@ -86,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Send className="w-3 h-3 text-brand-blue" />
                 <span className="hidden sm:inline">
-                  {notificationsEnabled ? 'التلجرام متصل 📱' : 'ربط التلجرام ⚡'}
+                  {notificationsEnabled ? 'التنبيهات مفعلة 🔔' : 'ربط التنبيهات ⚡'}
                 </span>
                 {notificationsEnabled && <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse"></span>}
               </button>

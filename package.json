@@ -14,10 +14,12 @@
     "firebase": "^10.14.1",
     "firebase-admin": "^14.5.0",
     "lucide-react": "^0.475.0",
+    "nodemailer": "^10.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",

@@ -41,15 +41,15 @@ export type EmergencyDefenseMode = 'tighten_breakeven' | 'close_losing' | 'liqui
 
 export interface NotificationSettings {
   enabled: boolean;
-  channel: 'telegram' | 'email' | 'all';
   telegramBotToken: string;
   telegramChatId: string;
-  emailAddress?: string;
   webhookUrl?: string;
   notifyOnOpen: boolean;
   notifyOnCloseWin: boolean;
   notifyOnCloseLoss: boolean;
   notifyOnEmergency: boolean;
+  notifyOnMarketImprovement?: boolean; // تنبيه عند تحسن وانتعاش وضع السوق
+  notifyOnMarketDeterioration?: boolean; // تنبيه عند تدهور أو سوء وضع السوق
 }
 
 export interface ScannerSettings {
