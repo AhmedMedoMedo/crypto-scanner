@@ -14,6 +14,7 @@ import { Trade, ScannerSettings, MarketHealthData } from './types';
 import { playSound } from './utils/sound';
 import { Header } from './components/Header';
 import { MarketHealthCard } from './components/MarketHealthCard';
+import { SmartPortfolioCard } from './components/SmartPortfolioCard';
 import { ScannerSettingsCard } from './components/ScannerSettingsCard';
 import { PerformanceStats } from './components/PerformanceStats';
 import { ManualTradeForm } from './components/ManualTradeForm';
@@ -30,6 +31,9 @@ const defaultSettings: ScannerSettings = {
   vol_mult: 2.0,
   cooldown_mins: 15,
   auto_kill: false,
+  emergency_defense_mode: 'tighten_breakeven',
+  portfolio_capital: 1000,
+  max_open_trades: 10,
   strats: {
     momentum: true,
     breakout: true,
@@ -118,9 +122,78 @@ export const App: React.FC = () => {
   };
 
   // Add Manual Trade
+  // Capital Allocation & Auto-Compounding Calculation
+  const initialCap = settings.portfolio_capital && settings.portfolio_capital > 0
+    ? settings.portfolio_capital
+    : Number(localStorage.getItem('smart_portfolio_capital') || 1000);
+
+  const maxTrades = settings.max_open_trades && settings.max_open_trades > 0
+    ? settings.max_open_trades
+    : Number(localStorage.getItem('smart_portfolio_max_trades') || 10);
+
+  const closedList = trades.filter((t) => t.status === 'won' || t.status === 'lost');
+  const baseAlloc = Math.max(10, initialCap / maxTrades);
+  let closedPnlUsd = 0;
+  closedList.forEach((t) => {
+    const alloc = t.allocatedCapital || baseAlloc;
+    closedPnlUsd += (alloc * (t.pnl || 0)) / 100;
+  });
+  const currentRealizedCap = Math.max(0, initialCap + closedPnlUsd);
+  const currentPerTradeAlloc = Number((currentRealizedCap / maxTrades).toFixed(2));
+
+  // Add Manual Trade
   const handleAddTrade = async (newTrade: Omit<Trade, 'docId'>) => {
     const newDocRef = doc(collection(db, 'momentum_trades_v1'));
-    await setDoc(newDocRef, newTrade);
+    await setDoc(newDocRef, {
+      ...newTrade,
+      allocatedCapital: newTrade.allocatedCapital || currentPerTradeAlloc,
+    });
+  };
+
+  // Emergency Market Defense Action
+  const handleEmergencyAction = async (action: 'tighten_breakeven' | 'close_losing' | 'liquidate_all') => {
+    const currentOpen = trades.filter((t) => t.status === 'open');
+    if (currentOpen.length === 0) return;
+
+    for (const trade of currentOpen) {
+      const currentPrice = livePrices[trade.symbol] || trade.currentPrice || trade.entryPrice;
+      const pnl = trade.entryPrice > 0 ? ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100 : 0;
+
+      if (action === 'liquidate_all') {
+        const status = pnl >= 0 ? 'won' : 'lost';
+        await setDoc(doc(db, 'momentum_trades_v1', trade.docId), {
+          status: status,
+          closeTime: Date.now(),
+          closePrice: currentPrice,
+          pnl: pnl,
+        }, { merge: true });
+      } else if (action === 'close_losing') {
+        if (pnl < 0) {
+          await setDoc(doc(db, 'momentum_trades_v1', trade.docId), {
+            status: 'lost',
+            closeTime: Date.now(),
+            closePrice: currentPrice,
+            pnl: pnl,
+          }, { merge: true });
+        } else {
+          // Breakeven +0.2% on winners
+          await setDoc(doc(db, 'momentum_trades_v1', trade.docId), {
+            slLevel: trade.entryPrice * 1.002,
+          }, { merge: true });
+        }
+      } else if (action === 'tighten_breakeven') {
+        if (pnl >= 0) {
+          await setDoc(doc(db, 'momentum_trades_v1', trade.docId), {
+            slLevel: trade.entryPrice * 1.002,
+          }, { merge: true });
+        } else {
+          // Tighten loss to -1.5% max
+          await setDoc(doc(db, 'momentum_trades_v1', trade.docId), {
+            slLevel: Math.max(trade.slLevel || 0, trade.entryPrice * 0.985),
+          }, { merge: true });
+        }
+      }
+    }
   };
 
   // Cancel Trade
@@ -160,6 +233,9 @@ export const App: React.FC = () => {
             vol_mult: s.vol_mult !== undefined ? s.vol_mult : prev.vol_mult,
             cooldown_mins: s.cooldown_mins !== undefined ? s.cooldown_mins : prev.cooldown_mins,
             auto_kill: s.auto_kill !== undefined ? s.auto_kill : prev.auto_kill,
+            emergency_defense_mode: s.emergency_defense_mode !== undefined ? s.emergency_defense_mode : prev.emergency_defense_mode,
+            portfolio_capital: s.portfolio_capital !== undefined ? s.portfolio_capital : prev.portfolio_capital,
+            max_open_trades: s.max_open_trades !== undefined ? s.max_open_trades : prev.max_open_trades,
             strats: {
               momentum: s.strats?.momentum ?? prev.strats.momentum,
               breakout: s.strats?.breakout ?? prev.strats.breakout,
@@ -427,13 +503,21 @@ export const App: React.FC = () => {
               onToggleAutoKill={handleToggleAutoKill}
             />
 
+            <SmartPortfolioCard
+              trades={trades}
+              marketHealth={marketHealth}
+              settings={settings}
+              onSaveSettings={handleSaveSettings}
+              onEmergencyAction={handleEmergencyAction}
+            />
+
             <div className="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
               <span className="relative flex h-2.5 w-2.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-blue"></span>
               </span>
               <div className="text-[11px] font-mono text-gray-400 truncate">
-                🚀 متصل بالسيرفر السحابي... الأسعار تنبض وتتحدث تلقائياً.
+                🚀 متصل بالسيرفر السحابي... حجم الدخول المحسوب حالياً: <strong className="text-brand-gold font-mono">${currentPerTradeAlloc} USDT</strong> لكل صفقة.
               </div>
             </div>
 
@@ -449,6 +533,7 @@ export const App: React.FC = () => {
                 onTimeFilterChange={handleTimeFilterChange}
                 openTradesCount={openTrades.length}
                 totalFloatingPnl={totalFloatingPnl}
+                perTradeAllocation={currentPerTradeAlloc}
               />
 
               <ManualTradeForm
@@ -461,12 +546,14 @@ export const App: React.FC = () => {
                 sortOption={openTradesSort}
                 onSortChange={handleSortChange}
                 onCancelTrade={handleCancelTrade}
+                perTradeAllocation={currentPerTradeAlloc}
               />
 
               <ClosedTradesList
                 trades={trades}
                 timeFilter={timeFilter}
                 onClearHistory={handleClearHistory}
+                perTradeAllocation={currentPerTradeAlloc}
               />
             </section>
           </div>

@@ -194,6 +194,16 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
     if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') return;
     if (virtualTrades.find(t => t.symbol === symbol && t.status === 'open')) return;
 
+    // حماية المحفظة: لا نفتح صفقات أكثر من الحد الأقصى المتزامن
+    const maxTrades = SETTINGS.max_open_trades || 10;
+    const openCount = virtualTrades.filter(t => t.status === 'open').length;
+    if (openCount >= maxTrades) {
+        return;
+    }
+
+    const initialCap = SETTINGS.portfolio_capital || 1000;
+    const perTradeAlloc = Number((initialCap / maxTrades).toFixed(2));
+
     // لصفقات السكالبينج الخاطف، وقف الخسارة محسوب بدقة (2% - 2.5% كحد أقصى) لحماية رأس المال
     const slRate = strategy === 'TurboScalp' ? Math.min(SETTINGS.sl_perc || 0.025, 0.025) : (SETTINGS.sl_perc || 0.03);
 
@@ -201,14 +211,15 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
         symbol: symbol, entryPrice: price, maxPrice: price, trailActive: false, 
         slLevel: price * (1 - slRate), status: 'open', openTime: Date.now(),
         strategy: strategy, entryScore: healthData.score, liveScore: healthData.score,
-        entryBreakdown: healthData.breakdown
+        entryBreakdown: healthData.breakdown,
+        allocatedCapital: perTradeAlloc
     };
 
     try {
         const docRef = tradesRef.doc();
         await docRef.set(newTrade);
         // ستتم إضافتها لـ virtualTrades تلقائياً عبر onSnapshot
-        console.log(`🟢 [دخول فرصة نارية] ${symbol} | الاستراتيجية: ${strategy}`);
+        console.log(`🟢 [دخول فرصة نارية] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
     } catch (e) { console.error("Error:", e.message); }
 };
 
@@ -466,6 +477,42 @@ const manageOpenTrades = async () => {
                 const trailDistValue = mem.maxPrice * (SETTINGS.trail_dist || 0.015);
                 const potentialSl = mem.maxPrice - trailDistValue;
                 if (potentialSl > mem.slLevel) mem.slLevel = potentialSl;
+            }
+
+            // [بروتوكول حماية الصفقات وقت خطر السوق]:
+            const isMarketDanger = globalMarketStatus === 'bearish' || (currentMarketScore !== null && currentMarketScore < 48);
+            const defenseMode = SETTINGS.emergency_defense_mode || 'tighten_breakeven';
+
+            if (isMarketDanger && defenseMode !== 'alert_only') {
+                if (defenseMode === 'liquidate_all') {
+                    // تسييل فوري لجميع الصفقات لحماية رأس المال
+                    const status = pnl >= 0 ? 'won' : 'lost';
+                    batch.update(tradesRef.doc(trade.docId), {
+                        status: status, closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
+                        maxPrice: mem.maxPrice, slLevel: currentPrice
+                    });
+                    hasUpdates = true;
+                    delete memoryTrades[trade.docId];
+                    console.log(`🚨 [تسييل طارئ للسوق] إغلاق ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
+                    continue;
+                } else if (defenseMode === 'close_losing' && pnl < -0.3) {
+                    // إغلاق فوري للصفقات الخاسرة لمنع تفاقم الخسائر
+                    batch.update(tradesRef.doc(trade.docId), {
+                        status: 'lost', closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
+                        maxPrice: mem.maxPrice, slLevel: currentPrice
+                    });
+                    hasUpdates = true;
+                    delete memoryTrades[trade.docId];
+                    console.log(`🛑 [إغلاق دفاعي طارئ لخاسرة] ${trade.symbol} لمنع الغرق | ${pnl.toFixed(2)}%`);
+                    continue;
+                } else if (pnl > 0) {
+                    // تأمين الصفقات الرابحة برفع الوقف فوراً لنقطة الدخول Breakeven
+                    const beStop = trade.entryPrice * 1.002;
+                    if (mem.slLevel < beStop) {
+                        mem.slLevel = beStop;
+                        console.log(`🛡️ [تأمين بريك إيفن وقت الخطر] ${trade.symbol} رفع الوقف لنقطة الدخول لحجز الربح`);
+                    }
+                }
             }
 
             // الإغلاق الفعلي: هنا فقط نكتب النتائج في قاعدة البيانات

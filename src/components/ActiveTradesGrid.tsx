@@ -8,6 +8,7 @@ interface ActiveTradesGridProps {
   sortOption: string;
   onSortChange: (sort: string) => void;
   onCancelTrade: (docId: string) => void;
+  perTradeAllocation?: number;
 }
 
 export const ActiveTradesGrid: React.FC<ActiveTradesGridProps> = ({
@@ -15,6 +16,7 @@ export const ActiveTradesGrid: React.FC<ActiveTradesGridProps> = ({
   sortOption,
   onSortChange,
   onCancelTrade,
+  perTradeAllocation = 100,
 }) => {
   // Sort trades based on sortOption
   const sortedTrades = [...trades].sort((a, b) => {
@@ -108,6 +110,8 @@ export const ActiveTradesGrid: React.FC<ActiveTradesGridProps> = ({
           sortedTrades.map((t) => {
             const currentPrice = t.currentPrice || t.entryPrice;
             const currentPnl = ((currentPrice - t.entryPrice) / t.entryPrice) * 100;
+            const tradeAlloc = t.allocatedCapital || perTradeAllocation || 100;
+            const dollarPnl = (tradeAlloc * currentPnl) / 100;
             const isWin = currentPnl >= 0;
             const pnlColor = isWin ? 'text-brand-green' : 'text-brand-red';
             const cardBorder = isWin ? 'border-brand-green/30' : 'border-brand-red/30';
@@ -171,10 +175,15 @@ export const ActiveTradesGrid: React.FC<ActiveTradesGridProps> = ({
                     {getStrategyBadgeElement(t.strategy)}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className={`dir-ltr font-black text-[11px] ${pnlColor}`}>
-                      {currentPnl > 0 ? '+' : ''}
-                      {currentPnl.toFixed(2)}%
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className={`dir-ltr font-black text-[11px] ${pnlColor}`}>
+                        {currentPnl > 0 ? '+' : ''}
+                        {currentPnl.toFixed(2)}%
+                      </span>
+                      <span className={`dir-ltr font-mono font-bold text-[9px] ${pnlColor}`}>
+                        ({dollarPnl >= 0 ? '+' : ''}${dollarPnl.toFixed(2)})
+                      </span>
+                    </div>
                     <button
                       onClick={() => onCancelTrade(t.docId)}
                       className="text-brand-red hover:text-white transition-colors bg-red-500/10 rounded p-1 hover:bg-brand-red border border-red-500/20 cursor-pointer"
@@ -192,6 +201,12 @@ export const ActiveTradesGrid: React.FC<ActiveTradesGridProps> = ({
                       <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   </div>
+                </div>
+
+                {/* Capital Allocation Badge */}
+                <div className="flex justify-between items-center text-[9px] bg-gray-950/70 px-2 py-1 rounded border border-gray-700/60 mb-1.5">
+                  <span className="text-gray-400 font-bold">السيولة المخصصة:</span>
+                  <span className="text-brand-gold font-mono font-bold">${tradeAlloc.toFixed(1)} USDT</span>
                 </div>
 
                 {/* Score & Breakdown */}

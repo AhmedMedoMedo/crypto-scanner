@@ -25,6 +25,7 @@ export interface Trade {
   liveScore?: number;
   entryBreakdown?: StrategyBreakdown;
   liveBreakdown?: StrategyBreakdown;
+  allocatedCapital?: number;
 }
 
 export interface StrategyFlags {
@@ -35,6 +36,8 @@ export interface StrategyFlags {
   turboScalp?: boolean;
 }
 
+export type EmergencyDefenseMode = 'tighten_breakeven' | 'close_losing' | 'liquidate_all' | 'alert_only';
+
 export interface ScannerSettings {
   tf: string;
   sl_perc: number;
@@ -43,7 +46,22 @@ export interface ScannerSettings {
   vol_mult: number;
   cooldown_mins: number;
   auto_kill: boolean;
+  emergency_defense_mode?: EmergencyDefenseMode;
+  portfolio_capital?: number;
+  max_open_trades?: number;
   strats: StrategyFlags;
+}
+
+export interface PortfolioStats {
+  initialCapital: number;
+  maxTrades: number;
+  currentEquity: number;
+  realizedPnlUsd: number;
+  floatingPnlUsd: number;
+  investedCapital: number;
+  freeCash: number;
+  perTradeAllocation: number;
+  growthPercent: number;
 }
 
 export interface MarketScoreLogEntry {

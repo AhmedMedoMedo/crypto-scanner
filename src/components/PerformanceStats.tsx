@@ -8,6 +8,7 @@ interface PerformanceStatsProps {
   onTimeFilterChange: (filter: string) => void;
   openTradesCount: number;
   totalFloatingPnl: number;
+  perTradeAllocation?: number;
 }
 
 export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
@@ -16,6 +17,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
   onTimeFilterChange,
   openTradesCount,
   totalFloatingPnl,
+  perTradeAllocation = 100,
 }) => {
   const allClosed = trades.filter((t) => t.status === 'won' || t.status === 'lost');
 
@@ -29,11 +31,15 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
   let won = 0;
   let lost = 0;
   let totalPnl = 0;
+  let totalPnlUsd = 0;
 
   filteredClosed.forEach((trade) => {
     if (trade.status === 'won') won++;
     if (trade.status === 'lost') lost++;
-    totalPnl += trade.pnl || 0;
+    const pnl = trade.pnl || 0;
+    totalPnl += pnl;
+    const alloc = trade.allocatedCapital || perTradeAllocation || 100;
+    totalPnlUsd += (alloc * pnl) / 100;
   });
 
   const closedCount = won + lost;
@@ -127,12 +133,19 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
             صافي الربح
           </div>
           <div
-            className={`text-3xl font-black dir-ltr ${
+            className={`text-2xl sm:text-3xl font-black dir-ltr ${
               totalPnl >= 0 ? 'text-brand-green' : 'text-brand-red'
             }`}
           >
             {totalPnl > 0 ? '+' : ''}
             {totalPnl.toFixed(2)}%
+          </div>
+          <div
+            className={`text-[11px] font-mono font-bold mt-1 dir-ltr ${
+              totalPnlUsd >= 0 ? 'text-brand-green' : 'text-brand-red'
+            }`}
+          >
+            ({totalPnlUsd >= 0 ? '+' : ''}${totalPnlUsd.toFixed(2)})
           </div>
         </div>
 
@@ -150,6 +163,9 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
             >
               ({totalFloatingPnl > 0 ? '+' : ''}
               {totalFloatingPnl.toFixed(2)}%)
+            </div>
+            <div className="text-[10px] font-mono font-bold mt-0.5 dir-ltr text-gray-400">
+              (${((openTradesCount * perTradeAllocation * (totalFloatingPnl / (openTradesCount || 1))) / 100).toFixed(2)})
             </div>
           </div>
         </div>

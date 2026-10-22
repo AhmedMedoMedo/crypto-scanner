@@ -7,12 +7,14 @@ interface ClosedTradesListProps {
   trades: Trade[];
   timeFilter: string;
   onClearHistory: () => Promise<void>;
+  perTradeAllocation?: number;
 }
 
 export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
   trades,
   timeFilter,
   onClearHistory,
+  perTradeAllocation = 100,
 }) => {
   const [clearing, setClearing] = useState(false);
 
@@ -39,10 +41,14 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
   let wonCount = 0;
   let lostCount = 0;
   let totalClosedPnl = 0;
+  let totalClosedPnlUsd = 0;
   listToDisplay.forEach((t) => {
     if (t.status === 'won') wonCount++;
     if (t.status === 'lost') lostCount++;
-    totalClosedPnl += t.pnl || 0;
+    const pnl = t.pnl || 0;
+    totalClosedPnl += pnl;
+    const alloc = t.allocatedCapital || perTradeAllocation;
+    totalClosedPnlUsd += (alloc * pnl) / 100;
   });
 
   const handleClear = async () => {
@@ -120,7 +126,10 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
           <span className="text-[10px] font-normal text-gray-400 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800">
             إجمالي السجل: <span className="text-white font-bold">{allClosed.length}</span> | رابحة:{' '}
             <span className="text-brand-green font-bold">{allClosed.filter(t => t.status === 'won').length}</span> | خاسرة:{' '}
-            <span className="text-brand-red font-bold">{allClosed.filter(t => t.status === 'lost').length}</span>
+            <span className="text-brand-red font-bold">{allClosed.filter(t => t.status === 'lost').length}</span> | صافي الربح:{' '}
+            <span className={`font-mono font-bold dir-ltr ${totalClosedPnlUsd >= 0 ? 'text-brand-green' : 'text-brand-red'}`}>
+              {totalClosedPnlUsd >= 0 ? '+' : ''}${totalClosedPnlUsd.toFixed(2)}
+            </span>
           </span>
           {timeFilter !== 'all' && (
             <button
@@ -194,10 +203,21 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-2 shrink-0 w-auto">
-                  <span className={`dir-ltr font-black text-xs ${pColor}`}>
-                    {(t.pnl || 0) > 0 ? '+' : ''}
-                    {(t.pnl || 0).toFixed(2)}%
-                  </span>
+                  {(() => {
+                    const tradeAlloc = t.allocatedCapital || perTradeAllocation || 100;
+                    const dollarPnl = (tradeAlloc * (t.pnl || 0)) / 100;
+                    return (
+                      <div className="flex flex-col items-end">
+                        <span className={`dir-ltr font-black text-xs ${pColor}`}>
+                          {(t.pnl || 0) > 0 ? '+' : ''}
+                          {(t.pnl || 0).toFixed(2)}%
+                        </span>
+                        <span className={`dir-ltr font-mono font-bold text-[9px] ${pColor}`}>
+                          ({dollarPnl >= 0 ? '+' : ''}${dollarPnl.toFixed(2)})
+                        </span>
+                      </div>
+                    );
+                  })()}
                   <span
                     className={`${pColor} font-bold text-sm bg-gray-950 w-5 h-5 flex items-center justify-center rounded border ${
                       isWin ? 'border-brand-green/50' : 'border-brand-red/50'
