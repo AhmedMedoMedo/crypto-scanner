@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { History, Trash2, Clock } from 'lucide-react';
+import { History, Trash2, Clock, CheckCircle2, Loader2 } from 'lucide-react';
 import { Trade } from '../types';
 import { formatDuration } from '../utils/formatters';
 
@@ -17,6 +17,7 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
   perTradeAllocation = 100,
 }) => {
   const [clearing, setClearing] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
 
   const [showAllInList, setShowAllInList] = useState(true);
   const [displayLimit, setDisplayLimit] = useState(100);
@@ -54,19 +55,20 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
   const handleClear = async () => {
     if (
       !window.confirm(
-        '⚠️ تحذير هام: هل أنت متأكد من مسح سجل الصفقات المغلقة؟ سيتم الاحتفاظ بنسخة أرشيفية محلية لحماية بياناتك.'
+        '⚠️ هل أنت متأكد من مسح وإفراغ سجل الصفقات المغلقة بالكامل؟ سيتم تصفير السجل وتحديث الإحصائيات فوراً.'
       )
     )
       return;
 
-    // Backup to local storage before clearing
-    try {
-      localStorage.setItem('momentum_trades_backup_cleared', JSON.stringify(allClosed));
-    } catch {}
-
     setClearing(true);
+    setSuccessMsg(false);
     try {
       await onClearHistory();
+      setSuccessMsg(true);
+      setTimeout(() => setSuccessMsg(false), 5000);
+    } catch (err) {
+      console.error('Error clearing trades history:', err);
+      alert('حدث خطأ أثناء مسح السجل. يرجى المحاولة مرة أخرى.');
     } finally {
       setClearing(false);
     }
@@ -143,12 +145,32 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
         <button
           onClick={handleClear}
           disabled={clearing || allClosed.length === 0}
-          className="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          title={allClosed.length === 0 ? 'السجل فارغ بالفعل' : 'مسح وإفراغ سجل الصفقات المغلقة'}
         >
-          <Trash2 className="w-3 h-3" />
-          {clearing ? 'جاري الحذف...' : 'مسح السجل'}
+          {clearing ? (
+            <Loader2 className="w-3 h-3 animate-spin text-brand-red" />
+          ) : (
+            <Trash2 className="w-3 h-3" />
+          )}
+          {clearing ? 'جاري المسح الفوري...' : 'مسح السجل'}
         </button>
       </div>
+
+      {successMsg && (
+        <div className="mb-3 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center justify-between shadow-sm">
+          <span className="flex items-center gap-1.5 font-bold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            تم مسح وإفراغ سجل الصفقات المغلقة بنجاح وتحديث الإحصائيات فوراً
+          </span>
+          <button
+            onClick={() => setSuccessMsg(false)}
+            className="text-gray-400 hover:text-white text-xs px-1 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1">
         {sortedClosed.length === 0 ? (

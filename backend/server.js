@@ -96,6 +96,39 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    if (req.url === '/api/clear-history' || req.url === '/clear-history') {
+        try {
+            if (tradesRef && db) {
+                const snapshotWon = await tradesRef.where('status', '==', 'won').get();
+                const snapshotLost = await tradesRef.where('status', '==', 'lost').get();
+                const allDocs = [...snapshotWon.docs, ...snapshotLost.docs];
+                
+                if (allDocs.length > 0) {
+                    const BATCH_SIZE = 400;
+                    for (let i = 0; i < allDocs.length; i += BATCH_SIZE) {
+                        const chunk = allDocs.slice(i, i + BATCH_SIZE);
+                        const batch = db.batch();
+                        chunk.forEach(docSnap => batch.delete(docSnap.ref));
+                        await batch.commit();
+                    }
+                    console.log(`🗑️ [مسح السجل]: تم حذف ${allDocs.length} صفقة مغلقة بنجاح من قاعدة البيانات.`);
+                }
+                res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+                res.end(JSON.stringify({ success: true, count: allDocs.length }));
+                return;
+            } else {
+                res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+                res.end(JSON.stringify({ success: true, count: 0, note: 'standalone_or_client_handled' }));
+                return;
+            }
+        } catch (e) {
+            console.error('Error clearing history on backend:', e.message);
+            res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
+            res.end(JSON.stringify({ success: false, error: e.message }));
+            return;
+        }
+    }
+
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
 });

@@ -5,6 +5,7 @@ import {
   onSnapshot,
   setDoc,
   deleteDoc,
+  writeBatch,
   query,
   orderBy,
   limit,
@@ -70,6 +71,7 @@ export const App: React.FC = () => {
   });
 
   const prevOpenCountRef = useRef<number | null>(null);
+  const isClearingHistoryRef = useRef<boolean>(false);
 
   // Toggle sound
   const handleToggleSound = () => {
@@ -208,13 +210,50 @@ export const App: React.FC = () => {
 
   // Clear History
   const handleClearHistory = async () => {
+    isClearingHistoryRef.current = true;
+    const now = Date.now();
+    localStorage.setItem('momentum_trades_cleared_at', String(now));
+    localStorage.removeItem('momentum_trades_vault_v1');
+    localStorage.removeItem('momentum_trades_backup_cleared');
+
     const closed = trades.filter((t) => t.status === 'won' || t.status === 'lost');
-    for (const t of closed) {
-      try {
-        await deleteDoc(doc(db, 'momentum_trades_v1', t.docId));
-      } catch (e) {
-        console.error('Error clearing trade', e);
+
+    // Optimistic UI update: immediately drop closed trades so UI is instantly cleared
+    setTrades((prev) => prev.filter((t) => t.status === 'open'));
+
+    if (closed.length === 0) {
+      isClearingHistoryRef.current = false;
+      return;
+    }
+
+    try {
+      // 1. Client-side fast batch delete (chunks of 400 docs per batch)
+      const BATCH_SIZE = 400;
+      for (let i = 0; i < closed.length; i += BATCH_SIZE) {
+        const chunk = closed.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+        chunk.forEach((t) => {
+          batch.delete(doc(db, 'momentum_trades_v1', t.docId));
+        });
+        await batch.commit();
       }
+
+      // 2. Also notify backend endpoint for server-level purge
+      try {
+        await fetch('/api/clear-history', { method: 'POST' });
+      } catch (err) {
+        // Backend ping is auxiliary
+      }
+    } catch (batchErr) {
+      console.warn('Batch delete error, falling back to parallel deleteDoc:', batchErr);
+      await Promise.allSettled(
+        closed.map((t) => deleteDoc(doc(db, 'momentum_trades_v1', t.docId)))
+      );
+    } finally {
+      // Allow snapshot listener again after 2.5s cooldown so Firestore deletions settle
+      setTimeout(() => {
+        isClearingHistoryRef.current = false;
+      }, 2500);
     }
   };
 
@@ -332,40 +371,60 @@ export const App: React.FC = () => {
           });
         });
 
-        // Persistent Local Vault: prevents any past trade or profit from disappearing
+        // Persistent Local Vault: prevents past trades from disappearing unintentionally,
+        // but strictly respects manual "مسح السجل" (Clear History) actions.
         let mergedTrades = fetchedTrades;
-        try {
-          const VAULT_KEY = 'momentum_trades_vault_v1';
-          const savedVaultStr = localStorage.getItem(VAULT_KEY);
-          const savedVault: Record<string, Trade> = savedVaultStr ? JSON.parse(savedVaultStr) : {};
+        const clearedAt = Number(localStorage.getItem('momentum_trades_cleared_at') || 0);
 
-          // Store incoming closed trades in permanent vault
-          fetchedTrades.forEach((t) => {
-            if (t.status === 'won' || t.status === 'lost') {
-              savedVault[t.docId] = t;
+        if (!isClearingHistoryRef.current) {
+          try {
+            const VAULT_KEY = 'momentum_trades_vault_v1';
+            const savedVaultStr = localStorage.getItem(VAULT_KEY);
+            const savedVault: Record<string, Trade> = savedVaultStr ? JSON.parse(savedVaultStr) : {};
+
+            // Store incoming closed trades in permanent vault ONLY if they were closed after the last clear timestamp
+            fetchedTrades.forEach((t) => {
+              if (t.status === 'won' || t.status === 'lost') {
+                const tradeTime = t.closeTime || t.openTime || 0;
+                if (tradeTime > clearedAt) {
+                  savedVault[t.docId] = t;
+                }
+              }
+            });
+
+            // Check if any historical closed trades from vault are missing from fetchedTrades
+            const fetchedIds = new Set(fetchedTrades.map((t) => t.docId));
+            const restoredFromVault: Trade[] = [];
+            Object.values(savedVault).forEach((vt) => {
+              const tradeTime = vt.closeTime || vt.openTime || 0;
+              if (tradeTime > clearedAt && !fetchedIds.has(vt.docId)) {
+                restoredFromVault.push(vt);
+                // Auto-restore back to Firestore so data remains in database even if an external old server script runs
+                setDoc(doc(db, 'momentum_trades_v1', vt.docId), vt, { merge: true }).catch(() => {});
+              }
+            });
+
+            if (restoredFromVault.length > 0) {
+              mergedTrades = [...fetchedTrades, ...restoredFromVault].sort(
+                (a, b) => (b.openTime || 0) - (a.openTime || 0)
+              );
             }
-          });
 
-          // Check if any historical closed trades from vault are missing from fetchedTrades
-          const fetchedIds = new Set(fetchedTrades.map((t) => t.docId));
-          const restoredFromVault: Trade[] = [];
-          Object.values(savedVault).forEach((vt) => {
-            if (!fetchedIds.has(vt.docId)) {
-              restoredFromVault.push(vt);
-              // Auto-restore back to Firestore so data remains in database even if an external old server script runs
-              setDoc(doc(db, 'momentum_trades_v1', vt.docId), vt, { merge: true }).catch(() => {});
-            }
-          });
-
-          if (restoredFromVault.length > 0) {
-            mergedTrades = [...fetchedTrades, ...restoredFromVault].sort(
-              (a, b) => (b.openTime || 0) - (a.openTime || 0)
-            );
+            localStorage.setItem(VAULT_KEY, JSON.stringify(savedVault));
+          } catch (vaultErr) {
+            console.warn('Vault sync notice:', vaultErr);
           }
+        }
 
-          localStorage.setItem(VAULT_KEY, JSON.stringify(savedVault));
-        } catch (vaultErr) {
-          console.warn('Vault sync notice:', vaultErr);
+        // Filter out any closed trade that was cleared before clearedAt (handles offline cache latency)
+        if (clearedAt > 0) {
+          mergedTrades = mergedTrades.filter((t) => {
+            if (t.status === 'won' || t.status === 'lost') {
+              const tradeTime = t.closeTime || t.openTime || 0;
+              return tradeTime > clearedAt;
+            }
+            return true;
+          });
         }
 
         const newOpenCount = mergedTrades.filter((t) => t.status === 'open').length;
