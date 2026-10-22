@@ -52,7 +52,13 @@ export const App: React.FC = () => {
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
 
   const [timeFilter, setTimeFilter] = useState(() => {
-    return localStorage.getItem('momentumStatsTimeFilter_v35') || '24';
+    // Default to 'all' (all-time cumulative) so past trades and profits are never hidden
+    const saved = localStorage.getItem('momentumStatsTimeFilter_v36');
+    if (!saved || saved === '24') {
+      localStorage.setItem('momentumStatsTimeFilter_v36', 'all');
+      return 'all';
+    }
+    return saved;
   });
 
   const [openTradesSort, setOpenTradesSort] = useState(() => {
@@ -74,7 +80,7 @@ export const App: React.FC = () => {
   // Time filter change
   const handleTimeFilterChange = (filter: string) => {
     setTimeFilter(filter);
-    localStorage.setItem('momentumStatsTimeFilter_v35', filter);
+    localStorage.setItem('momentumStatsTimeFilter_v36', filter);
   };
 
   // Sort change
@@ -270,6 +276,8 @@ export const App: React.FC = () => {
           Object.values(savedVault).forEach((vt) => {
             if (!fetchedIds.has(vt.docId)) {
               restoredFromVault.push(vt);
+              // Auto-restore back to Firestore so data remains in database even if an external old server script runs
+              setDoc(doc(db, 'momentum_trades_v1', vt.docId), vt, { merge: true }).catch(() => {});
             }
           });
 

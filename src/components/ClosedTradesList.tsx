@@ -16,6 +16,9 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
 }) => {
   const [clearing, setClearing] = useState(false);
 
+  const [showAllInList, setShowAllInList] = useState(true);
+  const [displayLimit, setDisplayLimit] = useState(100);
+
   const allClosed = trades.filter((t) => t.status === 'won' || t.status === 'lost');
 
   let filteredClosed = allClosed;
@@ -25,9 +28,9 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
     filteredClosed = allClosed.filter((t) => (t.closeTime || 0) >= timeLimit);
   }
 
-  const [displayLimit, setDisplayLimit] = useState(100);
+  const listToDisplay = showAllInList ? allClosed : filteredClosed;
 
-  const sortedClosed = [...filteredClosed].sort(
+  const sortedClosed = [...listToDisplay].sort(
     (a, b) => (b.closeTime || 0) - (a.closeTime || 0)
   );
 
@@ -36,7 +39,7 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
   let wonCount = 0;
   let lostCount = 0;
   let totalClosedPnl = 0;
-  filteredClosed.forEach((t) => {
+  listToDisplay.forEach((t) => {
     if (t.status === 'won') wonCount++;
     if (t.status === 'lost') lostCount++;
     totalClosedPnl += t.pnl || 0;
@@ -109,29 +112,33 @@ export const ClosedTradesList: React.FC<ClosedTradesListProps> = ({
   return (
     <div className="mt-8 pt-6 border-t border-gray-800">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
-          <History className="w-4 h-4 text-gray-400" />
-          سجل الصفقات المغلقة
-          <span className="text-[10px] font-normal text-gray-400 mr-2 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800 hidden sm:inline-block">
-            (إجمالي: {filteredClosed.length} | رابحة:{' '}
-            <span className="text-brand-green font-bold">{wonCount}</span> | خاسرة:{' '}
-            <span className="text-brand-red font-bold">{lostCount}</span>)
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+            <History className="w-4 h-4 text-gray-400" />
+            سجل الصفقات المغلقة
+          </h3>
+          <span className="text-[10px] font-normal text-gray-400 bg-gray-950 px-2.5 py-1 rounded-md border border-gray-800">
+            إجمالي السجل: <span className="text-white font-bold">{allClosed.length}</span> | رابحة:{' '}
+            <span className="text-brand-green font-bold">{allClosed.filter(t => t.status === 'won').length}</span> | خاسرة:{' '}
+            <span className="text-brand-red font-bold">{allClosed.filter(t => t.status === 'lost').length}</span>
           </span>
-        </h3>
+          {timeFilter !== 'all' && (
+            <button
+              onClick={() => setShowAllInList((prev) => !prev)}
+              className="text-[10px] px-2.5 py-1 rounded-md border font-bold transition-colors cursor-pointer bg-blue-500/10 text-brand-blue border-blue-500/30 hover:bg-blue-500/20"
+            >
+              {showAllInList ? `عرض كل الصفقات (${allClosed.length}) ♾️` : `مُصفى لآخر فترة (${filteredClosed.length}) ⏳`}
+            </button>
+          )}
+        </div>
         <button
           onClick={handleClear}
-          disabled={clearing || filteredClosed.length === 0}
+          disabled={clearing || allClosed.length === 0}
           className="flex items-center justify-center gap-1.5 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-brand-red px-3 py-1.5 rounded-md border border-red-500/30 transition-all shadow-sm cursor-pointer disabled:opacity-50"
         >
           <Trash2 className="w-3 h-3" />
           {clearing ? 'جاري الحذف...' : 'مسح السجل'}
         </button>
-      </div>
-
-      <div className="text-[10px] text-center text-gray-400 bg-gray-950 px-2 py-1.5 rounded-md border border-gray-800 mb-3 sm:hidden">
-        (إجمالي: {filteredClosed.length} | رابحة:{' '}
-        <span className="text-brand-green font-bold">{wonCount}</span> | خاسرة:{' '}
-        <span className="text-brand-red font-bold">{lostCount}</span>)
       </div>
 
       <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1">

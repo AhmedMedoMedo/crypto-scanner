@@ -568,6 +568,7 @@ const scanMarket = async () => {
 };
 
 console.log("🚀 Server Engine Running in OPTIMIZED Mode (Low DB Cost)...");
+console.log("🛡️ [PERMANENT TRADES RETENTION ACTIVE] - Automatic deletion of closed trades is PERMANENTLY DISABLED.");
 
 // scanMarket: checks every 15s
 setInterval(scanMarket, 15000);        

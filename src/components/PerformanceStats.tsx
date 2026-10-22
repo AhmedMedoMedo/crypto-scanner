@@ -49,30 +49,63 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
     floatingClass = 'text-brand-red bg-brand-red/10 border-brand-red/30';
   }
 
+  const getTimeFilterLabel = (tf: string) => {
+    switch (tf) {
+      case '1': return 'آخر ساعة';
+      case '4': return 'آخر 4 ساعات';
+      case '6': return 'آخر 6 ساعات';
+      case '12': return 'آخر 12 ساعة';
+      case '24': return 'آخر 24 ساعة';
+      case '168': return 'آخر 7 أيام';
+      case '720': return 'آخر 30 يوم';
+      default: return 'كل الأوقات';
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
         <h2 className="text-sm font-bold text-white flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-brand-blue" />
           إحصائيات الأداء
+          <span className="text-[10px] font-normal text-gray-400 bg-gray-900 border border-gray-800 px-2 py-0.5 rounded">
+            {timeFilter === 'all' ? 'سجل تراكمي شامل (غير محدود)' : `مُصفى: ${getTimeFilterLabel(timeFilter)}`}
+          </span>
         </h2>
-        <div className="input-group sm:w-48">
+        <div className="input-group sm:w-56">
           <select
             value={timeFilter}
             onChange={(e) => onTimeFilterChange(e.target.value)}
             className="!py-1.5 !text-xs !bg-gray-950 !text-brand-gold !font-bold !border-gray-700"
           >
-            <option value="all">كل الأوقات</option>
-            <option value="1">آخر ساعة</option>
+            <option value="all">كل الأوقات (سجل تراكمي كامل ♾️)</option>
+            <option value="1">آخر ساعة واحدة</option>
             <option value="4">آخر 4 ساعات</option>
             <option value="6">آخر 6 ساعات</option>
             <option value="12">آخر 12 ساعة</option>
-            <option value="24">آخر 24 ساعة</option>
+            <option value="24">آخر 24 ساعة فقط</option>
             <option value="168">آخر 7 أيام</option>
             <option value="720">آخر 30 يوم</option>
           </select>
         </div>
       </div>
+
+      {timeFilter !== 'all' && (
+        <div className="mb-4 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-400 font-bold">ℹ️ تنبيه التصفية:</span>
+            <span>
+              يتم الآن عرض إحصائيات <strong>{getTimeFilterLabel(timeFilter)}</strong> فقط ({closedCount} صفقة من أصل {allClosed.length} صفقة مسجلة). الصفقات السابقة محفوظة بالكامل.
+            </span>
+          </div>
+          <button
+            onClick={() => onTimeFilterChange('all')}
+            className="text-[11px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 px-3 py-1 rounded font-bold transition-colors whitespace-nowrap cursor-pointer self-start sm:self-auto"
+          >
+            عرض السجل الشامل (كل الأوقات) ↩️
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="stat-box">
