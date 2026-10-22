@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, BellOff, Activity, Radar } from 'lucide-react';
+import { Bell, BellOff, Activity, Radar, Send } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'momentum' | 'radar';
@@ -7,6 +7,8 @@ interface HeaderProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   isConnected: boolean;
+  onOpenNotifications?: () => void;
+  notificationsEnabled?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,6 +17,8 @@ export const Header: React.FC<HeaderProps> = ({
   soundEnabled,
   onToggleSound,
   isConnected,
+  onOpenNotifications,
+  notificationsEnabled = false,
 }) => {
   return (
     <>
@@ -69,7 +73,25 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {onOpenNotifications && (
+              <button
+                onClick={onOpenNotifications}
+                className={`transition-all px-2.5 py-1 rounded-full border text-[11px] font-bold flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                  notificationsEnabled
+                    ? 'bg-blue-500/10 text-brand-blue border-blue-500/40 hover:bg-blue-500/20'
+                    : 'bg-gray-800/80 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'
+                }`}
+                title="إعدادات تنبيهات التلجرام الفورية"
+              >
+                <Send className="w-3 h-3 text-brand-blue" />
+                <span className="hidden sm:inline">
+                  {notificationsEnabled ? 'التلجرام متصل 📱' : 'ربط التلجرام ⚡'}
+                </span>
+                {notificationsEnabled && <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse"></span>}
+              </button>
+            )}
+
             <button
               onClick={onToggleSound}
               className={`text-gray-400 hover:text-brand-gold transition-colors p-1.5 rounded-full border shadow-sm cursor-pointer ${

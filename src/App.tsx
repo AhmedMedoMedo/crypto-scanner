@@ -11,7 +11,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Trade, ScannerSettings, MarketHealthData } from './types';
+import { Trade, ScannerSettings, MarketHealthData, NotificationSettings } from './types';
 import { playSound } from './utils/sound';
 import { Header } from './components/Header';
 import { MarketHealthCard } from './components/MarketHealthCard';
@@ -22,7 +22,15 @@ import { ManualTradeForm } from './components/ManualTradeForm';
 import { ActiveTradesGrid } from './components/ActiveTradesGrid';
 import { ClosedTradesList } from './components/ClosedTradesList';
 import { ExplosionRadar } from './components/ExplosionRadar';
+import { NotificationSettingsCard } from './components/NotificationSettingsCard';
+import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 import { fetchLiveMarketMatrix } from './utils/marketMatrixCalculator';
+import {
+  defaultNotificationSettings,
+  notifyTradeOpen,
+  notifyEmergencyAction,
+  testTelegramConnection,
+} from './utils/notificationService';
 
 const defaultSettings: ScannerSettings = {
   tf: '15m',
@@ -42,6 +50,13 @@ const defaultSettings: ScannerSettings = {
     bbrsi: true,
     turboScalp: true,
   },
+  notifications: (() => {
+    try {
+      const saved = localStorage.getItem('momentum_notification_settings_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return defaultNotificationSettings;
+  })(),
 };
 
 export const App: React.FC = () => {
@@ -109,6 +124,10 @@ export const App: React.FC = () => {
     }
   };
 
+  // Notification Modal & Testing State
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const [testingNotif, setTestingNotif] = useState(false);
+
   // Save Settings
   const handleSaveSettings = async (newSettings: ScannerSettings): Promise<boolean> => {
     try {
@@ -120,6 +139,46 @@ export const App: React.FC = () => {
     } catch (e) {
       console.error('Failed to save settings', e);
       return false;
+    }
+  };
+
+  // Save Notifications
+  const handleSaveNotifications = async (newNotifs: NotificationSettings): Promise<boolean> => {
+    try {
+      const updatedSettings = { ...settings, notifications: newNotifs };
+      await setDoc(
+        doc(db, 'momentum_system_logs', 'scanner_settings'),
+        { notifications: newNotifs },
+        { merge: true }
+      );
+      localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(newNotifs));
+      setSettings(updatedSettings);
+      return true;
+    } catch (e) {
+      console.error('Failed to save notification settings:', e);
+      localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(newNotifs));
+      setSettings((prev) => ({ ...prev, notifications: newNotifs }));
+      return true;
+    }
+  };
+
+  // Quick Test Notification from Card
+  const handleQuickTestNotification = async () => {
+    if (!settings.notifications?.telegramBotToken || !settings.notifications?.telegramChatId) {
+      setIsNotifModalOpen(true);
+      return;
+    }
+    setTestingNotif(true);
+    try {
+      const res = await testTelegramConnection(
+        settings.notifications.telegramBotToken,
+        settings.notifications.telegramChatId
+      );
+      alert(res.message);
+    } catch (e: any) {
+      alert(`خطأ: ${e?.message || 'تعذر الاتصال'}`);
+    } finally {
+      setTestingNotif(false);
     }
   };
 
@@ -146,16 +205,26 @@ export const App: React.FC = () => {
   // Add Manual Trade
   const handleAddTrade = async (newTrade: Omit<Trade, 'docId'>) => {
     const newDocRef = doc(collection(db, 'momentum_trades_v1'));
-    await setDoc(newDocRef, {
+    const finalTrade = {
       ...newTrade,
       allocatedCapital: newTrade.allocatedCapital || currentPerTradeAlloc,
-    });
+    };
+    await setDoc(newDocRef, finalTrade);
+
+    // Send Telegram alert
+    notifyTradeOpen(settings.notifications, {
+      ...finalTrade,
+      docId: newDocRef.id,
+    }).catch(() => {});
   };
 
   // Emergency Market Defense Action
   const handleEmergencyAction = async (action: 'tighten_breakeven' | 'close_losing' | 'liquidate_all') => {
     const currentOpen = trades.filter((t) => t.status === 'open');
     if (currentOpen.length === 0) return;
+
+    // Send Telegram emergency alert
+    notifyEmergencyAction(settings.notifications, action, currentOpen.length).catch(() => {});
 
     for (const trade of currentOpen) {
       const currentPrice = livePrices[trade.symbol] || trade.currentPrice || trade.entryPrice;
@@ -282,6 +351,7 @@ export const App: React.FC = () => {
               bbrsi: s.strats?.bbrsi ?? prev.strats.bbrsi,
               turboScalp: s.strats?.turboScalp ?? prev.strats.turboScalp,
             },
+            notifications: s.notifications !== undefined ? s.notifications : prev.notifications,
           }));
         }
       },
@@ -551,6 +621,12 @@ export const App: React.FC = () => {
         soundEnabled={soundEnabled}
         onToggleSound={handleToggleSound}
         isConnected={isConnected}
+        onOpenNotifications={() => setIsNotifModalOpen(true)}
+        notificationsEnabled={Boolean(
+          settings.notifications?.enabled &&
+            settings.notifications?.telegramBotToken &&
+            settings.notifications?.telegramChatId
+        )}
       />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
@@ -568,6 +644,13 @@ export const App: React.FC = () => {
               settings={settings}
               onSaveSettings={handleSaveSettings}
               onEmergencyAction={handleEmergencyAction}
+            />
+
+            <NotificationSettingsCard
+              notifications={settings.notifications}
+              onOpenModal={() => setIsNotifModalOpen(true)}
+              onTest={handleQuickTestNotification}
+              testing={testingNotif}
             />
 
             <div className="bg-[#0f1423] border border-gray-800 rounded-lg p-3 flex items-center gap-3 shadow-inner">
@@ -620,6 +703,13 @@ export const App: React.FC = () => {
           <ExplosionRadar onAddTrade={handleAddTrade} />
         )}
       </main>
+
+      <NotificationSettingsModal
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+        settings={settings.notifications}
+        onSave={handleSaveNotifications}
+      />
     </div>
   );
 };

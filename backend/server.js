@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
@@ -129,6 +130,57 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
+    if (req.url === '/api/test-notification') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                const token = (parsed.token || (SETTINGS.notifications && SETTINGS.notifications.telegramBotToken) || '').trim();
+                const chatId = (parsed.chatId || (SETTINGS.notifications && SETTINGS.notifications.telegramChatId) || '').trim();
+                if (!token || !chatId) {
+                    res.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
+                    res.end(JSON.stringify({ success: false, error: 'Token and Chat ID required' }));
+                    return;
+                }
+                const nowStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const testMsg = `🔔 <b>[رسالة اختبار وتأكيد الاتصال]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n✅ <b>مبروك! تم ربط نظام الرادار بحساب التلجرام بنجاح!</b>\n\n📱 ستصلك الآن التنبيهات الفورية عند فتح وإغلاق الصفقات وتحقيق الأهداف.\n\n⏱️ <b>الوقت:</b> <code>${nowStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>نظام أحمد الذكي</i>`;
+                
+                const postData = JSON.stringify({ chat_id: chatId, text: testMsg, parse_mode: 'HTML' });
+                const tgReq = https.request({
+                    hostname: 'api.telegram.org',
+                    port: 443,
+                    path: `/bot${token}/sendMessage`,
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) }
+                }, (tgRes) => {
+                    let tgBody = '';
+                    tgRes.on('data', d => tgBody += d);
+                    tgRes.on('end', () => {
+                        try {
+                            const tgData = JSON.parse(tgBody || '{}');
+                            res.writeHead(tgRes.statusCode === 200 ? 200 : 400, {'Content-Type': 'application/json; charset=utf-8'});
+                            res.end(JSON.stringify({ success: tgData.ok, error: tgData.description }));
+                        } catch(parseErr) {
+                            res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+                            res.end(JSON.stringify({ success: tgRes.statusCode === 200 }));
+                        }
+                    });
+                });
+                tgReq.on('error', (e) => {
+                    res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
+                    res.end(JSON.stringify({ success: false, error: e.message }));
+                });
+                tgReq.write(postData);
+                tgReq.end();
+            } catch (err) {
+                res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
+                res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+        });
+        return;
+    }
+
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
 });
@@ -186,6 +238,49 @@ if (tradesRef) {
 const cleanOldTrades = async () => {
     // Permanent retention: never delete past trades
     return;
+};
+
+const sendTelegramNotification = (textHtml) => {
+    try {
+        const notif = SETTINGS && SETTINGS.notifications;
+        if (!notif || !notif.enabled) return;
+        const token = (notif.telegramBotToken || '').trim();
+        const chatId = (notif.telegramChatId || '').trim();
+        if (!token || !chatId) return;
+
+        const postData = JSON.stringify({
+            chat_id: chatId,
+            text: textHtml,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        });
+
+        const req = https.request({
+            hostname: 'api.telegram.org',
+            port: 443,
+            path: `/bot${token}/sendMessage`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        }, (res) => {
+            if (res.statusCode !== 200) {
+                let body = '';
+                res.on('data', d => body += d);
+                res.on('end', () => console.warn('Telegram response status:', res.statusCode, body));
+            }
+        });
+
+        req.on('error', (e) => {
+            console.error('Telegram notification error:', e.message);
+        });
+
+        req.write(postData);
+        req.end();
+    } catch (e) {
+        console.error('Failed to send telegram notification:', e.message);
+    }
 };
 
 const calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
@@ -253,6 +348,13 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
         await docRef.set(newTrade);
         // ستتم إضافتها لـ virtualTrades تلقائياً عبر onSnapshot
         console.log(`🟢 [دخول فرصة نارية] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
+
+        // إرسال تنبيه تلجرام فوري لهاتف المستخدم
+        if (SETTINGS.notifications && SETTINGS.notifications.enabled && SETTINGS.notifications.notifyOnOpen !== false) {
+            const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            const msg = `🎯 <b>[صيد صفقة جديدة]</b> 🟢\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${symbol}\n📈 <b>الاستراتيجية:</b> <b>${strategy}</b>\n💵 <b>سعر الدخول:</b> <code>$${price}</code>\n🛡️ <b>وقف الخسارة:</b> <code>$${newTrade.slLevel.toFixed(4)}</code>\n⚡ <b>قوة الإشارة:</b> <code>${healthData.score}%</code>\n💰 <b>رأس المال:</b> <code>$${perTradeAlloc}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>رادار الصفقات اللحظي</i>`;
+            sendTelegramNotification(msg);
+        }
     } catch (e) { console.error("Error:", e.message); }
 };
 
@@ -560,6 +662,22 @@ const manageOpenTrades = async () => {
                 delete memoryTrades[trade.docId]; // مسح من الذاكرة
                 if (SETTINGS.cooldown_mins > 0) exitCooldowns[trade.symbol] = Date.now() + (SETTINGS.cooldown_mins * 60 * 1000);
                 console.log(`🔴 [إغلاق صفقة وحفظ DB] ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
+
+                // إرسال تنبيه تلجرام فوري بنتيجة الصفقة
+                if (SETTINGS.notifications && SETTINGS.notifications.enabled) {
+                    const isWin = status === 'won';
+                    const shouldSend = (isWin && SETTINGS.notifications.notifyOnCloseWin !== false) || (!isWin && SETTINGS.notifications.notifyOnCloseLoss !== false);
+                    if (shouldSend) {
+                        const headerIcon = isWin ? '🏆' : '🛑';
+                        const title = isWin ? 'تم إغلاق صفقة بربح' : 'تم إغلاق صفقة';
+                        const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                        const alloc = trade.allocatedCapital || (SETTINGS.portfolio_capital ? SETTINGS.portfolio_capital / (SETTINGS.max_open_trades || 10) : 100);
+                        const dollarVal = (alloc * pnl) / 100;
+                        const dollarStr = `(${pnl >= 0 ? '+' : ''}$${dollarVal.toFixed(2)})`;
+                        const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
+                        sendTelegramNotification(msg);
+                    }
+                }
             }
         }
 

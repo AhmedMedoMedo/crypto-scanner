@@ -19,6 +19,7 @@ export interface Trade {
   status: 'open' | 'won' | 'lost' | 'canceled';
   openTime: number;
   closeTime?: number;
+  closePrice?: number;
   pnl?: number;
   strategy?: 'Momentum' | 'Breakout' | 'Sniper' | 'BB_RSI' | 'TurboScalp' | 'Manual' | string;
   entryScore?: number;
@@ -38,6 +39,19 @@ export interface StrategyFlags {
 
 export type EmergencyDefenseMode = 'tighten_breakeven' | 'close_losing' | 'liquidate_all' | 'alert_only';
 
+export interface NotificationSettings {
+  enabled: boolean;
+  channel: 'telegram' | 'email' | 'all';
+  telegramBotToken: string;
+  telegramChatId: string;
+  emailAddress?: string;
+  webhookUrl?: string;
+  notifyOnOpen: boolean;
+  notifyOnCloseWin: boolean;
+  notifyOnCloseLoss: boolean;
+  notifyOnEmergency: boolean;
+}
+
 export interface ScannerSettings {
   tf: string;
   sl_perc: number;
@@ -50,6 +64,7 @@ export interface ScannerSettings {
   portfolio_capital?: number;
   max_open_trades?: number;
   strats: StrategyFlags;
+  notifications?: NotificationSettings;
 }
 
 export interface PortfolioStats {
