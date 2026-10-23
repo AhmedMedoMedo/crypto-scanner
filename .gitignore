@@ -20,3 +20,6 @@ backend/serviceAccountKey.json
 # Logs
 *.log
 npm-debug.log*
+
+# AI Studio internal artifacts
+.aistudio/

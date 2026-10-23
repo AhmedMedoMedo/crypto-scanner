@@ -30,7 +30,6 @@ import {
   notifyTradeOpen,
   notifyEmergencyAction,
   testTelegramConnection,
-  testEmailConnection,
 } from './utils/notificationService';
 
 const defaultSettings: ScannerSettings = {
@@ -626,10 +625,8 @@ export const App: React.FC = () => {
         onOpenNotifications={() => setIsNotifModalOpen(true)}
         notificationsEnabled={Boolean(
           settings.notifications?.enabled &&
-            ((settings.notifications?.channel === 'email' && settings.notifications?.emailAddress) ||
-              (settings.notifications?.channel === 'telegram' && settings.notifications?.telegramBotToken) ||
-              (settings.notifications?.channel === 'all' &&
-                (settings.notifications?.telegramBotToken || settings.notifications?.emailAddress)))
+            settings.notifications?.telegramBotToken &&
+            settings.notifications?.telegramChatId
         )}
       />
 

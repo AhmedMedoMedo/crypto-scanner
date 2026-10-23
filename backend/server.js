@@ -732,19 +732,10 @@ const manageOpenTrades = async () => {
                         const dollarVal = (alloc * pnl) / 100;
                         const dollarStr = `(${pnl >= 0 ? '+' : ''}$${dollarVal.toFixed(2)})`;
 
-                        // 1. تلجرام
+                        // تلجرام
                         if (channel === 'telegram' || channel === 'all') {
                             const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
                             sendTelegramNotification(msg);
-                        }
-
-                        // 2. إيميل
-                        if ((channel === 'email' || channel === 'all') && SETTINGS.notifications.emailAddress) {
-                            const emailSubj = `[Momentum AI] ${headerIcon} ${title}: #${trade.symbol} (${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%)`;
-                            const emailTxt = `${title}\nالعملة: #${trade.symbol}\nالنتيجة: ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}\nالاستراتيجية: ${trade.strategy || 'Auto'}\nسعر الدخول: $${trade.entryPrice}\nسعر الإغلاق: $${currentPrice}\nالتوقيت: ${timeStr}`;
-                            const color = isWin ? '#10b981' : '#ef4444';
-                            const emailHtml = `<div dir="rtl" style="font-family:Arial,sans-serif;background:#0b0f19;color:#fff;padding:20px;border-radius:10px;"><h2 style="color:${color};">${headerIcon} ${title}</h2><p style="font-size:18px;font-weight:bold;color:${color};">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</p><p><strong>العملة:</strong> #${trade.symbol}</p><p><strong>الاستراتيجية:</strong> ${trade.strategy || 'Auto'}</p><p><strong>سعر الدخول:</strong> $${trade.entryPrice}</p><p><strong>سعر الإغلاق:</strong> $${currentPrice}</p><p style="color:#9ca3af;">⏱️ ${timeStr}</p></div>`;
-                            sendEmailNotificationBackend(SETTINGS.notifications.emailAddress, emailSubj, emailHtml, emailTxt, SETTINGS.notifications.smtpConfig);
                         }
                     }
                 }
