@@ -1,7 +1,7 @@
 import { Trade, NotificationSettings } from '../types';
 
 export const defaultNotificationSettings: NotificationSettings = {
-  enabled: false,
+  enabled: true,
   telegramBotToken: '',
   telegramChatId: '',
   webhookUrl: '',
@@ -12,6 +12,20 @@ export const defaultNotificationSettings: NotificationSettings = {
   notifyOnMarketImprovement: true,
   notifyOnMarketDeterioration: true,
 };
+
+/**
+ * Check if Telegram alerts are properly configured and active
+ */
+export function isTelegramConfigured(settings?: NotificationSettings): boolean {
+  if (!settings) return false;
+  const hasToken = Boolean(settings.telegramBotToken && settings.telegramBotToken.trim().length > 5);
+  const hasChatId = Boolean(settings.telegramChatId && settings.telegramChatId.trim().length > 3);
+  return hasToken && hasChatId && (settings.enabled !== false);
+}
+
+// Memory deduplication caches to prevent duplicate alerts during rapid re-renders
+const sentOpenTradeAlerts = new Set<string>();
+const sentCloseTradeAlerts = new Set<string>();
 
 /**
  * Send raw Telegram message via Telegram Bot API
@@ -47,12 +61,14 @@ export async function sendTelegramMessage(
     if (data.ok) {
       return { success: true };
     } else {
+      console.warn('Telegram API Error response:', data);
       return {
         success: false,
         error: data.description || 'فشل إرسال رسالة التلجرام. يرجى التحقق من صحة التوكن والشات آي دي.',
       };
     }
   } catch (err: any) {
+    console.error('Telegram network fetch error:', err);
     return {
       success: false,
       error: err?.message || 'خطأ في الاتصال بسيرفر التلجرام.',
@@ -78,7 +94,7 @@ export async function testTelegramConnection(
 ━━━━━━━━━━━━━━━━━━
 ✅ <b>مبروك! تم ربط نظام الرادار بحساب التلجرام بنجاح!</b>
 
-📱 ستصلك الآن التنبيهات الفورية عند:
+📱 ستصلك الآن التنبيهات الفورية تلقائياً عند:
   • 🟢 فتح وصيد أي فرصة جديدة
   • 🎯 تحقيق الهدف والربح (Take Profit)
   • 🛑 تفعيل وقف الخسارة (Stop Loss)
@@ -111,9 +127,20 @@ export async function testTelegramConnection(
 export async function notifyTradeOpen(
   settings: NotificationSettings | undefined,
   trade: Trade
-): Promise<void> {
-  if (!settings || !settings.enabled || !settings.notifyOnOpen) return;
-  if (!settings.telegramBotToken || !settings.telegramChatId) return;
+): Promise<boolean> {
+  if (!isTelegramConfigured(settings)) {
+    console.log('[Telegram Alert Skipped] notifyTradeOpen: Telegram is not configured or disabled');
+    return false;
+  }
+  if (settings?.notifyOnOpen === false) {
+    return false;
+  }
+
+  const tradeKey = trade.docId || `${trade.symbol}-${trade.openTime}`;
+  if (sentOpenTradeAlerts.has(tradeKey)) {
+    return false;
+  }
+  sentOpenTradeAlerts.add(tradeKey);
 
   const symbolClean = trade.symbol.replace('USDT', '');
   const timeStr = new Date(trade.openTime || Date.now()).toLocaleTimeString('ar-EG', {
@@ -139,7 +166,13 @@ export async function notifyTradeOpen(
 🤖 <i>رادار الصفقات اللحظي - نظام أحمد</i>
 `.trim();
 
-  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
+  const res = await sendTelegramMessage(settings!.telegramBotToken, settings!.telegramChatId, tgText);
+  if (!res.success) {
+    console.error('[Telegram Alert Error] notifyTradeOpen:', res.error);
+    return false;
+  }
+  console.log('[Telegram Alert Sent] notifyTradeOpen for', trade.symbol);
+  return true;
 }
 
 /**
@@ -152,11 +185,19 @@ export async function notifyTradeClose(
   pnl: number,
   dollarPnl?: number,
   reason?: string
-): Promise<void> {
-  if (!settings || !settings.enabled) return;
-  if (status === 'won' && !settings.notifyOnCloseWin) return;
-  if (status === 'lost' && !settings.notifyOnCloseLoss) return;
-  if (!settings.telegramBotToken || !settings.telegramChatId) return;
+): Promise<boolean> {
+  if (!isTelegramConfigured(settings)) {
+    console.log('[Telegram Alert Skipped] notifyTradeClose: Telegram is not configured or disabled');
+    return false;
+  }
+  if (status === 'won' && settings?.notifyOnCloseWin === false) return false;
+  if (status === 'lost' && settings?.notifyOnCloseLoss === false) return false;
+
+  const tradeKey = `${trade.docId || trade.symbol}-${status}`;
+  if (sentCloseTradeAlerts.has(tradeKey)) {
+    return false;
+  }
+  sentCloseTradeAlerts.add(tradeKey);
 
   const isWin = status === 'won';
   const headerIcon = isWin ? '🏆' : '🛑';
@@ -169,7 +210,7 @@ export async function notifyTradeClose(
 
   const durationStr =
     trade.openTime && trade.closeTime
-      ? `${Math.round((trade.closeTime - trade.openTime) / 60000)} دقيقة`
+      ? `${Math.max(1, Math.round((trade.closeTime - trade.openTime) / 60000))} دقيقة`
       : 'لحظي';
 
   const dollarStr =
@@ -190,7 +231,13 @@ ${reason ? `📝 <b>السبب:</b> ${reason}\n` : ''}━━━━━━━━�
 ${isWin ? '✨ <i>تم حجز الربح وإضافته للرصيد بنجاح!</i>' : '🛡️ <i>تم حماية باقي الرصيد بوقف الخسارة</i>'}
 `.trim();
 
-  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
+  const res = await sendTelegramMessage(settings!.telegramBotToken, settings!.telegramChatId, tgText);
+  if (!res.success) {
+    console.error('[Telegram Alert Error] notifyTradeClose:', res.error);
+    return false;
+  }
+  console.log('[Telegram Alert Sent] notifyTradeClose for', trade.symbol, status);
+  return true;
 }
 
 /**
@@ -200,9 +247,8 @@ export async function notifyEmergencyAction(
   settings: NotificationSettings | undefined,
   action: string,
   affectedCount: number
-): Promise<void> {
-  if (!settings || !settings.enabled || !settings.notifyOnEmergency) return;
-  if (!settings.telegramBotToken || !settings.telegramChatId) return;
+): Promise<boolean> {
+  if (!isTelegramConfigured(settings) || settings?.notifyOnEmergency === false) return false;
 
   const timeStr = new Date().toLocaleTimeString('ar-EG', {
     hour: '2-digit',
@@ -227,7 +273,12 @@ export async function notifyEmergencyAction(
 🛡️ <i>نظام حماية المحفظة التلقائي</i>
 `.trim();
 
-  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
+  const res = await sendTelegramMessage(settings!.telegramBotToken, settings!.telegramChatId, tgText);
+  if (!res.success) {
+    console.error('[Telegram Alert Error] notifyEmergencyAction:', res.error);
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -237,16 +288,15 @@ export async function notifyMarketStatusChange(
   settings: NotificationSettings | undefined,
   type: 'improvement' | 'deterioration',
   data: {
-    status: 'bullish' | 'neutral' | 'bearish';
+    status: 'bullish' | 'neutral' | 'bearish' | string;
     score: number;
     synergyLabel?: string;
     recommendation?: string;
   }
-): Promise<void> {
-  if (!settings || !settings.enabled) return;
-  if (type === 'improvement' && !settings.notifyOnMarketImprovement) return;
-  if (type === 'deterioration' && !settings.notifyOnMarketDeterioration) return;
-  if (!settings.telegramBotToken || !settings.telegramChatId) return;
+): Promise<boolean> {
+  if (!isTelegramConfigured(settings)) return false;
+  if (type === 'improvement' && settings?.notifyOnMarketImprovement === false) return false;
+  if (type === 'deterioration' && settings?.notifyOnMarketDeterioration === false) return false;
 
   const isImprovement = type === 'improvement';
   const headerIcon = isImprovement ? '🟢' : '🔴';
@@ -288,5 +338,11 @@ ${headerIcon} <b>[${title}]</b> ⚠️
 🛑 <i>نظام الحماية الآلي نشط لحفظ رأس المال</i>
 `.trim();
 
-  sendTelegramMessage(settings.telegramBotToken, settings.telegramChatId, tgText).catch(() => {});
+  const res = await sendTelegramMessage(settings!.telegramBotToken, settings!.telegramChatId, tgText);
+  if (!res.success) {
+    console.error('[Telegram Alert Error] notifyMarketStatusChange:', res.error);
+    return false;
+  }
+  console.log('[Telegram Alert Sent] notifyMarketStatusChange:', type);
+  return true;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Send, Smartphone, CheckCircle2, AlertCircle } from 'lucide-react';
 import { NotificationSettings } from '../types';
+import { isTelegramConfigured } from '../utils/notificationService';
 
 interface NotificationSettingsCardProps {
   notifications?: NotificationSettings;
@@ -15,8 +16,7 @@ export const NotificationSettingsCard: React.FC<NotificationSettingsCardProps> =
   onTest,
   testing = false,
 }) => {
-  const hasTg = Boolean(notifications?.telegramBotToken && notifications?.telegramChatId);
-  const isConfigured = Boolean(notifications?.enabled && hasTg);
+  const isConfigured = isTelegramConfigured(notifications);
 
   return (
     <div className="bg-gradient-to-r from-[#0d1424] via-gray-900 to-[#0e172a] rounded-xl border border-gray-800 p-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -35,10 +35,10 @@ export const NotificationSettingsCard: React.FC<NotificationSettingsCardProps> =
             <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
               تنبيهات الصفقات اللحظية (تلجرام)
             </h3>
-            {notifications?.enabled ? (
+            {isConfigured ? (
               <span className="text-[10px] bg-blue-500/10 text-brand-blue border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
                 <Smartphone className="w-3 h-3 text-brand-blue" />
-                التلجرام
+                التلجرام نشط
               </span>
             ) : (
               <span className="text-[10px] bg-gray-800 text-gray-400 border border-gray-700 px-2 py-0.5 rounded-full font-bold">

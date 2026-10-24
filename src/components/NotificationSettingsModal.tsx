@@ -81,7 +81,15 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     setSaving(true);
     setSaveSuccess(false);
     try {
-      const ok = await onSave(formData);
+      const hasCreds = Boolean(
+        formData.telegramBotToken?.trim() && formData.telegramChatId?.trim()
+      );
+      // Ensure enabled is true if user entered token & chat id, unless explicitly toggled off
+      const dataToSave: NotificationSettings = {
+        ...formData,
+        enabled: hasCreds ? (formData.enabled !== false) : formData.enabled,
+      };
+      const ok = await onSave(dataToSave);
       if (ok) {
         setSaveSuccess(true);
         setTimeout(() => {
@@ -215,7 +223,11 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                   type={showToken ? 'text' : 'password'}
                   value={formData.telegramBotToken}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, telegramBotToken: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      telegramBotToken: e.target.value,
+                      enabled: e.target.value.trim().length > 5 ? true : prev.enabled,
+                    }))
                   }
                   placeholder="7891234567:AAFn_m4..."
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 dir-ltr text-left pl-9"
@@ -239,7 +251,11 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                 type="text"
                 value={formData.telegramChatId}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, telegramChatId: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    telegramChatId: e.target.value,
+                    enabled: e.target.value.trim().length > 3 ? true : prev.enabled,
+                  }))
                 }
                 placeholder="مثال: 123456789"
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 dir-ltr text-left"

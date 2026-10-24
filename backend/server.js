@@ -184,9 +184,30 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    if (pathname === '/api/sync-settings' || pathname === '/sync-settings') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                if (parsed.notifications) {
+                    SETTINGS.notifications = {
+                        ...SETTINGS.notifications,
+                        ...parsed.notifications,
+                        enabled: parsed.notifications.enabled !== false
+                    };
+                    console.log('📱 [Sync Settings]: Telegram notification settings synced with backend successfully.');
+                }
+                res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+                res.end(JSON.stringify({ success: true }));
+            } catch (e) {
+                res.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
+                res.end(JSON.stringify({ success: false, error: e.message }));
+            }
+        });
+        return;
+    }
 
-
-    res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
 });
 
@@ -252,10 +273,11 @@ const cleanOldTrades = async () => {
 const sendTelegramNotification = (textHtml) => {
     try {
         const notif = SETTINGS && SETTINGS.notifications;
-        if (!notif || !notif.enabled) return;
+        if (!notif) return;
         const token = (notif.telegramBotToken || '').trim();
         const chatId = (notif.telegramChatId || '').trim();
         if (!token || !chatId) return;
+        if (notif.enabled === false && !notif.telegramBotToken) return;
 
         const postData = JSON.stringify({
             chat_id: chatId,
@@ -361,7 +383,9 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
         console.log(`🟢 [دخول فرصة نارية] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
 
         // إرسال تنبيه فوري لهاتف المستخدم عبر التلجرام
-        if (SETTINGS.notifications && SETTINGS.notifications.enabled && SETTINGS.notifications.notifyOnOpen !== false) {
+        const notif = SETTINGS && SETTINGS.notifications;
+        const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
+        if (hasTg && notif.notifyOnOpen !== false && notif.enabled !== false) {
             const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             const msg = `🎯 <b>[صيد صفقة جديدة]</b> 🟢\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${symbol}\n📈 <b>الاستراتيجية:</b> <b>${strategy}</b>\n💵 <b>سعر الدخول:</b> <code>$${price}</code>\n🛡️ <b>وقف الخسارة:</b> <code>$${newTrade.slLevel.toFixed(4)}</code>\n⚡ <b>قوة الإشارة:</b> <code>${healthData.score}%</code>\n💰 <b>رأس المال:</b> <code>$${perTradeAlloc}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>رادار الصفقات اللحظي</i>`;
             sendTelegramNotification(msg);
@@ -570,8 +594,8 @@ const analyzeMarketHealth = async () => {
         // تنبيه عند تحسن وضع السوق (Bullish / انتعاش)
         // تنبيه عند تدهور أو سوء وضع السوق (Bearish / خطر)
         const notif = SETTINGS && SETTINGS.notifications;
-        if (notif && notif.enabled) {
-            const channel = notif.channel || 'all';
+        const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
+        if (hasTg && notif.enabled !== false) {
             const now = Date.now();
             const timePassed = now - lastMarketAlertTime;
 
@@ -719,12 +743,13 @@ const manageOpenTrades = async () => {
                 if (SETTINGS.cooldown_mins > 0) exitCooldowns[trade.symbol] = Date.now() + (SETTINGS.cooldown_mins * 60 * 1000);
                 console.log(`🔴 [إغلاق صفقة وحفظ DB] ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
 
-                // إرسال تنبيه فوري بنتيجة الصفقة (تلجرام أو إيميل أو الاثنين معاً)
-                if (SETTINGS.notifications && SETTINGS.notifications.enabled) {
+                // إرسال تنبيه فوري بنتيجة الصفقة للتلجرام
+                const notif = SETTINGS && SETTINGS.notifications;
+                const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
+                if (hasTg && notif.enabled !== false) {
                     const isWin = status === 'won';
-                    const shouldSend = (isWin && SETTINGS.notifications.notifyOnCloseWin !== false) || (!isWin && SETTINGS.notifications.notifyOnCloseLoss !== false);
+                    const shouldSend = (isWin && notif.notifyOnCloseWin !== false) || (!isWin && notif.notifyOnCloseLoss !== false);
                     if (shouldSend) {
-                        const channel = SETTINGS.notifications.channel || 'all';
                         const headerIcon = isWin ? '🏆' : '🛑';
                         const title = isWin ? 'تم إغلاق صفقة بربح' : 'تم إغلاق صفقة';
                         const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -732,11 +757,8 @@ const manageOpenTrades = async () => {
                         const dollarVal = (alloc * pnl) / 100;
                         const dollarStr = `(${pnl >= 0 ? '+' : ''}$${dollarVal.toFixed(2)})`;
 
-                        // تلجرام
-                        if (channel === 'telegram' || channel === 'all') {
-                            const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
-                            sendTelegramNotification(msg);
-                        }
+                        const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
+                        sendTelegramNotification(msg);
                     }
                 }
             }

@@ -28,8 +28,11 @@ import { fetchLiveMarketMatrix } from './utils/marketMatrixCalculator';
 import {
   defaultNotificationSettings,
   notifyTradeOpen,
+  notifyTradeClose,
   notifyEmergencyAction,
+  notifyMarketStatusChange,
   testTelegramConnection,
+  isTelegramConfigured,
 } from './utils/notificationService';
 
 const defaultSettings: ScannerSettings = {
@@ -53,7 +56,13 @@ const defaultSettings: ScannerSettings = {
   notifications: (() => {
     try {
       const saved = localStorage.getItem('momentum_notification_settings_v1');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.telegramBotToken && parsed.telegramChatId) {
+          parsed.enabled = parsed.enabled !== false;
+        }
+        return parsed;
+      }
     } catch {}
     return defaultNotificationSettings;
   })(),
@@ -87,6 +96,28 @@ export const App: React.FC = () => {
 
   const prevOpenCountRef = useRef<number | null>(null);
   const isClearingHistoryRef = useRef<boolean>(false);
+  const previousTradesRef = useRef<Map<string, Trade>>(new Map());
+  const isFirstTradesSnapshotRef = useRef<boolean>(true);
+  const latestSettingsRef = useRef<ScannerSettings>(settings);
+  const lastMarketStatusRef = useRef<'bullish' | 'neutral' | 'bearish' | null>(null);
+  const lastMarketScoreRef = useRef<number | null>(null);
+  const lastMarketAlertTimeRef = useRef<number>(0);
+
+  // Keep latestSettingsRef in sync
+  useEffect(() => {
+    latestSettingsRef.current = settings;
+  }, [settings]);
+
+  // Sync notification settings to backend on app load if configured
+  useEffect(() => {
+    if (settings.notifications && isTelegramConfigured(settings.notifications)) {
+      fetch('/api/sync-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notifications: settings.notifications }),
+      }).catch(() => {});
+    }
+  }, []);
 
   // Toggle sound
   const handleToggleSound = () => {
@@ -145,19 +176,40 @@ export const App: React.FC = () => {
   // Save Notifications
   const handleSaveNotifications = async (newNotifs: NotificationSettings): Promise<boolean> => {
     try {
-      const updatedSettings = { ...settings, notifications: newNotifs };
+      const hasCreds = Boolean(newNotifs.telegramBotToken?.trim() && newNotifs.telegramChatId?.trim());
+      const finalizedNotifs: NotificationSettings = {
+        ...newNotifs,
+        enabled: hasCreds ? (newNotifs.enabled !== false) : newNotifs.enabled,
+      };
+
+      const updatedSettings = { ...settings, notifications: finalizedNotifs };
       await setDoc(
         doc(db, 'momentum_system_logs', 'scanner_settings'),
-        { notifications: newNotifs },
+        { notifications: finalizedNotifs },
         { merge: true }
       );
-      localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(newNotifs));
+      localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(finalizedNotifs));
       setSettings(updatedSettings);
+
+      // Also sync to backend server in background
+      try {
+        await fetch('/api/sync-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notifications: finalizedNotifs }),
+        });
+      } catch (err) {}
+
       return true;
     } catch (e) {
       console.error('Failed to save notification settings:', e);
-      localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(newNotifs));
-      setSettings((prev) => ({ ...prev, notifications: newNotifs }));
+      const hasCreds = Boolean(newNotifs.telegramBotToken?.trim() && newNotifs.telegramChatId?.trim());
+      const finalizedNotifs: NotificationSettings = {
+        ...newNotifs,
+        enabled: hasCreds ? (newNotifs.enabled !== false) : newNotifs.enabled,
+      };
+      localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(finalizedNotifs));
+      setSettings((prev) => ({ ...prev, notifications: finalizedNotifs }));
       return true;
     }
   };
@@ -409,6 +461,52 @@ export const App: React.FC = () => {
             log: combinedLogs,
           };
         });
+
+        // Automated Market Status Alerts via Telegram
+        const currentNotifs = latestSettingsRef.current.notifications;
+        const now = Date.now();
+        const timePassed = now - lastMarketAlertTimeRef.current;
+        const MARKET_ALERT_COOLDOWN = 3 * 60 * 1000; // 3 minutes
+
+        const liveStatus: 'bullish' | 'neutral' | 'bearish' =
+          liveData.status === 'bullish' ? 'bullish' : liveData.status === 'bearish' ? 'bearish' : 'neutral';
+
+        if (lastMarketStatusRef.current !== null && timePassed >= MARKET_ALERT_COOLDOWN) {
+          const isImproved =
+            (lastMarketStatusRef.current === 'bearish' && (liveStatus === 'neutral' || liveStatus === 'bullish')) ||
+            (lastMarketStatusRef.current === 'neutral' && liveStatus === 'bullish') ||
+            (lastMarketScoreRef.current !== null && lastMarketScoreRef.current < 50 && liveData.score >= 66);
+
+          const isDeteriorated =
+            (lastMarketStatusRef.current === 'bullish' && (liveStatus === 'neutral' || liveStatus === 'bearish')) ||
+            (lastMarketStatusRef.current === 'neutral' && liveStatus === 'bearish') ||
+            (lastMarketScoreRef.current !== null && lastMarketScoreRef.current >= 60 && liveData.score < 48);
+
+          if (isImproved) {
+            notifyMarketStatusChange(currentNotifs, 'improvement', {
+              status: liveStatus,
+              score: liveData.score,
+              synergyLabel: liveData.synergyLabel,
+              recommendation: liveData.recommendation,
+            }).catch(() => {});
+            lastMarketStatusRef.current = liveStatus;
+            lastMarketScoreRef.current = liveData.score;
+            lastMarketAlertTimeRef.current = now;
+          } else if (isDeteriorated) {
+            notifyMarketStatusChange(currentNotifs, 'deterioration', {
+              status: liveStatus,
+              score: liveData.score,
+              synergyLabel: liveData.synergyLabel,
+              recommendation: liveData.recommendation,
+            }).catch(() => {});
+            lastMarketStatusRef.current = liveStatus;
+            lastMarketScoreRef.current = liveData.score;
+            lastMarketAlertTimeRef.current = now;
+          }
+        } else if (lastMarketStatusRef.current === null) {
+          lastMarketStatusRef.current = liveStatus;
+          lastMarketScoreRef.current = liveData.score;
+        }
       } catch {
         // Silently preserve state
       }
@@ -498,6 +596,40 @@ export const App: React.FC = () => {
           });
         }
 
+        // Automated Telegram Trade Alerts (Open & Close Detection)
+        if (isFirstTradesSnapshotRef.current) {
+          // Initial load: populate cache without triggering alerts for historic trades
+          mergedTrades.forEach((t) => {
+            previousTradesRef.current.set(t.docId, t);
+          });
+          isFirstTradesSnapshotRef.current = false;
+        } else if (!isClearingHistoryRef.current) {
+          const prevMap = previousTradesRef.current;
+          const currentNotifs = latestSettingsRef.current.notifications;
+
+          mergedTrades.forEach((t) => {
+            const prev = prevMap.get(t.docId);
+
+            // 1. Newly opened trade detected
+            if (!prev && t.status === 'open') {
+              console.log('📱 [Auto-Telegram Alert] New Trade Opened:', t.symbol);
+              notifyTradeOpen(currentNotifs, t).catch(() => {});
+            }
+            // 2. Closed trade detected (from open -> won / lost)
+            else if (prev && prev.status === 'open' && (t.status === 'won' || t.status === 'lost')) {
+              const alloc = t.allocatedCapital || currentPerTradeAlloc;
+              const dollarVal = (alloc * (t.pnl || 0)) / 100;
+              console.log('📱 [Auto-Telegram Alert] Trade Closed:', t.symbol, t.status, t.pnl);
+              notifyTradeClose(currentNotifs, t, t.status, t.pnl || 0, dollarVal).catch(() => {});
+            }
+          });
+
+          // Sync previous map with current merged trades
+          const nextMap = new Map<string, Trade>();
+          mergedTrades.forEach((t) => nextMap.set(t.docId, t));
+          previousTradesRef.current = nextMap;
+        }
+
         const newOpenCount = mergedTrades.filter((t) => t.status === 'open').length;
 
         if (prevOpenCountRef.current !== null) {
@@ -517,7 +649,7 @@ export const App: React.FC = () => {
     );
 
     return () => unsubscribe();
-  }, [soundEnabled]);
+  }, [soundEnabled, currentPerTradeAlloc]);
 
   // Connect to Binance WebSocket for ticker prices
   useEffect(() => {
@@ -623,11 +755,7 @@ export const App: React.FC = () => {
         onToggleSound={handleToggleSound}
         isConnected={isConnected}
         onOpenNotifications={() => setIsNotifModalOpen(true)}
-        notificationsEnabled={Boolean(
-          settings.notifications?.enabled &&
-            settings.notifications?.telegramBotToken &&
-            settings.notifications?.telegramChatId
-        )}
+        notificationsEnabled={isTelegramConfigured(settings.notifications)}
       />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
