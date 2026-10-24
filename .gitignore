@@ -14,6 +14,10 @@ bun.lock
 # Secret credentials (Protected from GitHub Push Rejection)
 serviceAccountKey.json
 backend/serviceAccountKey.json
+backend/scanner_settings.json
+backend/settings.json
+scanner_settings.json
+settings.json
 .env
 .env.local
 

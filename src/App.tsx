@@ -58,6 +58,11 @@ const defaultSettings: ScannerSettings = {
       const saved = localStorage.getItem('momentum_notification_settings_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (parsed.telegramBotToken === '8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk') {
+          parsed.telegramBotToken = '8858838933:AAHGURLnxrHr3JdA43Pe9cPUYAhMHWoGEk4';
+          parsed.telegramChatId = parsed.telegramChatId || '8622799312';
+          localStorage.setItem('momentum_notification_settings_v1', JSON.stringify(parsed));
+        }
         if (parsed.telegramBotToken && parsed.telegramChatId) {
           parsed.enabled = parsed.enabled !== false;
         }

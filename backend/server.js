@@ -68,8 +68,8 @@ let SETTINGS = {
     strats: { momentum: true, breakout: true, sniper: true, bbrsi: true, turboScalp: true },
     notifications: {
         enabled: true,
-        telegramBotToken: '8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk',
-        telegramChatId: '8622799312',
+        telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
+        telegramChatId: process.env.TELEGRAM_CHAT_ID || '',
         notifyOnOpen: true,
         notifyOnCloseWin: true,
         notifyOnCloseLoss: true,
@@ -130,6 +130,8 @@ try {
 
 // Deduplication cache for Telegram notifications sent directly from backend
 const sentTelegramAlerts = new Set();
+const ACTIVE_TELEGRAM_BOT_TOKEN = '8858838933:AAHGURLnxrHr3JdA43Pe9cPUYAhMHWoGEk4';
+const REVOKED_TELEGRAM_BOT_TOKEN = '8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk';
 
 /**
  * Send Telegram alert autonomously from backend without requiring browser
@@ -145,12 +147,19 @@ const sendTelegramNotification = (textHtml, alertKey = null) => {
 
         const notif = SETTINGS && SETTINGS.notifications;
         if (!notif) return;
-        const token = (notif.telegramBotToken || '').trim();
-        const chatId = (notif.telegramChatId || '').trim();
-        if (!token || !chatId) {
-            console.warn('⚠️ Telegram not configured: Missing Bot Token or Chat ID');
-            return;
+        let token = (notif.telegramBotToken || '').trim();
+        let chatId = (notif.telegramChatId || '').trim();
+
+        // Auto-migrate revoked token if received from stale client
+        if (!token || token === REVOKED_TELEGRAM_BOT_TOKEN) {
+            token = ACTIVE_TELEGRAM_BOT_TOKEN;
+            notif.telegramBotToken = ACTIVE_TELEGRAM_BOT_TOKEN;
         }
+        if (!chatId) {
+            chatId = '8622799312';
+            notif.telegramChatId = chatId;
+        }
+
         if (notif.enabled === false) return;
 
         const postData = JSON.stringify({
@@ -258,12 +267,13 @@ const server = http.createServer(async (req, res) => {
         req.on('end', () => {
             try {
                 const parsed = JSON.parse(body || '{}');
-                const token = (parsed.token || (SETTINGS.notifications && SETTINGS.notifications.telegramBotToken) || '').trim();
-                const chatId = (parsed.chatId || (SETTINGS.notifications && SETTINGS.notifications.telegramChatId) || '').trim();
-                if (!token || !chatId) {
-                    res.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
-                    res.end(JSON.stringify({ success: false, error: 'Token and Chat ID required' }));
-                    return;
+                let token = (parsed.token || (SETTINGS.notifications && SETTINGS.notifications.telegramBotToken) || '').trim();
+                let chatId = (parsed.chatId || (SETTINGS.notifications && SETTINGS.notifications.telegramChatId) || '').trim();
+                if (!token || token === REVOKED_TELEGRAM_BOT_TOKEN) {
+                    token = ACTIVE_TELEGRAM_BOT_TOKEN;
+                }
+                if (!chatId) {
+                    chatId = '8622799312';
                 }
                 const nowStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const testMsg = `🔔 <b>[رسالة اختبار وتأكيد الاتصال 24/7]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n✅ <b>مبروك! تم ربط نظام الرادار بالسيرفر السحابي وبحساب التلجرام بنجاح!</b>\n\n📱 <b>ستصلك الآن التنبيهات الفورية حتى لو تم إغلاق المتصفح أو إيقاف الكمبيوتر تماماً.</b>\n\n⏱️ <b>الوقت:</b> <code>${nowStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>خادم نظام أحمد الذكي المستقل</i>`;
@@ -310,6 +320,12 @@ const server = http.createServer(async (req, res) => {
             try {
                 const parsed = JSON.parse(body || '{}');
                 if (parsed.notifications) {
+                    if (parsed.notifications.telegramBotToken === REVOKED_TELEGRAM_BOT_TOKEN) {
+                        parsed.notifications.telegramBotToken = ACTIVE_TELEGRAM_BOT_TOKEN;
+                    }
+                    if (!parsed.notifications.telegramChatId) {
+                        parsed.notifications.telegramChatId = '8622799312';
+                    }
                     SETTINGS.notifications = {
                         ...SETTINGS.notifications,
                         ...parsed.notifications,

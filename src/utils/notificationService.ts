@@ -2,8 +2,8 @@ import { Trade, NotificationSettings } from '../types';
 
 export const defaultNotificationSettings: NotificationSettings = {
   enabled: true,
-  telegramBotToken: '',
-  telegramChatId: '',
+  telegramBotToken: '8858838933:AAHGURLnxrHr3JdA43Pe9cPUYAhMHWoGEk4',
+  telegramChatId: '8622799312',
   webhookUrl: '',
   notifyOnOpen: true,
   notifyOnCloseWin: true,
