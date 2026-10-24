@@ -1,57 +1,36 @@
 const http = require('http');
 const https = require('https');
-const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
+const { initializeApp, getApps } = require('firebase/app');
+const { 
+  getFirestore, 
+  collection, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  query, 
+  where, 
+  getDocs, 
+  writeBatch 
+} = require('firebase/firestore');
 
+// Initialize Firebase JS SDK for server-side autonomous persistence and sync
+const firebaseConfig = {
+  apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
+  authDomain: "smartscanner-a5e0d.firebaseapp.com",
+  projectId: "smartscanner-a5e0d",
+  storageBucket: "smartscanner-a5e0d.firebasestorage.app",
+  messagingSenderId: "976223541282",
+  appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
+};
 
-let serviceAccount = null;
-if (process.env.SERVICE_ACCOUNT_KEY) {
-  try {
-    serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
-  } catch (e) {
-    console.error('⚠️ Could not parse SERVICE_ACCOUNT_KEY env var:', e.message);
-  }
-}
+const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig, 'momentum-backend-app') : getApps()[0];
+const db = getFirestore(firebaseApp);
 
-if (!serviceAccount) {
-  const possiblePaths = [
-    path.join(__dirname, 'serviceAccountKey.json'),
-    path.join(__dirname, '../serviceAccountKey.json'),
-    '/etc/secrets/serviceAccountKey.json',
-    './serviceAccountKey.json',
-  ];
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      try {
-        serviceAccount = JSON.parse(fs.readFileSync(p, 'utf8'));
-        break;
-      } catch (err) {}
-    }
-  }
-}
-
-if (!serviceAccount) {
-  console.log('ℹ️ Backend running in Standalone Mode (Set SERVICE_ACCOUNT_KEY or supply serviceAccountKey.json to sync with Firestore).');
-} else {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
-
-let db = null;
-try {
-  const apps = (admin && admin.apps) ? admin.apps : [];
-  if (apps.length > 0) {
-    db = admin.firestore();
-  }
-} catch (e) {
-  db = null;
-}
-
-const tradesRef = db ? db.collection('momentum_trades_v1') : null;
-const systemRef = db ? db.collection('momentum_system_logs').doc('market_health') : null;
-const settingsRef = db ? db.collection('momentum_system_logs').doc('scanner_settings') : null;
+console.log('🔥 [Firebase Cloud Connected]: Backend successfully initialized with real-time Firestore database.');
 
 process.on('uncaughtException', (err) => {
     console.error('⚠️ Unhandled Exception:', err.message);
@@ -72,6 +51,146 @@ process.on('SIGINT', () => {
 });
 
 const BACKEND_PORT = process.env.BACKEND_PORT || 10000;
+const SETTINGS_FILE = path.join(__dirname, 'scanner_settings.json');
+
+// Default initial settings configured with the user's Telegram credentials for 24/7 autonomous alerts
+let SETTINGS = { 
+    tf: '1m', 
+    sl_perc: 0.03, 
+    min_tp: 0.04, 
+    trail_dist: 0.015, 
+    vol_mult: 2.0, 
+    cooldown_mins: 15, 
+    auto_kill: true, 
+    emergency_defense_mode: 'tighten_breakeven',
+    portfolio_capital: 2000,
+    max_open_trades: 5,
+    strats: { momentum: true, breakout: true, sniper: true, bbrsi: true, turboScalp: true },
+    notifications: {
+        enabled: true,
+        telegramBotToken: '8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk',
+        telegramChatId: '8622799312',
+        notifyOnOpen: true,
+        notifyOnCloseWin: true,
+        notifyOnCloseLoss: true,
+        notifyOnEmergency: true,
+        notifyOnMarketImprovement: true,
+        notifyOnMarketDeterioration: true
+    }
+};
+
+// 1. Load cached settings from local disk if available
+if (fs.existsSync(SETTINGS_FILE)) {
+    try {
+        const cached = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+        SETTINGS = { ...SETTINGS, ...cached };
+        if (cached.notifications) {
+            SETTINGS.notifications = { ...SETTINGS.notifications, ...cached.notifications };
+        }
+        console.log('📁 [إعدادات محلية]: تم تحميل إعدادات التلجرام والرادار المخزنة محلياً.');
+    } catch (e) {
+        console.warn('Could not read cached settings:', e.message);
+    }
+}
+
+// 2. Subscribe to real-time settings in Firestore to keep settings continuously in sync with UI
+try {
+    onSnapshot(doc(db, 'momentum_system_logs', 'scanner_settings'), (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            SETTINGS = { ...SETTINGS, ...data };
+            if (data.notifications) {
+                SETTINGS.notifications = { ...SETTINGS.notifications, ...data.notifications };
+            }
+            try {
+                fs.writeFileSync(SETTINGS_FILE, JSON.stringify(SETTINGS, null, 2));
+            } catch (err) {}
+            console.log(`⚙️ [تحديث الرادار فوري من السحابة]: الفريم: [${SETTINGS.tf}] | الحماية: ${SETTINGS.auto_kill ? 'مفعلة' : 'مغلقة'} | التلجرام: ${SETTINGS.notifications?.telegramBotToken ? 'مربوط ومفعل 24/7' : 'غير مربوط'}`);
+        }
+    }, err => console.warn("Settings Sync Warning:", err.message));
+} catch (e) {
+    console.warn("Settings listener init notice:", e.message);
+}
+
+// 3. Subscribe to active open trades in Firestore
+let virtualTrades = [];
+try {
+    const openTradesQuery = query(collection(db, 'momentum_trades_v1'), where('status', '==', 'open'));
+    onSnapshot(openTradesQuery, (snapshot) => {
+        let activeTrades = [];
+        snapshot.forEach(docSnap => { 
+            activeTrades.push({ docId: docSnap.id, ...docSnap.data() }); 
+        });
+        virtualTrades = activeTrades;
+        console.log(`📊 [مزامنة الصفقات الحية]: إجمالي الصفقات المفتوحة النشطة حالياً: ${virtualTrades.length}`);
+    }, err => console.warn("Trades Sync Warning:", err.message));
+} catch (e) {
+    console.warn("Trades listener init notice:", e.message);
+}
+
+// Deduplication cache for Telegram notifications sent directly from backend
+const sentTelegramAlerts = new Set();
+
+/**
+ * Send Telegram alert autonomously from backend without requiring browser
+ */
+const sendTelegramNotification = (textHtml, alertKey = null) => {
+    try {
+        if (alertKey) {
+            if (sentTelegramAlerts.has(alertKey)) return;
+            sentTelegramAlerts.add(alertKey);
+            // Auto clean key after 30 minutes
+            setTimeout(() => sentTelegramAlerts.delete(alertKey), 30 * 60 * 1000);
+        }
+
+        const notif = SETTINGS && SETTINGS.notifications;
+        if (!notif) return;
+        const token = (notif.telegramBotToken || '').trim();
+        const chatId = (notif.telegramChatId || '').trim();
+        if (!token || !chatId) {
+            console.warn('⚠️ Telegram not configured: Missing Bot Token or Chat ID');
+            return;
+        }
+        if (notif.enabled === false) return;
+
+        const postData = JSON.stringify({
+            chat_id: chatId,
+            text: textHtml,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        });
+
+        const req = https.request({
+            hostname: 'api.telegram.org',
+            port: 443,
+            path: `/bot${token}/sendMessage`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        }, (res) => {
+            let body = '';
+            res.on('data', d => body += d);
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    console.log('✅ [Telegram 24/7]: تم إرسال إشعار التلجرام من السيرفر بنجاح!');
+                } else {
+                    console.warn(`⚠️ Telegram response status ${res.statusCode}:`, body);
+                }
+            });
+        });
+
+        req.on('error', (e) => {
+            console.error('⚠️ Telegram notification request error:', e.message);
+        });
+
+        req.write(postData);
+        req.end();
+    } catch (e) {
+        console.error('Failed to send telegram notification:', e.message);
+    }
+};
 
 let latestMarketMatrixData = null;
 
@@ -102,17 +221,17 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/clear-history' || pathname === '/clear-history') {
         try {
-            if (tradesRef && db) {
-                const snapshotWon = await tradesRef.where('status', '==', 'won').get();
-                const snapshotLost = await tradesRef.where('status', '==', 'lost').get();
+            if (db) {
+                const snapshotWon = await getDocs(query(collection(db, 'momentum_trades_v1'), where('status', '==', 'won')));
+                const snapshotLost = await getDocs(query(collection(db, 'momentum_trades_v1'), where('status', '==', 'lost')));
                 const allDocs = [...snapshotWon.docs, ...snapshotLost.docs];
                 
                 if (allDocs.length > 0) {
                     const BATCH_SIZE = 400;
                     for (let i = 0; i < allDocs.length; i += BATCH_SIZE) {
                         const chunk = allDocs.slice(i, i + BATCH_SIZE);
-                        const batch = db.batch();
-                        chunk.forEach(docSnap => batch.delete(docSnap.ref));
+                        const batch = writeBatch(db);
+                        chunk.forEach(docSnap => batch.delete(doc(db, 'momentum_trades_v1', docSnap.id)));
                         await batch.commit();
                     }
                     console.log(`🗑️ [مسح السجل]: تم حذف ${allDocs.length} صفقة مغلقة بنجاح من قاعدة البيانات.`);
@@ -122,7 +241,7 @@ const server = http.createServer(async (req, res) => {
                 return;
             } else {
                 res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
-                res.end(JSON.stringify({ success: true, count: 0, note: 'standalone_or_client_handled' }));
+                res.end(JSON.stringify({ success: true, count: 0, note: 'standalone_handled' }));
                 return;
             }
         } catch (e) {
@@ -147,7 +266,7 @@ const server = http.createServer(async (req, res) => {
                     return;
                 }
                 const nowStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const testMsg = `🔔 <b>[رسالة اختبار وتأكيد الاتصال]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n✅ <b>مبروك! تم ربط نظام الرادار بحساب التلجرام بنجاح!</b>\n\n📱 ستصلك الآن التنبيهات الفورية عند فتح وإغلاق الصفقات وتحقيق الأهداف.\n\n⏱️ <b>الوقت:</b> <code>${nowStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>نظام أحمد الذكي</i>`;
+                const testMsg = `🔔 <b>[رسالة اختبار وتأكيد الاتصال 24/7]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n✅ <b>مبروك! تم ربط نظام الرادار بالسيرفر السحابي وبحساب التلجرام بنجاح!</b>\n\n📱 <b>ستصلك الآن التنبيهات الفورية حتى لو تم إغلاق المتصفح أو إيقاف الكمبيوتر تماماً.</b>\n\n⏱️ <b>الوقت:</b> <code>${nowStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>خادم نظام أحمد الذكي المستقل</i>`;
                 
                 const postData = JSON.stringify({ chat_id: chatId, text: testMsg, parse_mode: 'HTML' });
                 const tgReq = https.request({
@@ -187,7 +306,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/sync-settings' || pathname === '/sync-settings') {
         let body = '';
         req.on('data', chunk => body += chunk);
-        req.on('end', () => {
+        req.on('end', async () => {
             try {
                 const parsed = JSON.parse(body || '{}');
                 if (parsed.notifications) {
@@ -196,7 +315,13 @@ const server = http.createServer(async (req, res) => {
                         ...parsed.notifications,
                         enabled: parsed.notifications.enabled !== false
                     };
-                    console.log('📱 [Sync Settings]: Telegram notification settings synced with backend successfully.');
+                    try {
+                        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(SETTINGS, null, 2));
+                    } catch (err) {}
+                    try {
+                        await setDoc(doc(db, 'momentum_system_logs', 'scanner_settings'), { notifications: SETTINGS.notifications }, { merge: true });
+                    } catch (err) {}
+                    console.log('📱 [Sync Settings]: Telegram notification settings synced and persisted.');
                 }
                 res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
                 res.end(JSON.stringify({ success: true }));
@@ -208,7 +333,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    res.end('Momentum Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
+    res.end('Momentum Autonomous 24/7 Scanner Backend is ALIVE and OPTIMIZED! 🚀\n');
 });
 
 server.on('error', (err) => {
@@ -223,7 +348,6 @@ server.listen(BACKEND_PORT, () => {
     console.log(`📡 Backend HTTP server running on port ${BACKEND_PORT}`);
 });
 
-let virtualTrades = []; // الصفقات ستحفظ هنا في الذاكرة لتوفير القراءة
 let currentMarketScore = null;
 let globalMarketStatus = 'neutral';
 let isCheckingMarket = false;
@@ -231,90 +355,9 @@ let marketScoreLog = [];
 let lastReportedMarketStatus = null;
 let lastReportedMarketScore = null;
 let lastMarketAlertTime = 0;
-const MARKET_ALERT_COOLDOWN_MS = 3 * 60 * 1000; // 3 دقائق كحد أدنى بين تنبيهات السوق لتجنب التكرار
+const MARKET_ALERT_COOLDOWN_MS = 3 * 60 * 1000;
 const exitCooldowns = {};
 const BLACKLIST = ['USDCUSDT', 'USD1USDT', 'FDUSDUSDT', 'TUSDUSDT', 'USDPUSDT', 'EURUSDT', 'XAUTUSDT', 'PAXGUSDT', 'BUSDUSDT', 'AEURUSDT', 'USDSUSDT'];
-
-let SETTINGS = { 
-    tf: '15m', sl_perc: 0.03, min_tp: 0.05, trail_dist: 0.015, vol_mult: 2.0, cooldown_mins: 15, auto_kill: true, 
-    strats: { momentum: true, breakout: true, sniper: true, bbrsi: true, turboScalp: true } 
-};
-
-// [تحسين 1]: استخدام onSnapshot بدلاً من جلب الإعدادات كل 5 ثوانٍ
-let lastSettingsString = "";
-if (settingsRef) {
-  settingsRef.onSnapshot((docSnap) => {
-    if (docSnap.exists) {
-        SETTINGS = { ...SETTINGS, ...docSnap.data() };
-        const currentSettingsString = `${SETTINGS.tf}-${SETTINGS.vol_mult}-${SETTINGS.sl_perc}-${SETTINGS.auto_kill}`;
-        if(currentSettingsString !== lastSettingsString) {
-            console.log(`⚙️ [تحديث الرادار فوري]: الفريم: [${SETTINGS.tf}] | الحماية: ${SETTINGS.auto_kill ? 'مفعلة' : 'مغلقة'}`);
-            lastSettingsString = currentSettingsString;
-        }
-    }
-  }, err => console.error("Settings Sync Error:", err));
-}
-
-// [تحسين 2]: استماع حي للصفقات المفتوحة فقط، بدلاً من جلبها كل 5 ثوانٍ
-if (tradesRef) {
-  tradesRef.where('status', '==', 'open').onSnapshot((snapshot) => {
-    let activeTrades = [];
-    snapshot.forEach(doc => { activeTrades.push({ docId: doc.id, ...doc.data() }); });
-    virtualTrades = activeTrades; // تحديث الذاكرة فوراً عند أي تغيير
-  }, err => console.error("Trades Sync Error:", err));
-}
-
-// تم إلغاء الحذف التلقائي نهائياً للحفاظ على كافة الصفقات المغلقة والأرباح التاريخية للمستخدم
-const cleanOldTrades = async () => {
-    // Permanent retention: never delete past trades
-    return;
-};
-
-const sendTelegramNotification = (textHtml) => {
-    try {
-        const notif = SETTINGS && SETTINGS.notifications;
-        if (!notif) return;
-        const token = (notif.telegramBotToken || '').trim();
-        const chatId = (notif.telegramChatId || '').trim();
-        if (!token || !chatId) return;
-        if (notif.enabled === false && !notif.telegramBotToken) return;
-
-        const postData = JSON.stringify({
-            chat_id: chatId,
-            text: textHtml,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true
-        });
-
-        const req = https.request({
-            hostname: 'api.telegram.org',
-            port: 443,
-            path: `/bot${token}/sendMessage`,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(postData)
-            }
-        }, (res) => {
-            if (res.statusCode !== 200) {
-                let body = '';
-                res.on('data', d => body += d);
-                res.on('end', () => console.warn('Telegram response status:', res.statusCode, body));
-            }
-        });
-
-        req.on('error', (e) => {
-            console.error('Telegram notification error:', e.message);
-        });
-
-        req.write(postData);
-        req.end();
-    } catch (e) {
-        console.error('Failed to send telegram notification:', e.message);
-    }
-};
-
-
 
 const calcEMA = (data, period) => { if(data.length < period) return null; let k = 2 / (period + 1); let ema = data[0]; for(let i = 1; i < data.length; i++) ema = (data[i] - ema) * k + ema; return ema; };
 const calcSMA = (data, period) => { if(data.length < period) return null; let sum = 0; for(let i = data.length - period; i < data.length; i++) sum += data[i]; return sum / period; };
@@ -350,13 +393,12 @@ const calculateTradeStrength = (isLive, strategy, price, open, high, low, vol, v
 };
 
 const enterNewTrade = async (symbol, price, strategy, healthData) => {
-    if (!tradesRef) return;
+    if (!db) return;
     if (exitCooldowns[symbol] && Date.now() < exitCooldowns[symbol]) return;
     if (SETTINGS.auto_kill && globalMarketStatus === 'bearish') return;
     if (virtualTrades.find(t => t.symbol === symbol && t.status === 'open')) return;
 
-    // حماية المحفظة: لا نفتح صفقات أكثر من الحد الأقصى المتزامن
-    const maxTrades = SETTINGS.max_open_trades || 10;
+    const maxTrades = SETTINGS.max_open_trades || 5;
     const openCount = virtualTrades.filter(t => t.status === 'open').length;
     if (openCount >= maxTrades) {
         return;
@@ -364,33 +406,41 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
 
     const initialCap = SETTINGS.portfolio_capital || 1000;
     const perTradeAlloc = Number((initialCap / maxTrades).toFixed(2));
-
-    // لصفقات السكالبينج الخاطف، وقف الخسارة محسوب بدقة (2% - 2.5% كحد أقصى) لحماية رأس المال
     const slRate = strategy === 'TurboScalp' ? Math.min(SETTINGS.sl_perc || 0.025, 0.025) : (SETTINGS.sl_perc || 0.03);
 
     const newTrade = {
-        symbol: symbol, entryPrice: price, maxPrice: price, trailActive: false, 
-        slLevel: price * (1 - slRate), status: 'open', openTime: Date.now(),
-        strategy: strategy, entryScore: healthData.score, liveScore: healthData.score,
+        symbol: symbol, 
+        entryPrice: price, 
+        currentPrice: price,
+        maxPrice: price, 
+        trailActive: false, 
+        slLevel: price * (1 - slRate), 
+        status: 'open', 
+        openTime: Date.now(),
+        strategy: strategy, 
+        entryScore: healthData.score, 
+        liveScore: healthData.score,
         entryBreakdown: healthData.breakdown,
-        allocatedCapital: perTradeAlloc
+        allocatedCapital: perTradeAlloc,
+        telegramAlertSent: true
     };
 
     try {
-        const docRef = tradesRef.doc();
-        await docRef.set(newTrade);
-        // ستتم إضافتها لـ virtualTrades تلقائياً عبر onSnapshot
-        console.log(`🟢 [دخول فرصة نارية] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
+        const newDocRef = doc(collection(db, 'momentum_trades_v1'));
+        newTrade.docId = newDocRef.id;
+        await setDoc(newDocRef, newTrade);
+        virtualTrades.push(newTrade);
+        console.log(`🟢 [دخول فرصة نارية من السيرفر] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
 
-        // إرسال تنبيه فوري لهاتف المستخدم عبر التلجرام
+        // إرسال تنبيه فوري لهاتف المستخدم عبر التلجرام من السيرفر مباشرة دون حاجة لفتح المتصفح
         const notif = SETTINGS && SETTINGS.notifications;
         const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
         if (hasTg && notif.notifyOnOpen !== false && notif.enabled !== false) {
             const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            const msg = `🎯 <b>[صيد صفقة جديدة]</b> 🟢\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${symbol}\n📈 <b>الاستراتيجية:</b> <b>${strategy}</b>\n💵 <b>سعر الدخول:</b> <code>$${price}</code>\n🛡️ <b>وقف الخسارة:</b> <code>$${newTrade.slLevel.toFixed(4)}</code>\n⚡ <b>قوة الإشارة:</b> <code>${healthData.score}%</code>\n💰 <b>رأس المال:</b> <code>$${perTradeAlloc}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>رادار الصفقات اللحظي</i>`;
-            sendTelegramNotification(msg);
+            const msg = `🎯 <b>[صيد صفقة جديدة]</b> 🟢\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${symbol}\n📈 <b>الاستراتيجية:</b> <b>${strategy}</b>\n💵 <b>سعر الدخول:</b> <code>$${price}</code>\n🛡️ <b>وقف الخسارة:</b> <code>$${newTrade.slLevel.toFixed(4)}</code>\n⚡ <b>قوة الإشارة:</b> <code>${healthData.score}%</code>\n💰 <b>رأس المال:</b> <code>$${perTradeAlloc}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>رادار الصفقات التلقائي 24/7 (خادم سحابي مستقل)</i>`;
+            sendTelegramNotification(msg, `open-${newTrade.docId}`);
         }
-    } catch (e) { console.error("Error:", e.message); }
+    } catch (e) { console.error("Error entering new trade:", e.message); }
 };
 
 const evaluateTfData = (tfName, klines, label) => {
@@ -570,29 +620,13 @@ const analyzeMarketHealth = async () => {
             lastUpdate: Date.now()
         };
 
-        if (systemRef) {
-            await systemRef.set({
-                score: compositeScore,
-                status: globalMarketStatus,
-                log: marketScoreLog,
-                matrix: matrixPayload,
-                macroScore,
-                microScore,
-                macroStatus,
-                microStatus,
-                macroMicroSynergy,
-                synergyLabel,
-                alignment,
-                scalpOpportunity,
-                recommendation,
-                targetProjection: macroMicroSynergy === 'PERFECT_5_TF' ? '+5.0% - +9.0%' : (scalpOpportunity ? '+4.0% - +6.5%' : '+2.5% - +4.0%'),
-                lastUpdate: Date.now()
-            });
+        if (db) {
+            try {
+                await setDoc(doc(db, 'momentum_system_logs', 'market_health'), latestMarketMatrixData);
+            } catch (err) {}
         }
 
-        // [نظام تنبيهات تغير وضع السوق الفوري]:
-        // تنبيه عند تحسن وضع السوق (Bullish / انتعاش)
-        // تنبيه عند تدهور أو سوء وضع السوق (Bearish / خطر)
+        // [نظام تنبيهات تغير وضع السوق الفوري المستقل في السيرفر]:
         const notif = SETTINGS && SETTINGS.notifications;
         const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
         if (hasTg && notif.enabled !== false) {
@@ -619,15 +653,15 @@ const analyzeMarketHealth = async () => {
                     lastReportedMarketScore = compositeScore;
                     lastMarketAlertTime = now;
 
-                    const tgMsg = `🟢 <b>[انتعاش وتحسن وضع السوق]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n📊 <b>حالة السوق الجديدة:</b> <b>صاعد وإيجابي (${globalMarketStatus.toUpperCase()})</b>\n⚡ <b>مؤشر أمان السوق:</b> <code>${compositeScore}%</code>\n🎯 <b>توافق الأطر:</b> ${synergyLabel}\n💡 <b>التوصية الفنية:</b>\n<i>${recommendation}</i>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n✨ <i>بيئة مواتية لصيد فرص السكالبينج والانفجارات السعرية</i>`;
-                    sendTelegramNotification(tgMsg);
+                    const tgMsg = `🟢 <b>[انتعاش وتحسن وضع السوق]</b> 🚀\n━━━━━━━━━━━━━━━━━━\n📊 <b>حالة السوق الجديدة:</b> <b>صاعد وإيجابي (${globalMarketStatus.toUpperCase()})</b>\n⚡ <b>مؤشر أمان السوق:</b> <code>${compositeScore}%</code>\n🎯 <b>توافق الأطر:</b> ${synergyLabel}\n💡 <b>التوصية الفنية:</b>\n<i>${recommendation}</i>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n✨ <i>بيئة مواتية لصيد فرص السكالبينج والانفجارات السعرية (24/7 سيرفر)</i>`;
+                    sendTelegramNotification(tgMsg, `market-improved-${Math.floor(now / (5 * 60 * 1000))}`);
                 } else if (isDeteriorated && notif.notifyOnMarketDeterioration !== false) {
                     lastReportedMarketStatus = globalMarketStatus;
                     lastReportedMarketScore = compositeScore;
                     lastMarketAlertTime = now;
 
-                    const tgMsg = `🔴 <b>[تحذير: تدهور وضع السوق ودخول مرحلة الخطر]</b> ⚠️\n━━━━━━━━━━━━━━━━━━\n📊 <b>حالة السوق الحالية:</b> <b>هابط / مرحلة خطر (${globalMarketStatus.toUpperCase()})</b>\n⚡ <b>مؤشر أمان السوق:</b> <code>${compositeScore}%</code>\n⚠️ <b>توافق الأطر:</b> ${synergyLabel}\n🛡️ <b>الإجراء التلقائي:</b>\n<i>تم تفعيل أنظمة الدفاع وتجميد الصفقات الجديدة تلقائياً لحماية المحفظة.</i>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🛑 <i>نظام الحماية الآلي نشط لحفظ رأس المال</i>`;
-                    sendTelegramNotification(tgMsg);
+                    const tgMsg = `🔴 <b>[تحذير: تدهور وضع السوق ودخول مرحلة الخطر]</b> ⚠️\n━━━━━━━━━━━━━━━━━━\n📊 <b>حالة السوق الحالية:</b> <b>هابط / مرحلة خطر (${globalMarketStatus.toUpperCase()})</b>\n⚡ <b>مؤشر أمان السوق:</b> <code>${compositeScore}%</code>\n⚠️ <b>توافق الأطر:</b> ${synergyLabel}\n🛡️ <b>الإجراء التلقائي:</b>\n<i>تم تفعيل أنظمة الدفاع وتجميد الصفقات الجديدة تلقائياً لحماية المحفظة.</i>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🛑 <i>نظام الحماية الآلي نشط لحفظ رأس المال (24/7 سيرفر)</i>`;
+                    sendTelegramNotification(tgMsg, `market-danger-${Math.floor(now / (5 * 60 * 1000))}`);
                 }
             } else if (lastReportedMarketStatus === null) {
                 lastReportedMarketStatus = globalMarketStatus;
@@ -641,13 +675,12 @@ const analyzeMarketHealth = async () => {
     }
 };
 
-// [تحسين 3]: الذاكرة المحلية لمعالجة الملاحقة دون إرهاق قاعدة البيانات
 let memoryTrades = {}; 
 let isManagingTrades = false;
 
 const manageOpenTrades = async () => {
     if (isManagingTrades) return;
-    if (!db || !tradesRef || virtualTrades.length === 0) return;
+    if (!db || virtualTrades.length === 0) return;
     isManagingTrades = true;
     
     try {
@@ -657,35 +690,31 @@ const manageOpenTrades = async () => {
         const prices = {};
         tickers.forEach(t => prices[t.symbol] = parseFloat(t.price));
 
-        const batch = db.batch();
-        let hasUpdates = false;
-
-        for (let trade of virtualTrades) {
+        for (let trade of [...virtualTrades]) {
             const currentPrice = prices[trade.symbol];
             if (!currentPrice) continue;
+            const docId = trade.docId;
+            if (!docId) continue;
 
-            // جلب البيانات من الذاكرة العشوائية لتوفير الكتابة
-            if (!memoryTrades[trade.docId]) {
-                memoryTrades[trade.docId] = { 
+            if (!memoryTrades[docId]) {
+                memoryTrades[docId] = { 
                     maxPrice: trade.maxPrice || trade.entryPrice, 
                     slLevel: trade.slLevel || (trade.entryPrice * (1 - (SETTINGS.sl_perc || 0.03))), 
                     trailActive: !!trade.trailActive 
                 };
             }
-            let mem = memoryTrades[trade.docId];
-            
+            let mem = memoryTrades[docId];
             let pnl = trade.entryPrice > 0 ? ((currentPrice - trade.entryPrice) / trade.entryPrice) * 100 : 0;
             
             if (currentPrice > mem.maxPrice) mem.maxPrice = currentPrice;
 
-            // تفعيل الملاحقة: لصفقات TurboScalp تبدأ الملاحقة عند تحقيق الهدف 4% أو min_tp
             const targetMinTp = trade.strategy === 'TurboScalp' ? Math.min(SETTINGS.min_tp || 0.04, 0.04) : (SETTINGS.min_tp || 0.05);
             if (!mem.trailActive && pnl >= (targetMinTp * 100)) {
                 mem.trailActive = true; 
                 console.log(`✨ [تفعيل الملاحقة في الذاكرة] ${trade.symbol} (${trade.strategy || 'Auto'})`);
-                // نكتب في DB فقط عند تفعيل الملاحقة لأول مرة
-                batch.update(tradesRef.doc(trade.docId), { trailActive: true }); 
-                hasUpdates = true;
+                try {
+                    await updateDoc(doc(db, 'momentum_trades_v1', docId), { trailActive: true });
+                } catch (e) {}
             }
 
             if (mem.trailActive) {
@@ -694,34 +723,35 @@ const manageOpenTrades = async () => {
                 if (potentialSl > mem.slLevel) mem.slLevel = potentialSl;
             }
 
-            // [بروتوكول حماية الصفقات وقت خطر السوق]:
+            // بروتوكول حماية الصفقات وقت خطر السوق
             const isMarketDanger = globalMarketStatus === 'bearish' || (currentMarketScore !== null && currentMarketScore < 48);
             const defenseMode = SETTINGS.emergency_defense_mode || 'tighten_breakeven';
 
             if (isMarketDanger && defenseMode !== 'alert_only') {
                 if (defenseMode === 'liquidate_all') {
-                    // تسييل فوري لجميع الصفقات لحماية رأس المال
                     const status = pnl >= 0 ? 'won' : 'lost';
-                    batch.update(tradesRef.doc(trade.docId), {
-                        status: status, closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
-                        maxPrice: mem.maxPrice, slLevel: currentPrice
-                    });
-                    hasUpdates = true;
-                    delete memoryTrades[trade.docId];
+                    try {
+                        await updateDoc(doc(db, 'momentum_trades_v1', docId), {
+                            status: status, closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
+                            maxPrice: mem.maxPrice, slLevel: currentPrice, telegramClosedAlertSent: true
+                        });
+                    } catch (e) {}
+                    delete memoryTrades[docId];
+                    virtualTrades = virtualTrades.filter(t => t.docId !== docId);
                     console.log(`🚨 [تسييل طارئ للسوق] إغلاق ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
                     continue;
                 } else if (defenseMode === 'close_losing' && pnl < -0.3) {
-                    // إغلاق فوري للصفقات الخاسرة لمنع تفاقم الخسائر
-                    batch.update(tradesRef.doc(trade.docId), {
-                        status: 'lost', closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
-                        maxPrice: mem.maxPrice, slLevel: currentPrice
-                    });
-                    hasUpdates = true;
-                    delete memoryTrades[trade.docId];
+                    try {
+                        await updateDoc(doc(db, 'momentum_trades_v1', docId), {
+                            status: 'lost', closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
+                            maxPrice: mem.maxPrice, slLevel: currentPrice, telegramClosedAlertSent: true
+                        });
+                    } catch (e) {}
+                    delete memoryTrades[docId];
+                    virtualTrades = virtualTrades.filter(t => t.docId !== docId);
                     console.log(`🛑 [إغلاق دفاعي طارئ لخاسرة] ${trade.symbol} لمنع الغرق | ${pnl.toFixed(2)}%`);
                     continue;
                 } else if (pnl > 0) {
-                    // تأمين الصفقات الرابحة برفع الوقف فوراً لنقطة الدخول Breakeven
                     const beStop = trade.entryPrice * 1.002;
                     if (mem.slLevel < beStop) {
                         mem.slLevel = beStop;
@@ -730,20 +760,29 @@ const manageOpenTrades = async () => {
                 }
             }
 
-            // الإغلاق الفعلي: هنا فقط نكتب النتائج في قاعدة البيانات
+            // الإغلاق الفعلي عند ضرب الوقف أو جني الأرباح
             if (currentPrice <= mem.slLevel) {
                 const status = (mem.slLevel >= trade.entryPrice) ? 'won' : 'lost';
-                batch.update(tradesRef.doc(trade.docId), {
-                    status: status, closeTime: Date.now(), closePrice: currentPrice, pnl: pnl,
-                    maxPrice: mem.maxPrice, slLevel: mem.slLevel // تحديث الأرقام النهائية فقط
-                });
-                hasUpdates = true;
+                try {
+                    await updateDoc(doc(db, 'momentum_trades_v1', docId), {
+                        status: status, 
+                        closeTime: Date.now(), 
+                        closePrice: currentPrice, 
+                        pnl: pnl,
+                        maxPrice: mem.maxPrice, 
+                        slLevel: mem.slLevel,
+                        telegramClosedAlertSent: true
+                    });
+                } catch (e) {
+                    console.error("Error updating closed trade:", e.message);
+                }
                 
-                delete memoryTrades[trade.docId]; // مسح من الذاكرة
+                delete memoryTrades[docId];
+                virtualTrades = virtualTrades.filter(t => t.docId !== docId);
                 if (SETTINGS.cooldown_mins > 0) exitCooldowns[trade.symbol] = Date.now() + (SETTINGS.cooldown_mins * 60 * 1000);
                 console.log(`🔴 [إغلاق صفقة وحفظ DB] ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
 
-                // إرسال تنبيه فوري بنتيجة الصفقة للتلجرام
+                // إرسال تنبيه فوري بنتيجة الصفقة للتلجرام من السيرفر مباشرة دون حاجة لفتح المتصفح
                 const notif = SETTINGS && SETTINGS.notifications;
                 const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
                 if (hasTg && notif.enabled !== false) {
@@ -753,19 +792,18 @@ const manageOpenTrades = async () => {
                         const headerIcon = isWin ? '🏆' : '🛑';
                         const title = isWin ? 'تم إغلاق صفقة بربح' : 'تم إغلاق صفقة';
                         const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-                        const alloc = trade.allocatedCapital || (SETTINGS.portfolio_capital ? SETTINGS.portfolio_capital / (SETTINGS.max_open_trades || 10) : 100);
+                        const alloc = trade.allocatedCapital || (SETTINGS.portfolio_capital ? SETTINGS.portfolio_capital / (SETTINGS.max_open_trades || 5) : 100);
                         const dollarVal = (alloc * pnl) / 100;
                         const dollarStr = `(${pnl >= 0 ? '+' : ''}$${dollarVal.toFixed(2)})`;
 
-                        const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}`;
-                        sendTelegramNotification(msg);
+                        const msg = `${headerIcon} <b>[${title}]</b> ${isWin ? '🎯' : '⚠️'}\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${trade.symbol}\n📊 <b>النتيجة:</b> <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${dollarStr}</b>\n📈 <b>الاستراتيجية:</b> ${trade.strategy || 'Auto'}\n💵 <b>سعر الدخول:</b> <code>$${trade.entryPrice}</code>\n🏁 <b>سعر الإغلاق:</b> <code>$${currentPrice}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n${isWin ? '✨ <i>تم حجز الأرباح بنجاح</i>' : '🛡️ <i>تم حماية الرصيد بوقف الخسارة</i>'}\n🤖 <i>نظام الرادار الآلي 24/7 (خادم سحابي مستقل)</i>`;
+                        sendTelegramNotification(msg, `close-${docId}`);
                     }
                 }
             }
         }
-
-        if (hasUpdates) await batch.commit();
     } catch (e) {
+        console.error("Error in manageOpenTrades:", e.message);
     } finally {
         isManagingTrades = false;
     }
@@ -848,7 +886,7 @@ const scanMarket = async () => {
     }
 };
 
-console.log("🚀 Server Engine Running in OPTIMIZED Mode (Low DB Cost)...");
+console.log("🚀 [Momentum 24/7 Autonomous Engine]: Running with continuous Telegram alerts and Firestore synchronization...");
 console.log("🛡️ [PERMANENT TRADES RETENTION ACTIVE] - Automatic deletion of closed trades is PERMANENTLY DISABLED.");
 
 // scanMarket: checks every 15s

@@ -261,6 +261,7 @@ export const App: React.FC = () => {
     const finalTrade = {
       ...newTrade,
       allocatedCapital: newTrade.allocatedCapital || currentPerTradeAlloc,
+      telegramAlertSent: true,
     };
     await setDoc(newDocRef, finalTrade);
 
@@ -610,13 +611,13 @@ export const App: React.FC = () => {
           mergedTrades.forEach((t) => {
             const prev = prevMap.get(t.docId);
 
-            // 1. Newly opened trade detected
-            if (!prev && t.status === 'open') {
+            // 1. Newly opened trade detected (dispatch only if not already sent by server)
+            if (!prev && t.status === 'open' && !t.telegramAlertSent) {
               console.log('📱 [Auto-Telegram Alert] New Trade Opened:', t.symbol);
               notifyTradeOpen(currentNotifs, t).catch(() => {});
             }
-            // 2. Closed trade detected (from open -> won / lost)
-            else if (prev && prev.status === 'open' && (t.status === 'won' || t.status === 'lost')) {
+            // 2. Closed trade detected (dispatch only if not already sent by server)
+            else if (prev && prev.status === 'open' && (t.status === 'won' || t.status === 'lost') && !t.telegramClosedAlertSent) {
               const alloc = t.allocatedCapital || currentPerTradeAlloc;
               const dollarVal = (alloc * (t.pnl || 0)) / 100;
               console.log('📱 [Auto-Telegram Alert] Trade Closed:', t.symbol, t.status, t.pnl);

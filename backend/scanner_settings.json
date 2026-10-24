@@ -1,0 +1,31 @@
+{
+  "tf": "1m",
+  "sl_perc": 0.09,
+  "min_tp": 0.04,
+  "trail_dist": 0.015,
+  "vol_mult": 2.2,
+  "cooldown_mins": 15,
+  "auto_kill": true,
+  "emergency_defense_mode": "tighten_breakeven",
+  "portfolio_capital": 2000,
+  "max_open_trades": 5,
+  "strats": {
+    "turboScalp": true,
+    "breakout": true,
+    "bbrsi": true,
+    "momentum": true,
+    "sniper": true
+  },
+  "notifications": {
+    "notifyOnOpen": true,
+    "notifyOnEmergency": true,
+    "notifyOnCloseLoss": true,
+    "notifyOnCloseWin": true,
+    "webhookUrl": "",
+    "telegramBotToken": "8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk",
+    "emailAddress": "old20111999@gmail.com",
+    "channel": "telegram",
+    "enabled": true,
+    "telegramChatId": "8622799312"
+  }
+}

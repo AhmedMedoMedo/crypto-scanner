@@ -27,6 +27,8 @@ export interface Trade {
   entryBreakdown?: StrategyBreakdown;
   liveBreakdown?: StrategyBreakdown;
   allocatedCapital?: number;
+  telegramAlertSent?: boolean;
+  telegramClosedAlertSent?: boolean;
 }
 
 export interface StrategyFlags {

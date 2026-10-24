@@ -48,7 +48,7 @@ export const NotificationSettingsCard: React.FC<NotificationSettingsCardProps> =
             {isConfigured ? (
               <span className="text-[10px] bg-emerald-500/10 text-brand-green border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-brand-green" />
-                متصل وجاهز للإرسال
+                سيرفر مستقل 24/7
               </span>
             ) : (
               <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
@@ -59,8 +59,8 @@ export const NotificationSettingsCard: React.FC<NotificationSettingsCardProps> =
           </div>
           <p className="text-[11px] text-gray-400 mt-1">
             {isConfigured
-              ? 'تصلك رسائل الصفقات والأرباح وحالة السوق فوراً إلى حساب التلجرام الخاص بك.'
-              : 'قم بربط بوت التلجرام لاستلام إشعارات الصفقات والأرباح وتغيرات وضع السوق فوراً.'}
+              ? '⚡ يعمل تلقائياً من السيرفر السحابي 24/7؛ ستصلك إشعارات الصفقات والأرباح فوراً حتى لو أغلقت المتصفح بالكامل.'
+              : 'قم بربط بوت التلجرام لاستلام إشعارات الصفقات والأرباح وتغيرات وضع السوق فوراً على هاتفك دون توقف.'}
           </p>
         </div>
       </div>
