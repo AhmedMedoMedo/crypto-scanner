@@ -53,6 +53,24 @@ process.on('SIGINT', () => {
 const BACKEND_PORT = process.env.BACKEND_PORT || 10000;
 const SETTINGS_FILE = path.join(__dirname, 'scanner_settings.json');
 
+const ACTIVE_TELEGRAM_BOT_TOKEN = '8858838933:AAHGURLnxrHr3JdA43Pe9cPUYAhMHWoGEk4';
+const REVOKED_TELEGRAM_BOT_TOKEN = '8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk';
+const DEFAULT_TELEGRAM_CHAT_ID = '8622799312';
+
+const getTelegramCredentials = () => {
+    const notif = SETTINGS && SETTINGS.notifications;
+    let token = (notif && notif.telegramBotToken) ? notif.telegramBotToken.trim() : '';
+    let chatId = (notif && notif.telegramChatId) ? notif.telegramChatId.trim() : '';
+    if (!token || token === REVOKED_TELEGRAM_BOT_TOKEN) {
+        token = ACTIVE_TELEGRAM_BOT_TOKEN;
+    }
+    if (!chatId) {
+        chatId = DEFAULT_TELEGRAM_CHAT_ID;
+    }
+    const isEnabled = notif ? notif.enabled !== false : true;
+    return { token, chatId, isEnabled };
+};
+
 // Default initial settings configured with the user's Telegram credentials for 24/7 autonomous alerts
 let SETTINGS = { 
     tf: '1m', 
@@ -68,8 +86,8 @@ let SETTINGS = {
     strats: { momentum: true, breakout: true, sniper: true, bbrsi: true, turboScalp: true },
     notifications: {
         enabled: true,
-        telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
-        telegramChatId: process.env.TELEGRAM_CHAT_ID || '',
+        telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || ACTIVE_TELEGRAM_BOT_TOKEN,
+        telegramChatId: process.env.TELEGRAM_CHAT_ID || DEFAULT_TELEGRAM_CHAT_ID,
         notifyOnOpen: true,
         notifyOnCloseWin: true,
         notifyOnCloseLoss: true,
@@ -130,8 +148,6 @@ try {
 
 // Deduplication cache for Telegram notifications sent directly from backend
 const sentTelegramAlerts = new Set();
-const ACTIVE_TELEGRAM_BOT_TOKEN = '8858838933:AAHGURLnxrHr3JdA43Pe9cPUYAhMHWoGEk4';
-const REVOKED_TELEGRAM_BOT_TOKEN = '8858838933:AAE6h1W3VmRLYWcgj7JS3C3s_iMGw2-AmYk';
 
 /**
  * Send Telegram alert autonomously from backend without requiring browser
@@ -145,22 +161,10 @@ const sendTelegramNotification = (textHtml, alertKey = null) => {
             setTimeout(() => sentTelegramAlerts.delete(alertKey), 30 * 60 * 1000);
         }
 
-        const notif = SETTINGS && SETTINGS.notifications;
-        if (!notif) return;
-        let token = (notif.telegramBotToken || '').trim();
-        let chatId = (notif.telegramChatId || '').trim();
-
-        // Auto-migrate revoked token if received from stale client
-        if (!token || token === REVOKED_TELEGRAM_BOT_TOKEN) {
-            token = ACTIVE_TELEGRAM_BOT_TOKEN;
-            notif.telegramBotToken = ACTIVE_TELEGRAM_BOT_TOKEN;
-        }
-        if (!chatId) {
-            chatId = '8622799312';
-            notif.telegramChatId = chatId;
-        }
-
-        if (notif.enabled === false) return;
+        const tgCreds = getTelegramCredentials();
+        if (!tgCreds.isEnabled) return;
+        const token = tgCreds.token;
+        const chatId = tgCreds.chatId;
 
         const postData = JSON.stringify({
             chat_id: chatId,
@@ -415,8 +419,8 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
     if (virtualTrades.find(t => t.symbol === symbol && t.status === 'open')) return;
 
     const maxTrades = SETTINGS.max_open_trades || 5;
-    const openCount = virtualTrades.filter(t => t.status === 'open').length;
-    if (openCount >= maxTrades) {
+    const activeOpenTrades = virtualTrades.filter(t => t.status === 'open' && (Date.now() - (t.openTime || 0)) < 24 * 60 * 60 * 1000);
+    if (activeOpenTrades.length >= maxTrades) {
         return;
     }
 
@@ -449,9 +453,9 @@ const enterNewTrade = async (symbol, price, strategy, healthData) => {
         console.log(`🟢 [دخول فرصة نارية من السيرفر] ${symbol} ($${perTradeAlloc}) | الاستراتيجية: ${strategy}`);
 
         // إرسال تنبيه فوري لهاتف المستخدم عبر التلجرام من السيرفر مباشرة دون حاجة لفتح المتصفح
+        const tgCreds = getTelegramCredentials();
         const notif = SETTINGS && SETTINGS.notifications;
-        const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
-        if (hasTg && notif.notifyOnOpen !== false && notif.enabled !== false) {
+        if (tgCreds.isEnabled && (notif ? notif.notifyOnOpen !== false : true)) {
             const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             const msg = `🎯 <b>[صيد صفقة جديدة]</b> 🟢\n━━━━━━━━━━━━━━━━━━\n🪙 <b>العملة:</b> #${symbol}\n📈 <b>الاستراتيجية:</b> <b>${strategy}</b>\n💵 <b>سعر الدخول:</b> <code>$${price}</code>\n🛡️ <b>وقف الخسارة:</b> <code>$${newTrade.slLevel.toFixed(4)}</code>\n⚡ <b>قوة الإشارة:</b> <code>${healthData.score}%</code>\n💰 <b>رأس المال:</b> <code>$${perTradeAlloc}</code>\n⏱️ <b>الوقت:</b> <code>${timeStr}</code>\n━━━━━━━━━━━━━━━━━━\n🤖 <i>رادار الصفقات التلقائي 24/7 (خادم سحابي مستقل)</i>`;
             sendTelegramNotification(msg, `open-${newTrade.docId}`);
@@ -643,9 +647,9 @@ const analyzeMarketHealth = async () => {
         }
 
         // [نظام تنبيهات تغير وضع السوق الفوري المستقل في السيرفر]:
+        const tgCreds = getTelegramCredentials();
         const notif = SETTINGS && SETTINGS.notifications;
-        const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
-        if (hasTg && notif.enabled !== false) {
+        if (tgCreds.isEnabled) {
             const now = Date.now();
             const timePassed = now - lastMarketAlertTime;
 
@@ -708,9 +712,26 @@ const manageOpenTrades = async () => {
 
         for (let trade of [...virtualTrades]) {
             const currentPrice = prices[trade.symbol];
-            if (!currentPrice) continue;
             const docId = trade.docId;
             if (!docId) continue;
+
+            const tradeAgeHours = (Date.now() - (trade.openTime || 0)) / (1000 * 60 * 60);
+            if (!currentPrice) {
+                if (tradeAgeHours > 4) {
+                    try {
+                        await updateDoc(doc(db, 'momentum_trades_v1', docId), {
+                            status: 'lost',
+                            closeTime: Date.now(),
+                            closePrice: (trade.entryPrice || 1) * 0.97,
+                            pnl: -3.0,
+                            telegramClosedAlertSent: true,
+                            closeReason: 'إغلاق تلقائي لصفقة متوقفة أو غير مدرجة على باينانس'
+                        });
+                        virtualTrades = virtualTrades.filter(t => t.docId !== docId);
+                    } catch (e) {}
+                }
+                continue;
+            }
 
             if (!memoryTrades[docId]) {
                 memoryTrades[docId] = { 
@@ -799,11 +820,11 @@ const manageOpenTrades = async () => {
                 console.log(`🔴 [إغلاق صفقة وحفظ DB] ${trade.symbol} | ${status} | ${pnl.toFixed(2)}%`);
 
                 // إرسال تنبيه فوري بنتيجة الصفقة للتلجرام من السيرفر مباشرة دون حاجة لفتح المتصفح
+                const tgCreds = getTelegramCredentials();
                 const notif = SETTINGS && SETTINGS.notifications;
-                const hasTg = Boolean(notif && notif.telegramBotToken && notif.telegramChatId);
-                if (hasTg && notif.enabled !== false) {
+                if (tgCreds.isEnabled) {
                     const isWin = status === 'won';
-                    const shouldSend = (isWin && notif.notifyOnCloseWin !== false) || (!isWin && notif.notifyOnCloseLoss !== false);
+                    const shouldSend = notif ? ((isWin && notif.notifyOnCloseWin !== false) || (!isWin && notif.notifyOnCloseLoss !== false)) : true;
                     if (shouldSend) {
                         const headerIcon = isWin ? '🏆' : '🛑';
                         const title = isWin ? 'تم إغلاق صفقة بربح' : 'تم إغلاق صفقة';
@@ -909,6 +930,13 @@ console.log("🛡️ [PERMANENT TRADES RETENTION ACTIVE] - Automatic deletion of
 setInterval(scanMarket, 15000);        
 // manageOpenTrades: checks trailing stop every 3s
 setInterval(manageOpenTrades, 3000);   
+
+// Internal keep-alive loop to keep server process warm
+setInterval(async () => {
+    try {
+        await fetch(`http://127.0.0.1:${BACKEND_PORT}/api/market-matrix`);
+    } catch (e) {}
+}, 25000);
 
 // Run initial scan on startup
 scanMarket();
