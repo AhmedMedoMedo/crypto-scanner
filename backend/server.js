@@ -2,35 +2,51 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { initializeApp, getApps } = require('firebase/app');
-const { 
-  getFirestore, 
-  collection, 
-  doc, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
-  where, 
-  getDocs, 
-  writeBatch 
-} = require('firebase/firestore');
+let initializeApp, getApps, getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, writeBatch;
+let db = null;
 
-// Initialize Firebase JS SDK for server-side autonomous persistence and sync
-const firebaseConfig = {
-  apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
-  authDomain: "smartscanner-a5e0d.firebaseapp.com",
-  projectId: "smartscanner-a5e0d",
-  storageBucket: "smartscanner-a5e0d.firebasestorage.app",
-  messagingSenderId: "976223541282",
-  appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
-};
+try {
+  let fbAppModule, fbFirestoreModule;
+  try {
+    fbAppModule = require('firebase/app');
+    fbFirestoreModule = require('firebase/firestore');
+  } catch (err1) {
+    fbAppModule = require(path.join(__dirname, '../node_modules/firebase/app'));
+    fbFirestoreModule = require(path.join(__dirname, '../node_modules/firebase/firestore'));
+  }
 
-const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig, 'momentum-backend-app') : getApps()[0];
-const db = getFirestore(firebaseApp);
+  initializeApp = fbAppModule.initializeApp;
+  getApps = fbAppModule.getApps;
+  getFirestore = fbFirestoreModule.getFirestore;
+  collection = fbFirestoreModule.collection;
+  doc = fbFirestoreModule.doc;
+  setDoc = fbFirestoreModule.setDoc;
+  updateDoc = fbFirestoreModule.updateDoc;
+  deleteDoc = fbFirestoreModule.deleteDoc;
+  onSnapshot = fbFirestoreModule.onSnapshot;
+  query = fbFirestoreModule.query;
+  where = fbFirestoreModule.where;
+  getDocs = fbFirestoreModule.getDocs;
+  writeBatch = fbFirestoreModule.writeBatch;
 
-console.log('🔥 [Firebase Cloud Connected]: Backend successfully initialized with real-time Firestore database.');
+  // Initialize Firebase JS SDK for server-side autonomous persistence and sync
+  const firebaseConfig = {
+    apiKey: "AIzaSyAH2hiXyrnxTDSa9vQJid8aFsryJk2jcHg",
+    authDomain: "smartscanner-a5e0d.firebaseapp.com",
+    projectId: "smartscanner-a5e0d",
+    storageBucket: "smartscanner-a5e0d.firebasestorage.app",
+    messagingSenderId: "976223541282",
+    appId: "1:976223541282:web:a5dcfaeaaa99ac50f3127b"
+  };
+
+  const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig, 'momentum-backend-app') : getApps()[0];
+  db = getFirestore(firebaseApp);
+  console.log('🔥 [Firebase Cloud Connected]: Backend successfully initialized with real-time Firestore database.');
+} catch (fbInitErr) {
+  console.error('⚠️ [Firebase Init Warning]: Could not initialize Firebase SDK:', fbInitErr.message);
+  console.log('⚠️ Running in standalone autonomous scanner mode.');
+}
+
 
 process.on('uncaughtException', (err) => {
     console.error('⚠️ Unhandled Exception:', err.message);
